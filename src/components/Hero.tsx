@@ -54,10 +54,12 @@ export const Hero = () => {
 
           {/* Quick actions */}
           <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg" className="h-14 px-8">
-              <Package className="mr-2" size={20} />
-              Book Shipment
-            </Button>
+            <Link to="/book-shipment">
+              <Button variant="hero" size="lg" className="h-14 px-8">
+                <Package className="mr-2" size={20} />
+                Book Shipment
+              </Button>
+            </Link>
             <Link to="/rate-calculator">
               <Button variant="secondary" size="lg" className="h-14 px-8">
                 <Globe className="mr-2" size={20} />
