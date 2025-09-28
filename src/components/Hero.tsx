@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, Package, Globe, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-logistics.jpg";
 
 export const Hero = () => {
@@ -57,10 +58,12 @@ export const Hero = () => {
               <Package className="mr-2" size={20} />
               Book Shipment
             </Button>
-            <Button variant="secondary" size="lg" className="h-14 px-8">
-              <Globe className="mr-2" size={20} />
-              Rate Calculator
-            </Button>
+            <Link to="/rate-calculator">
+              <Button variant="secondary" size="lg" className="h-14 px-8">
+                <Globe className="mr-2" size={20} />
+                Rate Calculator
+              </Button>
+            </Link>
           </div>
 
           {/* Features */}
