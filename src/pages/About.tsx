@@ -22,7 +22,7 @@ const About = () => {
             <h2 className="text-3xl font-semibold text-foreground mb-6">Our Story</h2>
             <p className="text-muted-foreground mb-6">
               With a team of experienced professionals and advanced technology, we are able to handle 
-              all types of logistics needs, from small packages to large shipments and everything in between.
+              all types of logistic needs, from small packages to large shipments and everything in between.
             </p>
             <p className="text-muted-foreground mb-6">
               Our mission is to provide our clients with the highest level of service and satisfaction, 
