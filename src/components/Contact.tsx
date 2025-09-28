@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import Map from "@/components/Map";
 import { 
   MapPin, 
   Phone, 
@@ -152,6 +153,17 @@ export const Contact = () => {
               </form>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Map Section */}
+        <div className="mt-16">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-semibold text-foreground mb-4">Find Us</h3>
+            <p className="text-muted-foreground">
+              Visit our office for in-person consultations and service
+            </p>
+          </div>
+          <Map />
         </div>
       </div>
     </section>
