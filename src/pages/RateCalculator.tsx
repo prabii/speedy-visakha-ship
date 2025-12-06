@@ -16,9 +16,9 @@ const RateCalculator = () => {
   const [isCalculating, setIsCalculating] = useState(false);
 
   const serviceTypes = [
-    { value: "express", label: "Express Delivery", icon: Plane, rate: 25 },
-    { value: "standard", label: "Standard Shipping", icon: Truck, rate: 15 },
-    { value: "economy", label: "Economy Shipping", icon: Ship, rate: 8 },
+    { value: "express", label: "Express Delivery", icon: Plane, rate: 2000 }, // INR per kg
+    { value: "standard", label: "Standard Shipping", icon: Truck, rate: 1200 }, // INR per kg
+    { value: "economy", label: "Economy Shipping", icon: Ship, rate: 800 }, // INR per kg
   ];
 
   const calculateRate = () => {
@@ -32,7 +32,7 @@ const RateCalculator = () => {
     // Simulate API call
     setTimeout(() => {
       const selectedService = serviceTypes.find(service => service.value === serviceType);
-      const baseRate = selectedService?.rate || 15;
+      const baseRate = selectedService?.rate || 1200; // Default INR per kg
       const weightNumber = parseFloat(weight);
       const volumetricWeight = dimensions.length && dimensions.width && dimensions.height 
         ? (parseFloat(dimensions.length) * parseFloat(dimensions.width) * parseFloat(dimensions.height)) / 5000
@@ -40,7 +40,7 @@ const RateCalculator = () => {
       
       const chargeableWeight = Math.max(weightNumber, volumetricWeight);
       const distance = Math.random() * 5000 + 500; // Random distance for demo
-      const rate = baseRate * chargeableWeight + (distance * 0.1);
+      const rate = baseRate * chargeableWeight + (distance * 8); // INR calculation
       
       setCalculatedRate(Math.round(rate * 100) / 100);
       setIsCalculating(false);
@@ -58,6 +58,9 @@ const RateCalculator = () => {
             </h1>
             <p className="text-lg text-gray-600">
               Get instant shipping rates for your packages worldwide
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              All rates are in Indian Rupees (₹)
             </p>
           </div>
 
@@ -192,10 +195,10 @@ const RateCalculator = () => {
                   <CardContent>
                     <div className="text-center">
                       <div className="text-3xl font-bold text-green-600 mb-2">
-                        ${calculatedRate}
+                        ₹{calculatedRate?.toLocaleString('en-IN')}
                       </div>
                       <p className="text-sm text-green-700">
-                        Estimated shipping cost
+                        Estimated shipping cost (INR)
                       </p>
                       <Button className="w-full mt-4" variant="default">
                         Book This Shipment
@@ -220,7 +223,7 @@ const RateCalculator = () => {
                       <div className="flex-1">
                         <div className="font-medium">{service.label}</div>
                         <div className="text-sm text-gray-600">
-                          From ${service.rate}/kg
+                          From ₹{service.rate.toLocaleString('en-IN')}/kg
                         </div>
                       </div>
                     </div>
