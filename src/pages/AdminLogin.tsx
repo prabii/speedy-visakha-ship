@@ -101,9 +101,6 @@ const AdminLogin = () => {
             <Button type="submit" className="w-full" size="lg">
               Login
             </Button>
-            <p className="text-xs text-center text-muted-foreground">
-              Default: admin / admin123
-            </p>
           </form>
         </CardContent>
       </Card>
