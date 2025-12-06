@@ -46,6 +46,8 @@ export const Hero = () => {
             origin: dbData.origin,
             destination: dbData.destination,
             bookingDate: dbData.bookingDate,
+            shipper: dbData.shipper || null,
+            consignee: dbData.consignee || null,
             trackingHistory: dbData.trackingHistory || []
           });
           setIsLoading(false);
