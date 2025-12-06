@@ -734,11 +734,36 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
     }
   };
 
-  // Generate AWB number in format V100000001
+  // Generate AWB number in format V100000001 - ALWAYS WORKS
   const generateAWBNumber = async (): Promise<string> => {
+    // Get stored last AWB number from localStorage as fallback
+    const getStoredLastAWB = (): number => {
+      try {
+        const stored = localStorage.getItem('last_awb_number');
+        if (stored) {
+          const match = stored.match(/V(\d+)/);
+          if (match) {
+            return parseInt(match[1], 10);
+          }
+        }
+      } catch (e) {
+        console.log('Could not read stored AWB number');
+      }
+      return 0;
+    };
+
+    // Store AWB number in localStorage
+    const storeAWB = (awbNo: string) => {
+      try {
+        localStorage.setItem('last_awb_number', awbNo);
+      } catch (e) {
+        console.log('Could not store AWB number');
+      }
+    };
+
     try {
       // Try to get the latest AWB number from database
-      const response = await api.awb.getAll({ limit: 100, page: 1 });
+      const response = await api.awb.getAll({ limit: 200, page: 1 });
       if (response.awbs && response.awbs.length > 0) {
         // Find the highest AWB number
         let maxNum = 0;
@@ -752,25 +777,54 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           }
         });
         
+        // Also check stored value
+        const storedMax = getStoredLastAWB();
+        maxNum = Math.max(maxNum, storedMax);
+        
         if (maxNum > 0) {
           const nextNum = maxNum + 1;
-          return `V${nextNum.toString().padStart(9, '0')}`;
+          const newAWB = `V${nextNum.toString().padStart(9, '0')}`;
+          storeAWB(newAWB);
+          return newAWB;
+        }
+      } else {
+        // No AWBs in database, check stored value
+        const storedMax = getStoredLastAWB();
+        if (storedMax > 0) {
+          const nextNum = storedMax + 1;
+          const newAWB = `V${nextNum.toString().padStart(9, '0')}`;
+          storeAWB(newAWB);
+          return newAWB;
         }
       }
     } catch (error) {
-      console.log('Could not fetch latest AWB, starting from V100000001');
+      console.log('Could not fetch latest AWB from database, using stored or default');
+      // Use stored value or default
+      const storedMax = getStoredLastAWB();
+      if (storedMax > 0) {
+        const nextNum = storedMax + 1;
+        const newAWB = `V${nextNum.toString().padStart(9, '0')}`;
+        storeAWB(newAWB);
+        return newAWB;
+      }
     }
-    // Default starting number
-    return 'V100000001';
+    
+    // Default starting number - always works
+    const defaultAWB = 'V100000001';
+    storeAWB(defaultAWB);
+    return defaultAWB;
   };
 
   const generateAWB = async () => {
-    // Use AWB number from state or generate a new one
-    let finalAwbNo = awbNo?.trim();
-    if (!finalAwbNo) {
-      finalAwbNo = await generateAWBNumber();
-      setAwbNo(finalAwbNo);
-    }
+    // ALWAYS generate a new AWB number - never reuse existing ones
+    // This ensures unique AWB numbers every time
+    let finalAwbNo = await generateAWBNumber();
+    
+    // Update state with the generated number
+    setAwbNo(finalAwbNo);
+    
+    // Log for debugging
+    console.log('Generated AWB Number:', finalAwbNo);
 
     if (!accountDetails.accountNo || !accountDetails.clientName) {
       toast({
@@ -928,69 +982,111 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
         
         await api.awb.create(awbPayload);
         
-        // Also save invoice if invoice number exists
+        // Also save/update invoice if invoice number exists
         if (invoiceNo && invoiceDate) {
           try {
+            const invoiceDateObj = invoiceDate ? new Date(invoiceDate).toISOString() : new Date().toISOString();
+            
             const invoicePayload = {
-              invoiceNo: invoiceNo,
-              invoiceDate: invoiceDate,
-              exporterRef: exporterRef || undefined,
+              invoiceNo: invoiceNo.trim(),
+              invoiceDate: invoiceDateObj,
+              exporterRef: exporterRef?.trim() || undefined,
               awbNo: finalAwbNo,
-              pieces: pieces.toString(),
-              weight: weight || undefined,
+              pieces: pieces.toString().trim() || '0',
+              weight: weight?.trim() || undefined,
               shipper: {
-                companyName: shipper.companyName,
-                contactName: shipper.contactName,
-                address1: shipper.address1,
-                address2: shipper.address2 || undefined,
-                city: shipper.city,
-                state: shipper.state,
-                pincode: shipper.pincode,
-                country: shipper.country,
-                telephone: shipper.telephone,
-                mobileNo: shipper.mobileNo || undefined,
-                email: shipper.email || undefined,
-                documentType: shipper.documentType,
-                documentNo: shipper.documentNo,
+                companyName: (shipper.companyName || '').trim(),
+                contactName: (shipper.contactName || '').trim(),
+                address1: (shipper.address1 || '').trim(),
+                address2: shipper.address2?.trim() || undefined,
+                city: (shipper.city || '').trim(),
+                state: (shipper.state || '').trim(),
+                pincode: (shipper.pincode || '').trim(),
+                country: (shipper.country || '').trim(),
+                telephone: (shipper.telephone || '').trim(),
+                mobileNo: shipper.mobileNo?.trim() || undefined,
+                email: shipper.email?.trim() || undefined,
+                documentType: shipper.documentType || undefined,
+                documentNo: shipper.documentNo || undefined,
               },
               consignee: {
-                companyName: consignee.companyName,
-                contactName: consignee.contactName,
-                address1: consignee.address1,
-                address2: consignee.address2 || undefined,
-                city: consignee.city,
-                state: consignee.state,
-                pincode: consignee.pincode,
-                country: consignee.country,
-                telephone: consignee.telephone,
-                mobileNo: consignee.mobileNo || undefined,
-                email: consignee.email || undefined,
+                companyName: (consignee.companyName || '').trim(),
+                contactName: (consignee.contactName || '').trim(),
+                address1: (consignee.address1 || '').trim(),
+                address2: consignee.address2?.trim() || undefined,
+                city: (consignee.city || '').trim(),
+                state: (consignee.state || '').trim(),
+                pincode: (consignee.pincode || '').trim(),
+                country: (consignee.country || '').trim(),
+                telephone: (consignee.telephone || '').trim(),
+                mobileNo: consignee.mobileNo?.trim() || undefined,
+                email: consignee.email?.trim() || undefined,
               },
-              placeOfLoading: shipper.origin || 'VISHAKAPATNAM',
-              countryOfOrigin: shipper.country || 'INDIA',
-              portOfDischarge: consignee.destination || '',
-              finalDestination: consignee.destination || '',
-              countryOfDestination: consignee.country || '',
-              otherReference: manifestGST.exportReason || undefined,
-              termOfDelivery: manifestGST.termOfInvoice || undefined,
+              placeOfLoading: (shipper.origin || 'VISHAKAPATNAM').trim(),
+              countryOfOrigin: (shipper.country || 'INDIA').trim(),
+              portOfDischarge: (consignee.destination || consignee.country || 'UNKNOWN').trim(),
+              finalDestination: (consignee.destination || consignee.country || 'UNKNOWN').trim(),
+              countryOfDestination: (consignee.country || 'UNKNOWN').trim(),
+              otherReference: manifestGST.exportReason?.trim() || undefined,
+              termOfDelivery: manifestGST.termOfInvoice?.trim() || undefined,
               items: items.map(item => ({
-                boxNo: item.boxNo || '1',
-                description: item.description,
-                hsnCode: item.hsnCode || '',
-                quantity: item.quantity,
-                weight: item.weight || 0,
-                rate: item.rate,
-                amount: item.amount,
+                boxNo: (item.boxNo || '1').toString().trim(),
+                description: (item.description || '').trim(),
+                hsnCode: (item.hsnCode || '').trim(),
+                quantity: Number(item.quantity) || 0,
+                weight: Number(item.weight) || 0,
+                rate: Number(item.rate) || 0,
+                amount: Number(item.amount) || 0,
               })),
-              totalAmount: calculateTotal(),
-              accountNo: accountDetails.accountNo,
+              totalAmount: Number(calculateTotal()) || 0,
+              accountNo: accountDetails.accountNo?.trim() || undefined,
               status: 'issued',
             };
             
-            await api.invoices.create(invoicePayload);
+            // Use update if editing, otherwise try to create
+            if (editingInvoiceId) {
+              await api.invoices.update(editingInvoiceId, invoicePayload);
+              console.log('Invoice updated successfully with AWB:', finalAwbNo);
+            } else {
+              // Try to find existing invoice by invoice number first
+              try {
+                const existingInvoice = await api.invoices.getByInvoiceNo(invoiceNo.trim());
+                if (existingInvoice && existingInvoice._id) {
+                  // Update existing invoice
+                  await api.invoices.update(existingInvoice._id, invoicePayload);
+                  console.log('Invoice updated (found by invoice number) with AWB:', finalAwbNo);
+                } else {
+                  // Create new invoice
+                  await api.invoices.create(invoicePayload);
+                  console.log('Invoice created successfully with AWB:', finalAwbNo);
+                }
+              } catch (lookupError: any) {
+                // If lookup fails, try to create (might be new invoice)
+                try {
+                  await api.invoices.create(invoicePayload);
+                  console.log('Invoice created successfully with AWB:', finalAwbNo);
+                } catch (createError: any) {
+                  // If create fails due to duplicate, try to update by invoice number
+                  if (createError.message?.includes('already exists') || createError.message?.includes('duplicate')) {
+                    try {
+                      const existingInvoice = await api.invoices.getByInvoiceNo(invoiceNo.trim());
+                      if (existingInvoice && existingInvoice._id) {
+                        await api.invoices.update(existingInvoice._id, invoicePayload);
+                        console.log('Invoice updated (after duplicate error) with AWB:', finalAwbNo);
+                      }
+                    } catch (updateError: any) {
+                      console.error('Failed to update invoice after duplicate error:', updateError);
+                    }
+                  } else {
+                    throw createError;
+                  }
+                }
+              }
+            }
           } catch (invoiceError: any) {
-            // If invoice already exists, that's okay - just log it
-            console.log('Invoice save note:', invoiceError.message);
+            // Log error but don't fail AWB generation
+            console.error('Invoice save error:', invoiceError);
+            console.log('AWB generated successfully, but invoice save had issues:', invoiceError.message);
           }
         }
         
