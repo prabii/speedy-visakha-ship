@@ -864,13 +864,13 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           throw new Error('Consignee company name or contact name is required');
         }
         
-        const awbPayload = {
+        const awbPayload: any = {
           awbNo: finalAwbNo,
           accountNo: accountDetails.accountNo,
           customer: accountDetails.clientName,
           origin: shipper.origin || 'HYDERABAD',
           destination: consignee.destination || consignee.country || 'UNKNOWN',
-          service: serviceDetails.service || 'PXC-SELF',
+          service: serviceDetails.vendor || serviceDetails.service || 'PXC-SELF', // Use vendor name for AWB display
           bookingDate: accountDetails.bookDate ? new Date(accountDetails.bookDate).toISOString() : new Date().toISOString(),
           companyName: 'VISAKHA INTERNATIONAL COURIERS',
           website: 'WWW.VISAKHACOURIERS.COM',
@@ -915,7 +915,16 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           gstNo: GST_NUMBER,
           // Status must be one of: 'Couriers', 'Courier Pickup', 'Shipped', 'Intransit', 'Arrived at Destination', 'Out for Delivery', 'Pending Order', 'Delivered'
           status: 'Pending Order',
+          trackingHistory: [{
+            status: 'Pending Order',
+            description: 'AWB created',
+            timestamp: new Date().toISOString(),
+            updatedBy: 'System'
+          }]
         };
+        
+        // Log payload to verify status is correct
+        console.log('AWB Payload Status:', awbPayload.status);
         
         await api.awb.create(awbPayload);
         
