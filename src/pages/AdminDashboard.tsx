@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('invoice');
   
   // Shipment management state
   const [awbs, setAwbs] = useState<any[]>([]);
@@ -41,6 +42,17 @@ const AdminDashboard = () => {
       navigate('/admin/login');
     }
   }, [isAuthenticated, navigate]);
+
+  // Listen for navigation to invoice tab
+  useEffect(() => {
+    const handleNavigateToInvoice = () => {
+      setActiveTab('invoice');
+    };
+    window.addEventListener('navigateToInvoiceTab', handleNavigateToInvoice);
+    return () => {
+      window.removeEventListener('navigateToInvoiceTab', handleNavigateToInvoice);
+    };
+  }, []);
 
   // Load AWBs
   const loadAWBs = async () => {
@@ -269,7 +281,7 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="invoice" className="space-y-6">
+        <Tabs defaultValue="invoice" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white/80 backdrop-blur-sm shadow-sm border border-gray-200 p-1.5 rounded-lg">
             <TabsTrigger 
               value="invoice"

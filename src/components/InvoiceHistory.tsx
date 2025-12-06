@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Download, Eye, ChevronLeft, ChevronRight, FileText, Package, Trash2 } from 'lucide-react';
+import { Search, Download, Eye, ChevronLeft, ChevronRight, FileText, Package, Trash2, Edit } from 'lucide-react';
 import { PDFPreview } from './PDFPreview';
 import { useToast } from '@/hooks/use-toast';
 import { generateInvoicePDF, generateAWBPDF } from '@/lib/pdfGenerator';
@@ -326,6 +326,33 @@ const InvoiceHistory = () => {
     }
   };
 
+  const handleEditInvoice = async (item: HistoryItem) => {
+    if (item.type !== 'invoice') return;
+    
+    try {
+      // Fetch full invoice data
+      const invoiceData = await api.invoices.getById(item.id);
+      
+      // Store invoice data in localStorage for editing
+      localStorage.setItem('edit_invoice_data', JSON.stringify(invoiceData));
+      
+      // Navigate to invoice tab by triggering a custom event
+      window.dispatchEvent(new CustomEvent('navigateToInvoiceTab'));
+      
+      toast({
+        title: 'Success',
+        description: 'Invoice loaded for editing. Please go to Invoice Entry tab.',
+      });
+    } catch (error: any) {
+      console.error('Error loading invoice for edit:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load invoice for editing',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
       // Invoice statuses
@@ -454,6 +481,17 @@ const InvoiceHistory = () => {
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {item.type === 'invoice' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditInvoice(item)}
+                              title="Edit Invoice"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"

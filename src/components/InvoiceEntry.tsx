@@ -191,6 +191,136 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [productResults, setProductResults] = useState<Product[]>([]);
 
+  // Load invoice data for editing
+  useEffect(() => {
+    const loadEditData = () => {
+      const editData = localStorage.getItem('edit_invoice_data');
+      if (editData) {
+        try {
+          const invoiceData = JSON.parse(editData);
+          
+          // Clear the localStorage
+          localStorage.removeItem('edit_invoice_data');
+          
+          // Populate form fields
+          if (invoiceData.invoiceNo) setInvoiceNo(invoiceData.invoiceNo);
+          if (invoiceData.invoiceDate) {
+            const date = new Date(invoiceData.invoiceDate);
+            setInvoiceDate(format(date, 'yyyy-MM-dd'));
+          }
+          if (invoiceData.exporterRef) setExporterRef(invoiceData.exporterRef);
+          if (invoiceData.awbNo) setAwbNo(invoiceData.awbNo);
+          if (invoiceData.pieces) setPieces(invoiceData.pieces);
+          if (invoiceData.weight) setWeight(invoiceData.weight);
+          
+          // Account Details
+          if (invoiceData.accountNo || invoiceData.customerId) {
+            setAccountDetails(prev => ({
+              ...prev,
+              accountNo: invoiceData.accountNo || invoiceData.customerId?.accountNo || '',
+              clientName: invoiceData.customerId?.clientName || '',
+              clientCode: invoiceData.customerId?.clientCode || '',
+            }));
+          }
+          
+          // Shipper Details
+          if (invoiceData.shipper) {
+            setShipper(prev => ({
+              ...prev,
+              companyName: invoiceData.shipper.companyName || '',
+              contactName: invoiceData.shipper.contactName || '',
+              address1: invoiceData.shipper.address1 || '',
+              address2: invoiceData.shipper.address2 || '',
+              city: invoiceData.shipper.city || '',
+              state: invoiceData.shipper.state || '',
+              pincode: invoiceData.shipper.pincode || '',
+              country: invoiceData.shipper.country || 'INDIA',
+              telephone: invoiceData.shipper.telephone || '',
+              mobileNo: invoiceData.shipper.mobileNo || '',
+              email: invoiceData.shipper.email || '',
+              documentType: invoiceData.shipper.documentType || 'Aadhaar Number',
+              documentNo: invoiceData.shipper.documentNo || '',
+              origin: invoiceData.placeOfLoading || prev.origin,
+            }));
+          }
+          
+          // Consignee Details
+          if (invoiceData.consignee) {
+            setConsignee(prev => ({
+              ...prev,
+              companyName: invoiceData.consignee.companyName || '',
+              contactName: invoiceData.consignee.contactName || '',
+              address1: invoiceData.consignee.address1 || '',
+              address2: invoiceData.consignee.address2 || '',
+              city: invoiceData.consignee.city || '',
+              state: invoiceData.consignee.state || '',
+              pincode: invoiceData.consignee.pincode || '',
+              country: invoiceData.consignee.country || '',
+              telephone: invoiceData.consignee.telephone || '',
+              mobileNo: invoiceData.consignee.mobileNo || '',
+              email: invoiceData.consignee.email || '',
+              destination: invoiceData.portOfDischarge || invoiceData.finalDestination || '',
+            }));
+          }
+          
+          // Manifest GST Details
+          if (invoiceData.otherReference || invoiceData.termOfDelivery) {
+            setManifestGST(prev => ({
+              ...prev,
+              exportReason: invoiceData.otherReference || prev.exportReason,
+              termOfInvoice: invoiceData.termOfDelivery || prev.termOfInvoice,
+            }));
+          }
+          
+          // Items
+          if (invoiceData.items && Array.isArray(invoiceData.items)) {
+            const mappedItems = invoiceData.items.map((item: any) => ({
+              boxNo: item.boxNo || 'Box-1',
+              packages: item.packages || '',
+              description: item.description || '',
+              hsnCode: item.hsnCode || '',
+              quantity: item.quantity || 1,
+              weight: item.weight || 0,
+              unit: item.unit || 'PCS',
+              rate: item.rate || 0,
+              amount: item.amount || 0,
+              igstPercent: item.igstPercent || 0,
+              igstAmount: item.igstAmount || 0,
+            }));
+            setItems(mappedItems);
+          }
+          
+          toast({
+            title: 'Invoice Loaded',
+            description: `Invoice ${invoiceData.invoiceNo || ''} loaded for editing.`,
+          });
+        } catch (error) {
+          console.error('Error loading invoice data:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load invoice data for editing',
+            variant: 'destructive',
+          });
+        }
+      }
+    };
+
+    // Load on mount
+    loadEditData();
+
+    // Also listen for tab navigation event
+    const handleTabNavigation = () => {
+      // Small delay to ensure tab is switched
+      setTimeout(loadEditData, 100);
+    };
+    
+    window.addEventListener('navigateToInvoiceTab', handleTabNavigation);
+    
+    return () => {
+      window.removeEventListener('navigateToInvoiceTab', handleTabNavigation);
+    };
+  }, [toast]);
+
   useEffect(() => {
     if (hsnSearchQuery) {
       searchHSN(hsnSearchQuery).then(setHsnResults);
