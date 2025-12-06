@@ -54,6 +54,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [exporterRef, setExporterRef] = useState('ICL');
   const [awbNo, setAwbNo] = useState('');
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null); // Track if we're editing
   const [pieces, setPieces] = useState('0');
   const [piecesUnit, setPiecesUnit] = useState('SPX');
   const [weight, setWeight] = useState('');
@@ -201,6 +202,11 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           
           // Clear the localStorage
           localStorage.removeItem('edit_invoice_data');
+          
+          // Store the invoice ID for editing
+          if (invoiceData._id) {
+            setEditingInvoiceId(invoiceData._id);
+          }
           
           // Populate form fields
           if (invoiceData.invoiceNo) setInvoiceNo(invoiceData.invoiceNo);
@@ -503,6 +509,11 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
 
   const GST_NUMBER = '37HVGPP7046R1ZG';
 
+  // Clear editing state when starting fresh
+  const clearEditingState = () => {
+    setEditingInvoiceId(null);
+  };
+
   const generatePDF = async () => {
     // Use manifest GST invoice details or generate defaults
     const finalInvoiceNo = manifestGST.invoiceNo || invoiceNo || 'INV-' + Date.now();
@@ -663,12 +674,22 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
         // Log payload for debugging (remove in production)
         console.log('Invoice payload:', JSON.stringify(invoicePayload, null, 2));
         
-        await api.invoices.create(invoicePayload);
-        
-        toast({
-          title: 'Success',
-          description: 'Invoice PDF generated and saved to database successfully',
-        });
+        // Use update if editing, otherwise create
+        if (editingInvoiceId) {
+          await api.invoices.update(editingInvoiceId, invoicePayload);
+          toast({
+            title: 'Success',
+            description: 'Invoice PDF generated and updated in database successfully',
+          });
+          // Clear editing state after successful update
+          setEditingInvoiceId(null);
+        } else {
+          await api.invoices.create(invoicePayload);
+          toast({
+            title: 'Success',
+            description: 'Invoice PDF generated and saved to database successfully',
+          });
+        }
       } catch (dbError: any) {
         console.error('Database save error:', dbError);
         console.error('Error message:', dbError.message);
@@ -686,8 +707,8 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
             variant: 'destructive',
           });
         } else {
-          // If invoice already exists, that's okay
-          if (dbError.message?.includes('already exists') || dbError.message?.includes('duplicate')) {
+          // If invoice already exists and we're not editing, that's okay
+          if ((dbError.message?.includes('already exists') || dbError.message?.includes('duplicate')) && !editingInvoiceId) {
             toast({
               title: 'Success',
               description: 'Invoice PDF generated. Invoice already exists in database.',
@@ -892,8 +913,8 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           paymentMethod: 'TOPAY',
           invoiceNo: invoiceNo || undefined,
           gstNo: GST_NUMBER,
-          // Status must be one of: 'pending', 'in_transit', 'out_for_delivery', 'delivered', 'returned', 'cancelled'
-          status: 'pending',
+          // Status must be one of: 'Couriers', 'Courier Pickup', 'Shipped', 'Intransit', 'Arrived at Destination', 'Out for Delivery', 'Pending Order', 'Delivered'
+          status: 'Pending Order',
         };
         
         await api.awb.create(awbPayload);
