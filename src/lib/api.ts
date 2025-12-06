@@ -112,6 +112,7 @@ export const api = {
     create: (data: any) => api.fetch('/awb', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => api.fetch(`/awb/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     updateTracking: (id: string, data: any) => api.fetch(`/awb/${id}/tracking`, { method: 'PUT', body: JSON.stringify(data) }),
+    updateTrackingByAWBNo: (awbNo: string, data: any) => api.fetch(`/awb/number/${awbNo}/tracking`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => api.fetch(`/awb/${id}`, { method: 'DELETE' }),
   },
 };

@@ -583,9 +583,43 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
     }
   };
 
+  // Generate AWB number in format V100000001
+  const generateAWBNumber = async (): Promise<string> => {
+    try {
+      // Try to get the latest AWB number from database
+      const response = await api.awb.getAll({ limit: 100, page: 1 });
+      if (response.awbs && response.awbs.length > 0) {
+        // Find the highest AWB number
+        let maxNum = 0;
+        response.awbs.forEach((awb: any) => {
+          const match = awb.awbNo?.match(/V(\d+)/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) {
+              maxNum = num;
+            }
+          }
+        });
+        
+        if (maxNum > 0) {
+          const nextNum = maxNum + 1;
+          return `V${nextNum.toString().padStart(9, '0')}`;
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch latest AWB, starting from V100000001');
+    }
+    // Default starting number
+    return 'V100000001';
+  };
+
   const generateAWB = async () => {
-    // Use AWB number from state or generate a default one
-    const finalAwbNo = awbNo?.trim() || `AWB-${Date.now()}`;
+    // Use AWB number from state or generate a new one
+    let finalAwbNo = awbNo?.trim();
+    if (!finalAwbNo) {
+      finalAwbNo = await generateAWBNumber();
+      setAwbNo(finalAwbNo);
+    }
 
     if (!accountDetails.accountNo || !accountDetails.clientName) {
       toast({
@@ -607,7 +641,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
       customer: accountDetails.clientName,
       origin: shipper.origin || 'HYDERABAD',
       destination: consignee.destination || consignee.country || '',
-      service: serviceDetails.service || 'PXC-SELF',
+      service: serviceDetails.vendor || serviceDetails.service || 'PXC-SELF', // Use vendor name for AWB display
       bookingDate: format(new Date(accountDetails.bookDate), 'dd/MM/yyyy'),
       companyName: 'VISAKHA INTERNATIONAL COURIERS',
       website: 'WWW.VISAKHACOURIERS.COM',
@@ -1925,6 +1959,9 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="UNSOLICITED GIFT - NOT FOR SALE">UNSOLICITED GIFT - NOT FOR SALE</SelectItem>
+                  <SelectItem value="For personal reason not for sale">
+                    <span className="font-bold">For personal reason not for sale</span>
+                  </SelectItem>
                   <SelectItem value="COMMERCIAL SAMPLE">COMMERCIAL SAMPLE</SelectItem>
                   <SelectItem value="RETURNED GOODS">RETURNED GOODS</SelectItem>
                   <SelectItem value="DOCUMENTS">DOCUMENTS</SelectItem>

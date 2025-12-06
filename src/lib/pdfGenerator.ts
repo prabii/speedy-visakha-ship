@@ -882,7 +882,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     data.customer || '',
     data.origin || '',
     data.destination || '',
-    data.service || '',
+    data.service || '', // This will contain vendor name
   ]);
 
   // ---- Row 2: SENDER'S COMPANY | RECIPIENT'S COMPANY | WEIGHT | DIMENSION IN CM

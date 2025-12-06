@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package, MapPin, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
 interface ScanDetail {
@@ -11,6 +12,39 @@ interface ScanDetail {
 }
 
 interface TrackingData {
+  fromDatabase?: boolean;
+  awbNo?: string;
+  status?: string;
+  origin?: string;
+  destination?: string;
+  bookingDate?: string;
+  shipper?: {
+    companyName?: string;
+    contactName?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    country?: string;
+    address1?: string;
+    address2?: string;
+  };
+  consignee?: {
+    companyName?: string;
+    contactName?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    country?: string;
+    address1?: string;
+    address2?: string;
+  };
+  trackingHistory?: Array<{
+    status: string;
+    location?: string;
+    description?: string;
+    timestamp: string | Date;
+    updatedBy?: string;
+  }>;
   ShipmentData?: Array<{
     Shipment?: {
       AWB?: string;
@@ -57,6 +91,132 @@ export const TrackingResult = ({ data, error, waybill }: TrackingResultProps) =>
             <p className="font-semibold">Tracking Error</p>
           </div>
           <p className="text-muted-foreground mt-2">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Handle database format
+  if (data?.fromDatabase) {
+    const formatDateTime = (date: string | Date | undefined) => {
+      if (!date) return '';
+      try {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      } catch {
+        return String(date);
+      }
+    };
+
+    return (
+      <Card className="mt-6 bg-white/95 backdrop-blur-sm shadow-elegant">
+        <CardHeader>
+          <CardTitle className="text-xl text-red-600">
+            Tracking / Reference Id {data.awbNo || waybill} Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Sender and Recipient Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Sender Section */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-blue-600 text-white px-4 py-2 font-semibold">
+                Sender
+              </div>
+              <div className="p-4">
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium w-1/3">Name</TableCell>
+                      <TableCell>{data.shipper?.contactName || data.shipper?.companyName || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">City</TableCell>
+                      <TableCell>{data.shipper?.city || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">State</TableCell>
+                      <TableCell>{data.shipper?.state || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Pincode</TableCell>
+                      <TableCell>{data.shipper?.pincode || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Country</TableCell>
+                      <TableCell>{data.shipper?.country || 'N/A'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Recipient Section */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-blue-600 text-white px-4 py-2 font-semibold">
+                Recipient
+              </div>
+              <div className="p-4">
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium w-1/3">Name</TableCell>
+                      <TableCell>{data.consignee?.contactName || data.consignee?.companyName || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">City</TableCell>
+                      <TableCell>{data.consignee?.city || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">State</TableCell>
+                      <TableCell>{data.consignee?.state || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Pincode</TableCell>
+                      <TableCell>{data.consignee?.pincode || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Country</TableCell>
+                      <TableCell>{data.consignee?.country || 'N/A'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+
+          {/* Tracking History */}
+          {data.trackingHistory && data.trackingHistory.length > 0 && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-blue-600 mb-4 text-center">Tracking History</h3>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="font-semibold">Date / Time</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
+                      <TableHead className="font-semibold">remark</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.trackingHistory.map((entry, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{formatDateTime(entry.timestamp)}</TableCell>
+                        <TableCell className="font-medium">{entry.status}</TableCell>
+                        <TableCell>{entry.description || entry.location || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );

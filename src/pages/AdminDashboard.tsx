@@ -6,10 +6,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InvoiceEntry from '@/components/InvoiceEntry';
 import InvoiceHistory from '@/components/InvoiceHistory';
+import api from '@/lib/api';
 
 const AdminDashboard = () => {
   const { isAuthenticated, logout, changePassword } = useAuth();
@@ -21,12 +25,138 @@ const AdminDashboard = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Shipment management state
+  const [awbs, setAwbs] = useState<any[]>([]);
+  const [searchAWB, setSearchAWB] = useState('');
+  const [selectedAWB, setSelectedAWB] = useState<any>(null);
+  const [updateStatus, setUpdateStatus] = useState('');
+  const [updateLocation, setUpdateLocation] = useState('');
+  const [updateDescription, setUpdateDescription] = useState('');
+  const [isLoadingAWBs, setIsLoadingAWBs] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/admin/login');
     }
   }, [isAuthenticated, navigate]);
+
+  // Load AWBs
+  const loadAWBs = async () => {
+    setIsLoadingAWBs(true);
+    try {
+      const response = await api.awb.getAll({ limit: 50, page: 1 });
+      setAwbs(response.awbs || []);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load shipments',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingAWBs(false);
+    }
+  };
+
+  // Search AWB
+  const handleSearchAWB = async () => {
+    if (!searchAWB.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter an AWB number',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoadingAWBs(true);
+    try {
+      const awb = await api.awb.getByAWBNo(searchAWB.trim());
+      setSelectedAWB(awb);
+      setUpdateStatus(awb.status || '');
+      setUpdateLocation('');
+      setUpdateDescription('');
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'AWB not found',
+        variant: 'destructive',
+      });
+      setSelectedAWB(null);
+    } finally {
+      setIsLoadingAWBs(false);
+    }
+  };
+
+  // Update shipment status
+  const handleUpdateStatus = async () => {
+    if (!selectedAWB || !updateStatus) {
+      toast({
+        title: 'Error',
+        description: 'Please select a status',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await api.awb.updateTrackingByAWBNo(selectedAWB.awbNo, {
+        status: updateStatus,
+        location: updateLocation || undefined,
+        description: updateDescription || undefined,
+        updatedBy: 'Admin',
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Shipment status updated successfully',
+      });
+      
+      // Reload AWB data
+      const updatedAWB = await api.awb.getByAWBNo(selectedAWB.awbNo);
+      setSelectedAWB(updatedAWB);
+      setUpdateLocation('');
+      setUpdateDescription('');
+      
+      // Reload AWBs list
+      loadAWBs();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update status',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const statusOptions = [
+    'Couriers',
+    'Courier Pickup',
+    'Shipped',
+    'Intransit',
+    'Arrived at Destination',
+    'Out for Delivery',
+    'Pending Order',
+    'Delivered',
+  ];
+
+  const getStatusBadge = (status: string) => {
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('delivered')) {
+      return <Badge className="bg-green-500">Delivered</Badge>;
+    } else if (statusLower.includes('out for delivery')) {
+      return <Badge className="bg-blue-500">Out for Delivery</Badge>;
+    } else if (statusLower.includes('intransit') || statusLower.includes('shipped')) {
+      return <Badge className="bg-yellow-500">In Transit</Badge>;
+    } else if (statusLower.includes('pending')) {
+      return <Badge className="bg-gray-500">Pending</Badge>;
+    }
+    return <Badge>{status}</Badge>;
+  };
 
   const handleLogout = () => {
     logout();
@@ -191,14 +321,123 @@ const AdminDashboard = () => {
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-blue-600" />
-                  Shipments
+                  Shipment Status Management
                 </CardTitle>
-                <CardDescription>Manage and track all shipments</CardDescription>
+                <CardDescription>Update shipment status by AWB number</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-muted-foreground text-lg">Shipment management coming soon...</p>
+              <CardContent className="pt-6 space-y-6">
+                {/* Search AWB */}
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter AWB number (e.g., V100000001)"
+                      value={searchAWB}
+                      onChange={(e) => setSearchAWB(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearchAWB()}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleSearchAWB} disabled={isLoadingAWBs}>
+                      <Search className="mr-2 h-4 w-4" />
+                      Search
+                    </Button>
+                    <Button onClick={loadAWBs} variant="outline" disabled={isLoadingAWBs}>
+                      Load All
+                    </Button>
+                  </div>
+
+                  {/* Update Status Form */}
+                  {selectedAWB && (
+                    <Card className="bg-blue-50/50 border-blue-200">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Update Status: {selectedAWB.awbNo}</CardTitle>
+                        <CardDescription>
+                          Current Status: {getStatusBadge(selectedAWB.status)}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Status</Label>
+                          <Select value={updateStatus} onValueChange={setUpdateStatus}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {statusOptions.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {status}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Location (Optional)</Label>
+                          <Input
+                            placeholder="Enter location"
+                            value={updateLocation}
+                            onChange={(e) => setUpdateLocation(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Description (Optional)</Label>
+                          <Input
+                            placeholder="Enter description"
+                            value={updateDescription}
+                            onChange={(e) => setUpdateDescription(e.target.value)}
+                          />
+                        </div>
+                        <Button onClick={handleUpdateStatus} disabled={isUpdating || !updateStatus}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          {isUpdating ? 'Updating...' : 'Update Status'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* AWBs List */}
+                  {awbs.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Recent Shipments</h3>
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>AWB Number</TableHead>
+                              <TableHead>Customer</TableHead>
+                              <TableHead>Origin</TableHead>
+                              <TableHead>Destination</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {awbs.map((awb) => (
+                              <TableRow key={awb._id}>
+                                <TableCell className="font-mono">{awb.awbNo}</TableCell>
+                                <TableCell>{awb.customer}</TableCell>
+                                <TableCell>{awb.origin}</TableCell>
+                                <TableCell>{awb.destination}</TableCell>
+                                <TableCell>{getStatusBadge(awb.status)}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSearchAWB(awb.awbNo);
+                                      handleSearchAWB();
+                                    }}
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Update
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

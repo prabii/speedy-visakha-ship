@@ -33,6 +33,30 @@ export const Hero = () => {
     setTrackingData(null);
 
     try {
+      // First, try to get tracking from our database
+      const api = (await import('@/lib/api')).default;
+      try {
+        const dbData = await api.awb.track(trackingNumber.trim());
+        if (dbData && dbData.awbNo) {
+          // Format data for our TrackingResult component
+          setTrackingData({
+            fromDatabase: true,
+            awbNo: dbData.awbNo,
+            status: dbData.status,
+            origin: dbData.origin,
+            destination: dbData.destination,
+            bookingDate: dbData.bookingDate,
+            trackingHistory: dbData.trackingHistory || []
+          });
+          setIsLoading(false);
+          return;
+        }
+      } catch (dbError: any) {
+        // If not found in database, try Delhivery API
+        console.log('AWB not found in database, trying Delhivery API');
+      }
+
+      // Fallback to Delhivery API
       const url = `${DELHIVERY_API_URL}?waybill=${encodeURIComponent(trackingNumber.trim())}&ref_ids=`;
       const response = await fetch(url, {
         method: "GET",
