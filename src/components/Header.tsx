@@ -1,19 +1,47 @@
 import { Button } from "@/components/ui/button";
 import { Plane, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Header = () => {
+  const navigate = useNavigate();
+
+  const handleTrackPackage = () => {
+    navigate('/');
+    // Scroll to tracking section after navigation
+    setTimeout(() => {
+      const trackingSection = document.querySelector('[data-tracking-section]');
+      if (trackingSection) {
+        trackingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
   return (
     <header className="bg-white shadow-elegant border-b border-border/10 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <img 
+              src="/VZlogo.png" 
+              alt="Visakha International Couriers Logo" 
+              className="h-14 md:h-16 w-auto object-contain max-w-[200px]"
+              onError={(e) => {
+                // Fallback if logo doesn't load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+            <div 
+              className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center"
+              style={{ display: 'none' }}
+            >
               <Plane className="text-white" size={24} />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Visakha International Couriers</h1>
-              <p className="text-sm text-muted-foreground">Shipping Worldwide with Trust & Speed</p>
+            <div className="hidden sm:block">
+              <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight">Visakha International Couriers</h1>
+              <p className="text-xs md:text-sm text-muted-foreground">Shipping Worldwide with Trust & Speed</p>
             </div>
           </Link>
           
@@ -26,11 +54,13 @@ export const Header = () => {
           </nav>
           
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm">
-              <User size={16} />
-              Login
-            </Button>
-            <Button variant="hero" size="lg">
+            <Link to="/admin/login">
+              <Button variant="outline" size="sm">
+                <User size={16} />
+                Admin
+              </Button>
+            </Link>
+            <Button variant="hero" size="lg" onClick={handleTrackPackage}>
               Track Package
             </Button>
           </div>

@@ -7,6 +7,21 @@ const About = () => {
       <div className="container mx-auto px-4">
         {/* Hero Section */}
         <div className="text-center mb-16">
+          {/* Logo */}
+          <div className="mb-8 flex justify-center">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 shadow-lg border border-blue-100">
+              <img 
+                src="/VZlogo.png" 
+                alt="Visakha International Couriers Logo" 
+                className="h-28 md:h-36 lg:h-40 w-auto object-contain max-w-[90vw] md:max-w-[600px]"
+                onError={(e) => {
+                  // Hide if logo doesn't load
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          </div>
+          
           <h1 className="text-4xl font-bold text-foreground mb-6">
             About Visakha International Couriers
           </h1>
