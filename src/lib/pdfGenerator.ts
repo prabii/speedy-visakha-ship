@@ -416,9 +416,9 @@ export const generateInvoicePDF = async (
   const logo = await loadLogo(customLogo);
   let logoHeight = 0;
   if (logo) {
-    // Optimal logo size for left side positioning
-    const logoMaxWidth = 50; // Fixed width for consistent left alignment (50mm)
-    const logoMaxHeight = 25; // Fixed max height (25mm)
+    // Increased logo size for better visibility
+    const logoMaxWidth = 70; // Increased from 50mm to 70mm
+    const logoMaxHeight = 35; // Increased from 25mm to 35mm
     
     // Calculate logo dimensions with aspect ratio
     const aspectRatio = logo.width / logo.height;
@@ -447,7 +447,7 @@ export const generateInvoicePDF = async (
 
   const titleAreaRight = headerX - 2;
   const titleCenterX = (PAGE_CONFIG.margin + titleAreaRight) / 2;
-  doc.text('COMMERCIAL INVOICE', titleCenterX, titleY, { align: 'center' });
+  doc.text('PROFORMA INVOICE', titleCenterX, titleY, { align: 'center' });
 
   // Header box text (auto height)
   doc.setFontSize(9);
@@ -456,15 +456,6 @@ export const generateInvoicePDF = async (
   doc.text(`INVOICE NO. : ${data.invoiceNo}`, headerX + 3, infoY); infoY += 5;
   doc.text(`INVOICE DATE: ${data.invoiceDate}`, headerX + 3, infoY); infoY += 5;
   doc.text(`TOTAL PIECE : ${data.pieces}`, headerX + 3, infoY); infoY += 5;
-
-  if (data.otherReference) {
-    const otherLines = doc.splitTextToSize(
-      `OTHER REFERENCE: ${data.otherReference}`,
-      headerBoxWidth - 6
-    );
-    doc.text(otherLines, headerX + 3, infoY);
-    infoY += otherLines.length * 5;
-  }
 
   // draw the box AFTER we know the content height
   const headerBoxHeight = (infoY - headerY) + 2;
@@ -571,16 +562,20 @@ export const generateInvoicePDF = async (
       });
       y += 4;
 
-    const body = itemsByBox[boxNo].map((item) => [
-      sr++,
-      item.description,
-      item.hsnCode,
-      'PCS',
-      item.quantity,
-      item.weight.toFixed(3),
-      item.rate.toFixed(2),
+    const body = itemsByBox[boxNo].map((item) => {
+      // Format HSN code to 9 digits (pad with zeros if needed)
+      const hsnCode = item.hsnCode ? item.hsnCode.toString().padStart(9, '0').slice(0, 9) : '000000000';
+      return [
+        sr++,
+        item.description,
+        hsnCode,
+        'PCS',
+        item.quantity,
+        item.weight.toFixed(3),
+        item.rate.toFixed(2),
         item.amount.toFixed(2),
-    ]);
+      ];
+    });
 
     autoTable(doc, {
       startY: y,
@@ -711,15 +706,13 @@ export const generateInvoicePDF = async (
 
   y += termsRowHeight;
 
-  // 4) Notes row (UNSOLICITED GIFT - NOT FOR SALE)
+  // 4) Notes row (PERSONAL USE - NOT FOR SALE)
   const notesRowHeight = 8;
   doc.rect(PAGE_CONFIG.margin, y, fullWidth, notesRowHeight);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  const notesText =
-    data.otherReference ||
-    'UNSOLICITED GIFT - NOT FOR SALE';
+  const notesText = 'PERSONAL USE - NOT FOR SALE';
   const notesLines = doc.splitTextToSize(notesText, fullWidth - 4);
   doc.text(notesLines, PAGE_CONFIG.margin + 2, y + 5);
 
@@ -782,13 +775,16 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   // Calculate left section width (for logo centering)
   const leftSectionWidth = awbBoxX - margin - 4; // Leave some gap before AWB box
   
+  // Check if custom logo is being used (either passed as parameter or in localStorage)
+  const hasCustomLogo = customLogo || (typeof window !== 'undefined' && localStorage.getItem('invoice_logo'));
+  
   // Load and position logo on the left side
   const logo = await loadLogo(customLogo);
   let logoH = 0;
   if (logo) {
     // Increased logo size to reduce empty space
-    const logoMaxWidth = 70; // Increased from 50mm to 70mm
-    const logoMaxHeight = 35; // Increased from 25mm to 35mm
+    const logoMaxWidth = 80; // Increased to 80mm
+    const logoMaxHeight = 40; // Increased to 40mm
     
     // Calculate logo dimensions with aspect ratio
     const aspectRatio = logo.width / logo.height;
@@ -807,6 +803,24 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     
     doc.addImage(logo.data, logo.format, logoX, logoY, logoWidth, logoHeight);
     logoH = logoHeight;
+    
+    // Add company address below logo ONLY if using default logo (not custom uploaded logo)
+    if (!hasCustomLogo) {
+      const addressY = logoY + logoHeight + 3;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
+      const website = data.website || 'WWW.VISAKHACOURIERS.COM';
+      const email = data.email || 'INFO@VISAKHACOURIERS.COM';
+      
+      doc.text(companyName, logoX, addressY);
+      doc.text(website, logoX, addressY + 4);
+      doc.text(email, logoX, addressY + 8);
+      
+      logoH = logoHeight + 15; // Adjust total height to include address
+    } else {
+      logoH = logoHeight; // No address for custom logo
+    }
   }
 
   // ---- AWB box on right (number only) ----
@@ -973,25 +987,23 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
 
   y += addressRowHeight;
 
-  // ---- Row 5: PIN / PIN / TEL / TEL / COUNTRY
-  widths = [30, 30, 40, 40, 50]; // sum = 190
+  // ---- Row 5: PIN / TEL / PIN / TEL / COUNTRY (Fixed order: shipper PIN, shipper TEL, consignee PIN, consignee TEL, COUNTRY)
+  widths = [30, 40, 30, 40, 50]; // sum = 190
   y = drawHeaderRow(margin, y, widths, [
     'PIN CODE',
-    'PIN CODE',
     'TEL NO.',
+    'PIN CODE',
     'TEL NO.',
     'COUNTRY',
   ]);
 
   y = drawValueRow(margin, y, widths, [
     data.shipper.pincode || '',
-    data.consignee.pincode || '',
     data.shipper.telephone || '',
+    data.consignee.pincode || '',
     data.consignee.telephone || '',
     data.destination || '',
   ]);
-
-  y += 2;
 
   // ========== SECOND GRID: GOODS / PIECES / WEIGHT / VALUE / DATE ==========
   widths = [80, 20, 30, 30, 30]; // sum = 190
@@ -1011,37 +1023,58 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     data.bookingDate || '',
   ]);
 
-  y += 4;
+  // Add small gap after Description of Goods table (before SHIPPER AGREEMENT)
+  y += 3;
 
   // ========== SHIPPER AGREEMENT BOX ==========
-  y = checkPageBreak(doc, y, 30);
+  y = checkPageBreak(doc, y, 35);
   
-  const agreementBoxHeight = 20;
   const agreementBoxWidth = contentWidth;
+  const boxPadding = 3;
+  
+  // Calculate content height first
+  let contentHeight = boxPadding;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  contentHeight += 5; // SHIPPER AGREEMENT DATE
+  
+  contentHeight += 6; // Gap
+  contentHeight += 5; // SHIPPER'S SIGNATURE
+  
+  contentHeight += 6; // Gap
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  const agreementText = 'SHIPPER AGREES TO STANDARD TERM AND CONDITIONS OF CARRIAGE.';
+  const agreementLines = doc.splitTextToSize(agreementText, agreementBoxWidth - (boxPadding * 2));
+  contentHeight += (agreementLines.length * 4); // Agreement text (multiple lines if needed)
+  
+  contentHeight += boxPadding; // Bottom padding
+  
+  const agreementBoxHeight = contentHeight;
   
   // Draw the agreement box
   doc.setLineWidth(0.5);
   doc.rect(margin, y, agreementBoxWidth, agreementBoxHeight);
   
   // Content inside the box
-  const boxPadding = 3;
   let boxY = y + boxPadding;
   
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.text('SHIPPER AGREEMENT DATE', margin + boxPadding, boxY + 5);
   
-  boxY += 8;
+  boxY += 6;
   doc.text('SHIPPER\'S SIGNATURE', margin + boxPadding, boxY + 5);
   
-  boxY += 8;
+  boxY += 6;
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  const agreementText = 'SHIPPER AGREES TO STANDARD TERM AND CONDITIONS OF CARRIAGE.';
-  const agreementLines = doc.splitTextToSize(agreementText, agreementBoxWidth - (boxPadding * 2));
-  doc.text(agreementLines, margin + boxPadding, boxY + 5);
+  agreementLines.forEach((line, idx) => {
+    doc.text(line, margin + boxPadding, boxY + 5 + (idx * 4));
+  });
   
-  y += agreementBoxHeight + 4;
+  // Add small gap after SHIPPER AGREEMENT (before Terms & Conditions)
+  y += agreementBoxHeight + 3;
 
   // ========== TERMS & CONDITIONS BOX ==========
   y = checkPageBreak(doc, y, 40);

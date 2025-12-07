@@ -19,7 +19,10 @@ import {
   Plane,
   Ship,
   Shield,
-  Clock
+  Clock,
+  ArrowRight,
+  ArrowLeft,
+  Info
 } from "lucide-react";
 
 const BookShipment = () => {
@@ -204,29 +207,50 @@ const BookShipment = () => {
             </p>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center space-x-4">
-              {[1, 2, 3, 4].map((step) => (
-                <div key={step} className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      currentStep >= step
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {step}
-                  </div>
-                  {step < 4 && (
+          {/* Progress Steps with Labels */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              {[
+                { num: 1, label: 'Sender' },
+                { num: 2, label: 'Receiver' },
+                { num: 3, label: 'Package' },
+                { num: 4, label: 'Payment' }
+              ].map((step, idx) => (
+                <div key={step.num} className="flex items-center">
+                  <div className="flex flex-col items-center">
                     <div
-                      className={`w-16 h-1 mx-2 ${
-                        currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                        currentStep >= step.num
+                          ? 'bg-blue-600 text-white shadow-lg scale-110'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {currentStep > step.num ? (
+                        <CheckCircle className="w-6 h-6" />
+                      ) : (
+                        step.num
+                      )}
+                    </div>
+                    <span className={`text-xs mt-2 font-medium ${
+                      currentStep >= step.num ? 'text-blue-600' : 'text-gray-500'
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                  {idx < 3 && (
+                    <div
+                      className={`w-20 h-1 mx-3 transition-all ${
+                        currentStep > step.num ? 'bg-blue-600' : 'bg-gray-200'
                       }`}
                     />
                   )}
                 </div>
               ))}
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Step {currentStep} of 4: {['', 'Sender Information', 'Receiver Information', 'Package Details', 'Payment & Review'][currentStep]}
+              </p>
             </div>
           </div>
 
@@ -243,8 +267,19 @@ const BookShipment = () => {
                 {/* Step 1: Sender Information */}
                 <TabsContent value="1" className="space-y-6">
                   <div className="text-center mb-6">
-                    <h2 className="text-2xl font-semibold mb-2">Sender Information</h2>
-                    <p className="text-gray-600">Enter the sender's details</p>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <User className="w-6 h-6 text-blue-600" />
+                      <h2 className="text-2xl font-semibold">Sender Information</h2>
+                    </div>
+                    <p className="text-gray-600">Enter the sender's complete details for shipping</p>
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-left max-w-2xl mx-auto">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-blue-800">
+                          <strong>Tip:</strong> Make sure all required fields (*) are filled before proceeding to the next step.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -325,8 +360,19 @@ const BookShipment = () => {
                 {/* Step 2: Receiver Information */}
                 <TabsContent value="2" className="space-y-6">
                   <div className="text-center mb-6">
-                    <h2 className="text-2xl font-semibold mb-2">Receiver Information</h2>
-                    <p className="text-gray-600">Enter the receiver's details</p>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <MapPin className="w-6 h-6 text-blue-600" />
+                      <h2 className="text-2xl font-semibold">Receiver Information</h2>
+                    </div>
+                    <p className="text-gray-600">Enter the receiver's complete details for delivery</p>
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-left max-w-2xl mx-auto">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-blue-800">
+                          <strong>Important:</strong> Ensure the receiver's address is accurate to avoid delivery delays.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -407,8 +453,19 @@ const BookShipment = () => {
                 {/* Step 3: Package Information */}
                 <TabsContent value="3" className="space-y-6">
                   <div className="text-center mb-6">
-                    <h2 className="text-2xl font-semibold mb-2">Package Information</h2>
-                    <p className="text-gray-600">Provide package details and select service</p>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Package className="w-6 h-6 text-blue-600" />
+                      <h2 className="text-2xl font-semibold">Package Information</h2>
+                    </div>
+                    <p className="text-gray-600">Provide package details and select your preferred service</p>
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-left max-w-2xl mx-auto">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-blue-800">
+                          <strong>Note:</strong> Accurate weight and dimensions help us provide the best shipping rate and service.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="space-y-6">
@@ -546,8 +603,19 @@ const BookShipment = () => {
                 {/* Step 4: Payment */}
                 <TabsContent value="4" className="space-y-6">
                   <div className="text-center mb-6">
-                    <h2 className="text-2xl font-semibold mb-2">Payment & Confirmation</h2>
-                    <p className="text-gray-600">Review your booking and complete payment</p>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <CreditCard className="w-6 h-6 text-blue-600" />
+                      <h2 className="text-2xl font-semibold">Payment & Confirmation</h2>
+                    </div>
+                    <p className="text-gray-600">Review your booking details and complete payment</p>
+                    <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-left max-w-2xl mx-auto">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-green-800">
+                          <strong>Almost done!</strong> Review all information carefully before confirming your booking.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -616,39 +684,61 @@ const BookShipment = () => {
               </Tabs>
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8 pt-6 border-t">
+              <div className="flex justify-between items-center mt-8 pt-6 border-t">
                 <Button
                   variant="outline"
                   onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
                   disabled={currentStep === 1}
+                  className="flex items-center gap-2"
                 >
+                  <ArrowLeft className="w-4 h-4" />
                   Previous
                 </Button>
+                
+                <div className="text-sm text-gray-500 text-center">
+                  {currentStep === 1 && (!formData.senderName || !formData.senderEmail) && (
+                    <span className="text-red-600">Please fill all required fields (*) to continue</span>
+                  )}
+                  {currentStep === 2 && (!formData.receiverName || !formData.receiverEmail) && (
+                    <span className="text-red-600">Please fill all required fields (*) to continue</span>
+                  )}
+                  {currentStep === 3 && (!formData.packageType || !formData.weight || !formData.serviceType) && (
+                    <span className="text-red-600">Please select package type, weight, and service to continue</span>
+                  )}
+                  {currentStep === 4 && !formData.paymentMethod && (
+                    <span className="text-red-600">Please select a payment method to complete booking</span>
+                  )}
+                </div>
                 
                 {currentStep < 4 ? (
                   <Button
                     onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
                     disabled={
-                      (currentStep === 1 && (!formData.senderName || !formData.senderEmail)) ||
-                      (currentStep === 2 && (!formData.receiverName || !formData.receiverEmail)) ||
-                      (currentStep === 3 && (!formData.packageType || !formData.weight || !formData.serviceType))
+                      (currentStep === 1 && (!formData.senderName || !formData.senderEmail || !formData.senderPhone)) ||
+                      (currentStep === 2 && (!formData.receiverName || !formData.receiverEmail || !formData.receiverPhone)) ||
+                      (currentStep === 3 && (!formData.packageType || !formData.weight || !formData.serviceType || !formData.description))
                     }
+                    className="flex items-center gap-2"
                   >
                     Next
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
                 ) : (
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting || !formData.paymentMethod}
-                    className="min-w-[120px]"
+                    className="min-w-[160px] bg-green-600 hover:bg-green-700 flex items-center gap-2"
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Processing...
                       </>
                     ) : (
-                      'Confirm Booking'
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Confirm Booking
+                      </>
                     )}
                   </Button>
                 )}

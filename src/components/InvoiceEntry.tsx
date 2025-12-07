@@ -149,7 +149,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
     invoiceNo: '',
     invoiceDate: format(new Date(), 'yyyy-MM-dd'),
     departmentNo: '',
-    exportReason: 'UNSOLICITED GIFT - NOT FOR SALE',
+    exportReason: 'PERSONAL USE - NOT FOR SALE',
     format: '',
   });
 
@@ -172,6 +172,18 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   const [hsnSearchQuery, setHsnSearchQuery] = useState('');
   const [hsnResults, setHsnResults] = useState<HSNItem[]>([]);
   const [showHsnDialog, setShowHsnDialog] = useState(false);
+  
+  // Consignee search
+  const [showConsigneeDialog, setShowConsigneeDialog] = useState(false);
+  const [consigneeSearchQuery, setConsigneeSearchQuery] = useState('');
+  const [consigneeResults, setConsigneeResults] = useState<any[]>([]);
+  const [isSearchingConsignees, setIsSearchingConsignees] = useState(false);
+  
+  // Client/Customer search
+  const [showClientDialog, setShowClientDialog] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [clientResults, setClientResults] = useState<any[]>([]);
+  const [isSearchingClients, setIsSearchingClients] = useState(false);
   
   // Country code search
   const [showCountryDialog, setShowCountryDialog] = useState(false);
@@ -345,6 +357,45 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
     }
   }, [showHsnDialog]);
 
+  // Search consignees when query changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (consigneeSearchQuery) {
+        searchConsignees(consigneeSearchQuery, false);
+      }
+    }, 300); // Debounce search
+
+    return () => clearTimeout(timeoutId);
+  }, [consigneeSearchQuery]);
+
+  // Load consignee data when dialog opens - auto-load all
+  useEffect(() => {
+    if (showConsigneeDialog) {
+      setConsigneeSearchQuery('');
+      // Auto-load all consignees when dialog opens
+      searchConsignees(undefined, true);
+    }
+  }, [showConsigneeDialog]);
+
+  // Search clients when query changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (clientSearchQuery) {
+        searchClients(clientSearchQuery, false);
+      }
+    }, 300); // Debounce search
+
+    return () => clearTimeout(timeoutId);
+  }, [clientSearchQuery]);
+
+  // Load client data when dialog opens
+  useEffect(() => {
+    if (showClientDialog) {
+      setClientSearchQuery('');
+      setClientResults([]);
+    }
+  }, [showClientDialog]);
+
   useEffect(() => {
     if (countrySearchQuery) {
       setCountryResults(searchCountries(countrySearchQuery));
@@ -485,6 +536,191 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
     updateCurrentItem('description', hsn.description);
     setShowHsnDialog(false);
     setHsnSearchQuery('');
+  };
+
+  // Search for existing consignees from invoices and AWBs
+  const searchConsignees = async (query?: string, loadAll: boolean = false) => {
+    setIsSearchingConsignees(true);
+    try {
+      const uniqueConsignees = new Map<string, any>();
+      const searchLower = query && !loadAll ? query.toLowerCase() : '';
+
+      // Search in invoices
+      try {
+        const invoicesResponse = await api.invoices.getAll({ 
+          limit: loadAll ? 500 : 100, 
+          search: query && !loadAll ? query : undefined
+        });
+        const invoices = invoicesResponse.invoices || [];
+        
+        invoices.forEach((invoice: any) => {
+          if (invoice.consignee?.companyName) {
+            const companyName = invoice.consignee.companyName.toLowerCase();
+            if ((loadAll || companyName.includes(searchLower)) && !uniqueConsignees.has(invoice.consignee.companyName)) {
+              uniqueConsignees.set(invoice.consignee.companyName, invoice.consignee);
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Error searching invoices:', error);
+      }
+
+      // Search in AWBs
+      try {
+        const awbsResponse = await api.awb.getAll({ 
+          limit: loadAll ? 500 : 100, 
+          search: query && !loadAll ? query : undefined
+        });
+        const awbs = awbsResponse.awbs || [];
+        
+        awbs.forEach((awb: any) => {
+          if (awb.consignee?.companyName) {
+            const companyName = awb.consignee.companyName.toLowerCase();
+            if ((loadAll || companyName.includes(searchLower)) && !uniqueConsignees.has(awb.consignee.companyName)) {
+              uniqueConsignees.set(awb.consignee.companyName, awb.consignee);
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Error searching AWBs:', error);
+      }
+
+      setConsigneeResults(Array.from(uniqueConsignees.values()));
+    } catch (error) {
+      console.error('Error searching consignees:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load consignees',
+        variant: 'destructive',
+      });
+      setConsigneeResults([]);
+    } finally {
+      setIsSearchingConsignees(false);
+    }
+  };
+
+  const loadAllConsignees = () => {
+    searchConsignees(undefined, true);
+  };
+
+  const selectConsignee = (consigneeData: any) => {
+    setConsignee({
+      ...consignee,
+      companyName: consigneeData.companyName || '',
+      contactName: consigneeData.contactName || '',
+      address1: consigneeData.address1 || '',
+      address2: consigneeData.address2 || '',
+      city: consigneeData.city || '',
+      state: consigneeData.state || '',
+      pincode: consigneeData.pincode || '',
+      country: consigneeData.country || '',
+      telephone: consigneeData.telephone || '',
+      mobileNo: consigneeData.mobileNo || '',
+      email: consigneeData.email || '',
+    });
+    setShowConsigneeDialog(false);
+    setConsigneeSearchQuery('');
+    toast({
+      title: 'Success',
+      description: 'Consignee details filled',
+      variant: 'success',
+    });
+  };
+
+  // Search for existing customers/clients
+  const searchClients = async (query?: string, loadAll: boolean = false) => {
+    setIsSearchingClients(true);
+    try {
+      const customersResponse = await api.customers.getAll({ 
+        limit: loadAll ? 500 : 50, 
+        search: query && !loadAll ? query : undefined
+      });
+      const customers = customersResponse.customers || [];
+      setClientResults(customers);
+    } catch (error) {
+      console.error('Error searching clients:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load clients',
+        variant: 'destructive',
+      });
+      setClientResults([]);
+    } finally {
+      setIsSearchingClients(false);
+    }
+  };
+
+  const loadAllClients = () => {
+    searchClients(undefined, true);
+  };
+
+  const selectClient = async (customerData: any) => {
+    // Fill account details
+    setAccountDetails({
+      ...accountDetails,
+      accountNo: customerData.accountNo || '',
+      clientName: customerData.clientName || '',
+      clientCode: customerData.clientCode || '',
+      bookDate: customerData.bookDate ? format(new Date(customerData.bookDate), 'yyyy-MM-dd') : accountDetails.bookDate,
+    });
+
+    // Try to find and fill shipper details from previous invoices/AWBs for this customer
+    let shipperDataFound = false;
+    try {
+      // Search for invoices with this account number
+      const invoicesResponse = await api.invoices.getAll({ 
+        limit: 10, 
+        accountNo: customerData.accountNo 
+      });
+      const invoices = invoicesResponse.invoices || [];
+      
+      // Search for AWBs with this account number
+      const awbsResponse = await api.awb.getAll({ 
+        limit: 10, 
+        accountNo: customerData.accountNo 
+      });
+      const awbs = awbsResponse.awbs || [];
+
+      // Get the most recent shipper details
+      let shipperData = null;
+      if (invoices.length > 0 && invoices[0].shipper) {
+        shipperData = invoices[0].shipper;
+      } else if (awbs.length > 0 && awbs[0].shipper) {
+        shipperData = awbs[0].shipper;
+      }
+
+      // Fill shipper details if found
+      if (shipperData) {
+        shipperDataFound = true;
+        setShipper({
+          ...shipper,
+          companyName: shipperData.companyName || shipper.companyName,
+          contactName: shipperData.contactName || shipper.contactName,
+          address1: shipperData.address1 || shipper.address1,
+          address2: shipperData.address2 || shipper.address2,
+          city: shipperData.city || shipper.city,
+          state: shipperData.state || shipper.state,
+          pincode: shipperData.pincode || shipper.pincode,
+          country: shipperData.country || shipper.country,
+          telephone: shipperData.telephone || shipper.telephone,
+          mobileNo: shipperData.mobileNo || shipper.mobileNo,
+          email: shipperData.email || shipper.email,
+          documentType: shipperData.documentType || shipper.documentType,
+          documentNo: shipperData.documentNo || shipper.documentNo,
+        });
+      }
+    } catch (error) {
+      console.warn('Error fetching shipper details:', error);
+      // Continue even if shipper details can't be fetched
+    }
+
+    setShowClientDialog(false);
+    setClientSearchQuery('');
+    toast({
+      title: 'Success',
+      description: 'Client details filled' + (shipperDataFound ? ' (including shipper details)' : ''),
+      variant: 'success',
+    });
   };
 
   const calculateTotal = () => {
@@ -680,6 +916,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           toast({
             title: 'Success',
             description: 'Invoice PDF generated and updated in database successfully',
+            variant: 'success',
           });
           // Clear editing state after successful update
           setEditingInvoiceId(null);
@@ -688,6 +925,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           toast({
             title: 'Success',
             description: 'Invoice PDF generated and saved to database successfully',
+            variant: 'success',
           });
         }
       } catch (dbError: any) {
@@ -712,6 +950,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
             toast({
               title: 'Success',
               description: 'Invoice PDF generated. Invoice already exists in database.',
+              variant: 'success',
             });
           } else {
             // Show the actual error message from backend
@@ -1093,6 +1332,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
         toast({
           title: 'Success',
           description: 'AWB PDF generated and saved to database successfully',
+          variant: 'success',
         });
       } catch (dbError: any) {
         console.error('Database save error:', dbError);
@@ -1113,6 +1353,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
             toast({
               title: 'Success',
               description: 'AWB PDF generated. AWB already exists in database.',
+              variant: 'success',
             });
           } else {
             toast({
@@ -1585,13 +1826,91 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
               <Label>Company Name *</Label>
               <div className="flex gap-2">
                 <Input 
+                  id="consigneeCompanyName"
                   value={consignee.companyName} 
                   onChange={(e) => updateConsignee('companyName', e.target.value)} 
                   className={!consignee.companyName ? 'border-red-500' : ''}
+                  placeholder="Enter company name or click search"
+                  onKeyDown={(e) => e.stopPropagation()}
                 />
-                <Button type="button" variant="outline" size="icon">
-                  <Search className="h-4 w-4" />
-                </Button>
+                <Dialog open={showConsigneeDialog} onOpenChange={setShowConsigneeDialog}>
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[80vh]">
+                    <DialogHeader>
+                      <DialogTitle>Search Existing Consignee</DialogTitle>
+                      <DialogDescription>Search for existing consignee details from previous invoices/AWBs</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="Search by company name..." 
+                          value={consigneeSearchQuery}
+                          onChange={(e) => setConsigneeSearchQuery(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                      <ScrollArea className="h-[500px] border rounded-md">
+                        {isSearchingConsignees ? (
+                          <div className="text-center py-8 text-muted-foreground">Searching...</div>
+                        ) : consigneeResults.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader className="sticky top-0 bg-muted">
+                                <TableRow>
+                                  <TableHead className="min-w-[180px]">Company Name</TableHead>
+                                  <TableHead className="min-w-[150px]">Contact Name</TableHead>
+                                  <TableHead className="min-w-[200px]">Address</TableHead>
+                                  <TableHead className="min-w-[120px]">City</TableHead>
+                                  <TableHead className="min-w-[120px]">Country</TableHead>
+                                  <TableHead className="min-w-[120px]">Phone</TableHead>
+                                  <TableHead className="min-w-[100px] text-center">Action</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {consigneeResults.map((consigneeData, idx) => (
+                                  <TableRow key={idx} className="hover:bg-muted/50 cursor-pointer">
+                                    <TableCell className="font-medium">{consigneeData.companyName || '-'}</TableCell>
+                                    <TableCell>{consigneeData.contactName || '-'}</TableCell>
+                                    <TableCell className="max-w-[200px]">
+                                      <div className="truncate" title={consigneeData.address1 || ''}>
+                                        {consigneeData.address1 || '-'}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>{consigneeData.city || '-'}</TableCell>
+                                    <TableCell>{consigneeData.country || '-'}</TableCell>
+                                    <TableCell>{consigneeData.telephone || consigneeData.mobileNo || '-'}</TableCell>
+                                    <TableCell className="text-center">
+                                      <Button 
+                                        size="sm" 
+                                        onClick={() => selectConsignee(consigneeData)}
+                                        className="w-full"
+                                      >
+                                        Select
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : consigneeSearchQuery ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            No consignees found matching "{consigneeSearchQuery}"
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            Loading consignees...
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
             <div>
@@ -2214,10 +2533,8 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="PERSONAL USE - NOT FOR SALE">PERSONAL USE - NOT FOR SALE</SelectItem>
                   <SelectItem value="UNSOLICITED GIFT - NOT FOR SALE">UNSOLICITED GIFT - NOT FOR SALE</SelectItem>
-                  <SelectItem value="For personal reason not for sale">
-                    <span className="font-bold">For personal reason not for sale</span>
-                  </SelectItem>
                   <SelectItem value="COMMERCIAL SAMPLE">COMMERCIAL SAMPLE</SelectItem>
                   <SelectItem value="RETURNED GOODS">RETURNED GOODS</SelectItem>
                   <SelectItem value="DOCUMENTS">DOCUMENTS</SelectItem>
