@@ -42,6 +42,7 @@ const AdminDashboard = () => {
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
   const [editingBranch, setEditingBranch] = useState<any>(null);
   const [branchForm, setBranchForm] = useState({
+    city: '',
     address: '',
     mobileNumber: '',
     email: '',
@@ -89,10 +90,10 @@ const AdminDashboard = () => {
   };
 
   const handleSaveBranch = async () => {
-    if (!branchForm.address || !branchForm.mobileNumber || !branchForm.email || !branchForm.contactPerson) {
+    if (!branchForm.city || !branchForm.address || !branchForm.mobileNumber || !branchForm.email || !branchForm.contactPerson) {
       toast({
         title: 'Error',
-        description: 'Please fill all required fields',
+        description: 'Please fill all required fields including city name',
         variant: 'destructive',
       });
       return;
@@ -120,7 +121,7 @@ const AdminDashboard = () => {
           variant: 'success',
         });
       }
-      setBranchForm({ address: '', mobileNumber: '', email: '', contactPerson: '' });
+      setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '' });
       setEditingBranch(null);
       // Reload to ensure sync
       await loadBranchLocations();
@@ -136,6 +137,7 @@ const AdminDashboard = () => {
   const handleEditBranch = (branch: any) => {
     setEditingBranch(branch);
     setBranchForm({
+      city: branch.city || '',
       address: branch.address || '',
       mobileNumber: branch.mobileNumber || '',
       email: branch.email || '',
@@ -158,7 +160,7 @@ const AdminDashboard = () => {
       });
       if (editingBranch?._id === id) {
         setEditingBranch(null);
-        setBranchForm({ address: '', mobileNumber: '', email: '', contactPerson: '' });
+        setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '' });
       }
       // Reload to ensure sync
       await loadBranchLocations();
@@ -624,6 +626,14 @@ const AdminDashboard = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
+                      <Label>City Name *</Label>
+                      <Input
+                        placeholder="Enter city name (e.g., Jamnagar, Mumbai)"
+                        value={branchForm.city}
+                        onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label>Address *</Label>
                       <Input
                         placeholder="Enter complete address"
@@ -667,7 +677,7 @@ const AdminDashboard = () => {
                           variant="outline" 
                           onClick={() => {
                             setEditingBranch(null);
-                            setBranchForm({ address: '', mobileNumber: '', email: '', contactPerson: '' });
+                            setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '' });
                           }}
                         >
                           Cancel
@@ -691,7 +701,10 @@ const AdminDashboard = () => {
                           <CardContent className="pt-6">
                             <div className="flex justify-between items-start">
                               <div className="space-y-2 flex-1">
-                                <p className="font-medium">{branch.address}</p>
+                                <div className="mb-2">
+                                  <h4 className="font-bold text-lg text-blue-600">{branch.city || 'Branch Location'}</h4>
+                                  <p className="text-sm text-gray-500 mt-1">{branch.address}</p>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                                   <div>
                                     <strong>Mobile:</strong> {branch.mobileNumber}

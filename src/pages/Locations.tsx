@@ -12,6 +12,7 @@ import { Footer } from '@/components/Footer';
 
 interface BranchLocation {
   _id?: string;
+  city?: string;
   address: string;
   mobileNumber: string;
   email: string;
@@ -151,8 +152,13 @@ const Locations = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Building2 className="w-5 h-5 text-blue-600" />
-                        Branch Location
+                        {branch.city ? branch.city : 'Branch Location'}
                       </CardTitle>
+                      {branch.city && (
+                        <CardDescription className="text-xs text-gray-500 mt-1">
+                          Branch Location
+                        </CardDescription>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-start gap-2">
