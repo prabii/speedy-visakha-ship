@@ -786,9 +786,9 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   const logo = await loadLogo(customLogo);
   let logoH = 0;
   if (logo) {
-    // Optimal logo size for left side positioning in AWB
-    const logoMaxWidth = 50; // Fixed width for consistent left alignment (50mm)
-    const logoMaxHeight = 25; // Fixed max height (25mm)
+    // Increased logo size to reduce empty space
+    const logoMaxWidth = 70; // Increased from 50mm to 70mm
+    const logoMaxHeight = 35; // Increased from 25mm to 35mm
     
     // Calculate logo dimensions with aspect ratio
     const aspectRatio = logo.width / logo.height;
@@ -1013,14 +1013,75 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
 
   y += 4;
 
-  // Optional small terms line (no big block, just one line)
-  doc.setFontSize(7);
+  // ========== SHIPPER AGREEMENT BOX ==========
+  y = checkPageBreak(doc, y, 30);
+  
+  const agreementBoxHeight = 20;
+  const agreementBoxWidth = contentWidth;
+  
+  // Draw the agreement box
+  doc.setLineWidth(0.5);
+  doc.rect(margin, y, agreementBoxWidth, agreementBoxHeight);
+  
+  // Content inside the box
+  const boxPadding = 3;
+  let boxY = y + boxPadding;
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SHIPPER AGREEMENT DATE', margin + boxPadding, boxY + 5);
+  
+  boxY += 8;
+  doc.text('SHIPPER\'S SIGNATURE', margin + boxPadding, boxY + 5);
+  
+  boxY += 8;
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(
-    'This AWB is non-transferable and subject to standard terms and conditions of carriage.',
-    margin,
-    y + 4
-  );
+  const agreementText = 'SHIPPER AGREES TO STANDARD TERM AND CONDITIONS OF CARRIAGE.';
+  const agreementLines = doc.splitTextToSize(agreementText, agreementBoxWidth - (boxPadding * 2));
+  doc.text(agreementLines, margin + boxPadding, boxY + 5);
+  
+  y += agreementBoxHeight + 4;
+
+  // ========== TERMS & CONDITIONS BOX ==========
+  y = checkPageBreak(doc, y, 40);
+  
+  const termsBoxHeight = 35;
+  const termsBoxWidth = contentWidth;
+  
+  // Draw the terms box
+  doc.setLineWidth(0.5);
+  doc.rect(margin, y, termsBoxWidth, termsBoxHeight);
+  
+  // Terms & Conditions title
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Terms & Conditions :', margin + boxPadding, y + 5);
+  
+  // Terms content
+  let termsY = y + 10;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  
+  const termsText = [
+    '1. No Claims would be entertained for any damage during transit & delay in delivery due to any reason.',
+    '2. Maximum claims for loss of parcel would be USD 50 upto 10 Kgs & USD 100 above 10 kgs or the declared value whichever is lower.',
+    '3. This AWB is for the account holder and it is not transferable. This receipt does not imply we have physically received the parcel in our hub'
+  ];
+  
+  const maxTermsWidth = termsBoxWidth - (boxPadding * 2);
+  termsText.forEach((term, index) => {
+    const termLines = doc.splitTextToSize(term, maxTermsWidth);
+    termLines.forEach((line) => {
+      doc.text(line, margin + boxPadding, termsY);
+      termsY += 4;
+    });
+    if (index < termsText.length - 1) {
+      termsY += 1; // Small gap between terms
+    }
+  });
+  
+  y += termsBoxHeight + 4;
 
   // ---------- FOOTER ----------
   const pageCount = doc.getNumberOfPages();
