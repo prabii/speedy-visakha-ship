@@ -50,6 +50,7 @@ export const Header = () => {
             <Link to="/about" className="text-foreground hover:text-primary transition-colors">About</Link>
             <Link to="/services" className="text-foreground hover:text-primary transition-colors">Services</Link>
             <Link to="/pricing" className="text-foreground hover:text-primary transition-colors">Pricing</Link>
+            <Link to="/locations" className="text-foreground hover:text-primary transition-colors">Locations</Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">Contact</Link>
           </nav>
           

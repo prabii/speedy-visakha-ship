@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit } from 'lucide-react';
+import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InvoiceEntry from '@/components/InvoiceEntry';
 import InvoiceHistory from '@/components/InvoiceHistory';
@@ -53,6 +53,119 @@ const AdminDashboard = () => {
       window.removeEventListener('navigateToInvoiceTab', handleNavigateToInvoice);
     };
   }, []);
+
+  // Load branch locations when tab is active
+  useEffect(() => {
+    if (activeTab === 'branches') {
+      loadBranchLocations();
+    }
+  }, [activeTab]);
+
+  // Branch Locations functions
+  const loadBranchLocations = async () => {
+    setIsLoadingBranches(true);
+    try {
+      const data = await api.branchLocations.getAll();
+      const branches = data.branches || data || [];
+      setBranchLocations(branches);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load branch locations',
+        variant: 'destructive',
+      });
+      // Fallback to localStorage if API fails
+      const stored = localStorage.getItem('branchLocations');
+      if (stored) {
+        setBranchLocations(JSON.parse(stored));
+      }
+    } finally {
+      setIsLoadingBranches(false);
+    }
+  };
+
+  const handleSaveBranch = async () => {
+    if (!branchForm.address || !branchForm.mobileNumber || !branchForm.email || !branchForm.contactPerson) {
+      toast({
+        title: 'Error',
+        description: 'Please fill all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (editingBranch) {
+        // Update existing
+        const updated = await api.branchLocations.update(editingBranch._id, branchForm);
+        setBranchLocations(branchLocations.map(b => 
+          b._id === editingBranch._id ? updated : b
+        ));
+        toast({
+          title: 'Success',
+          description: 'Branch location updated successfully',
+          variant: 'success',
+        });
+      } else {
+        // Create new
+        const newBranch = await api.branchLocations.create(branchForm);
+        setBranchLocations([...branchLocations, newBranch]);
+        toast({
+          title: 'Success',
+          description: 'Branch location added successfully',
+          variant: 'success',
+        });
+      }
+      setBranchForm({ address: '', mobileNumber: '', email: '', contactPerson: '' });
+      setEditingBranch(null);
+      // Reload to ensure sync
+      await loadBranchLocations();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save branch location',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditBranch = (branch: any) => {
+    setEditingBranch(branch);
+    setBranchForm({
+      address: branch.address || '',
+      mobileNumber: branch.mobileNumber || '',
+      email: branch.email || '',
+      contactPerson: branch.contactPerson || '',
+    });
+  };
+
+  const handleDeleteBranch = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this branch location?')) {
+      return;
+    }
+
+    try {
+      await api.branchLocations.delete(id);
+      setBranchLocations(branchLocations.filter(b => b._id !== id));
+      toast({
+        title: 'Success',
+        description: 'Branch location deleted successfully',
+        variant: 'success',
+      });
+      if (editingBranch?._id === id) {
+        setEditingBranch(null);
+        setBranchForm({ address: '', mobileNumber: '', email: '', contactPerson: '' });
+      }
+      // Reload to ensure sync
+      await loadBranchLocations();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete branch location',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Load AWBs
   const loadAWBs = async () => {
@@ -312,6 +425,13 @@ const AdminDashboard = () => {
               Customers
             </TabsTrigger>
             <TabsTrigger 
+              value="branches"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+            >
+              <Building2 className="mr-2 h-4 w-4" />
+              Branch Locations
+            </TabsTrigger>
+            <TabsTrigger 
               value="settings"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
             >
@@ -468,6 +588,133 @@ const AdminDashboard = () => {
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-muted-foreground text-lg">Customer management coming soon...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="branches" className="space-y-4">
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  Branch Location Management
+                </CardTitle>
+                <CardDescription>Add, edit, or delete branch locations</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                {/* Add/Edit Form */}
+                <Card className="bg-blue-50/50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      {editingBranch ? 'Edit Branch Location' : 'Add New Branch Location'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Address *</Label>
+                      <Input
+                        placeholder="Enter complete address"
+                        value={branchForm.address}
+                        onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Mobile Number *</Label>
+                        <Input
+                          placeholder="Enter mobile number"
+                          value={branchForm.mobileNumber}
+                          onChange={(e) => setBranchForm({ ...branchForm, mobileNumber: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email *</Label>
+                        <Input
+                          type="email"
+                          placeholder="Enter email address"
+                          value={branchForm.email}
+                          onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Contact Person *</Label>
+                      <Input
+                        placeholder="Enter contact person name"
+                        value={branchForm.contactPerson}
+                        onChange={(e) => setBranchForm({ ...branchForm, contactPerson: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleSaveBranch} className="flex-1">
+                        {editingBranch ? 'Update' : 'Add'} Branch
+                      </Button>
+                      {editingBranch && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setEditingBranch(null);
+                            setBranchForm({ address: '', mobileNumber: '', email: '', contactPerson: '' });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Branch Locations List */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Existing Branch Locations</h3>
+                  {isLoadingBranches ? (
+                    <div className="text-center py-8">Loading...</div>
+                  ) : branchLocations.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">No branch locations found</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {branchLocations.map((branch) => (
+                        <Card key={branch._id} className="bg-white border-gray-200">
+                          <CardContent className="pt-6">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-2 flex-1">
+                                <p className="font-medium">{branch.address}</p>
+                                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                  <div>
+                                    <strong>Mobile:</strong> {branch.mobileNumber}
+                                  </div>
+                                  <div>
+                                    <strong>Email:</strong> {branch.email}
+                                  </div>
+                                  <div className="col-span-2">
+                                    <strong>Contact Person:</strong> {branch.contactPerson}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditBranch(branch)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteBranch(branch._id)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

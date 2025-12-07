@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
+import Locations from "./pages/Locations";
 import Contact from "./pages/Contact";
 import RateCalculator from "./pages/RateCalculator";
 import BookShipment from "./pages/BookShipment";
@@ -55,6 +56,13 @@ const App = () => (
               <>
                 <Header />
                 <Pricing />
+                <WhatsAppButton />
+              </>
+            } />
+            <Route path="/locations" element={
+              <>
+                <Header />
+                <Locations />
                 <WhatsAppButton />
               </>
             } />

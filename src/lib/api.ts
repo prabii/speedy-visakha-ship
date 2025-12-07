@@ -115,6 +115,20 @@ export const api = {
     updateTrackingByAWBNo: (awbNo: string, data: any) => api.fetch(`/awb/number/${awbNo}/tracking`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => api.fetch(`/awb/${id}`, { method: 'DELETE' }),
   },
+  
+  // Branch Locations API
+  branchLocations: {
+    getAll: (params?: { isActive?: boolean }) => {
+      const queryParams = new URLSearchParams();
+      if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+      const query = queryParams.toString();
+      return api.fetch(`/branch-locations${query ? `?${query}` : ''}`);
+    },
+    getById: (id: string) => api.fetch(`/branch-locations/${id}`),
+    create: (data: any) => api.fetch('/branch-locations', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => api.fetch(`/branch-locations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => api.fetch(`/branch-locations/${id}`, { method: 'DELETE' }),
+  },
 };
 
 export default api;
