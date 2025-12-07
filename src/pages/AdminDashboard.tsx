@@ -36,6 +36,17 @@ const AdminDashboard = () => {
   const [updateDescription, setUpdateDescription] = useState('');
   const [isLoadingAWBs, setIsLoadingAWBs] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Branch Locations state
+  const [branchLocations, setBranchLocations] = useState<any[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<any>(null);
+  const [branchForm, setBranchForm] = useState({
+    address: '',
+    mobileNumber: '',
+    email: '',
+    contactPerson: '',
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,13 +64,6 @@ const AdminDashboard = () => {
       window.removeEventListener('navigateToInvoiceTab', handleNavigateToInvoice);
     };
   }, []);
-
-  // Load branch locations when tab is active
-  useEffect(() => {
-    if (activeTab === 'branches') {
-      loadBranchLocations();
-    }
-  }, [activeTab]);
 
   // Branch Locations functions
   const loadBranchLocations = async () => {
@@ -166,6 +170,14 @@ const AdminDashboard = () => {
       });
     }
   };
+
+  // Load branch locations when tab is active
+  useEffect(() => {
+    if (activeTab === 'branches') {
+      loadBranchLocations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Load AWBs
   const loadAWBs = async () => {
