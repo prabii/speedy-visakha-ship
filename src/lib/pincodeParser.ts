@@ -17,8 +17,37 @@ export const loadServiceLocations = async (): Promise<ServiceLocation[]> => {
   }
 
   try {
-    const response = await fetch('/Pincode Serviceability.csv');
-    const text = await response.text();
+    // Try multiple possible paths
+    const paths = [
+      '/Pincode Serviceability.csv',
+      './Pincode Serviceability.csv',
+      '/public/Pincode Serviceability.csv'
+    ];
+    
+    let response: Response | null = null;
+    let text = '';
+    
+    for (const path of paths) {
+      try {
+        response = await fetch(path);
+        if (response.ok) {
+          text = await response.text();
+          break;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    
+    if (!text) {
+      console.error('Could not load CSV file from any path. Please ensure "Pincode Serviceability.csv" is in the public folder.');
+      return [];
+    }
+    
+    if (text.length < 100) {
+      console.error('CSV file appears to be empty or too small');
+      return [];
+    }
     
     const lines = text.split('\n').filter(line => line.trim());
     serviceLocations = [];
@@ -28,23 +57,8 @@ export const loadServiceLocations = async (): Promise<ServiceLocation[]> => {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // Handle CSV parsing - split by comma but handle quoted fields
-      const columns: string[] = [];
-      let current = '';
-      let inQuotes = false;
-      
-      for (let j = 0; j < line.length; j++) {
-        const char = line[j];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          columns.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      columns.push(current.trim()); // Add last column
+      // Simple CSV parsing - split by comma
+      const columns = line.split(',').map(col => col.trim());
       
       if (columns.length >= 8) {
         serviceLocations.push({
@@ -60,6 +74,7 @@ export const loadServiceLocations = async (): Promise<ServiceLocation[]> => {
       }
     }
     
+    console.log(`Loaded ${serviceLocations.length} service locations from CSV`);
     return serviceLocations;
   } catch (error) {
     console.error('Error loading service locations:', error);

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Building2, Search, Mail, Phone, User } from 'lucide-react';
-import { loadServiceLocations, searchServiceLocations, ServiceLocation } from '@/lib/pincodeParser';
+import { loadServiceLocations, ServiceLocation } from '@/lib/pincodeParser';
 import { getStateName } from '@/lib/stateCodes';
 import api from '@/lib/api';
 import { Footer } from '@/components/Footer';
@@ -21,6 +21,7 @@ interface BranchLocation {
 const Locations = () => {
   const [branchLocations, setBranchLocations] = useState<BranchLocation[]>([]);
   const [serviceLocations, setServiceLocations] = useState<ServiceLocation[]>([]);
+  const [allServiceLocations, setAllServiceLocations] = useState<ServiceLocation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStateCode, setSelectedStateCode] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,10 +31,32 @@ const Locations = () => {
     loadBranchLocations();
   }, []);
 
-  // Load service locations
+  // Load all service locations on mount
   useEffect(() => {
-    loadServiceLocationsData();
-  }, [searchQuery, selectedStateCode]);
+    const loadAllData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await loadServiceLocations();
+        console.log('Loaded service locations:', data.length);
+        setAllServiceLocations(data);
+        // Show first 100 by default
+        setServiceLocations(data.slice(0, 100));
+      } catch (error) {
+        console.error('Error loading all service locations:', error);
+        setServiceLocations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAllData();
+  }, []);
+
+  // Filter service locations when search or state changes
+  useEffect(() => {
+    if (allServiceLocations.length > 0) {
+      loadServiceLocationsData();
+    }
+  }, [searchQuery, selectedStateCode, allServiceLocations.length]);
 
   const loadBranchLocations = async () => {
     try {
@@ -60,16 +83,29 @@ const Locations = () => {
     }
   };
 
-  const loadServiceLocationsData = async () => {
-    setIsLoading(true);
-    try {
-      const data = await searchServiceLocations(searchQuery, selectedStateCode || undefined);
-      setServiceLocations(data);
-    } catch (error) {
-      console.error('Error loading service locations:', error);
-    } finally {
-      setIsLoading(false);
+  const loadServiceLocationsData = () => {
+    if (allServiceLocations.length === 0) {
+      return;
     }
+    
+    let filtered = [...allServiceLocations];
+    
+    // Apply state filter
+    if (selectedStateCode) {
+      filtered = filtered.filter(item => item.stateCode === selectedStateCode);
+    }
+    
+    // Apply search filter
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.pincode.toLowerCase().includes(lowerQuery) ||
+        item.district.toLowerCase().includes(lowerQuery)
+      );
+    }
+    
+    // Limit results
+    setServiceLocations(filtered.slice(0, 100));
   };
 
   const getServiceAvailable = (location: ServiceLocation): string[] => {
@@ -82,8 +118,9 @@ const Locations = () => {
     return services;
   };
 
+  // Get unique state codes from all loaded data
   const uniqueStateCodes = Array.from(
-    new Set(serviceLocations.map(loc => loc.stateCode))
+    new Set(allServiceLocations.map(loc => loc.stateCode).filter(code => code))
   ).sort();
 
   return (
@@ -184,8 +221,8 @@ const Locations = () => {
                     </select>
                   </div>
 
-                  {isLoading ? (
-                    <div className="text-center py-8">Loading...</div>
+                  {isLoading && allServiceLocations.length === 0 ? (
+                    <div className="text-center py-8">Loading service locations from CSV...</div>
                   ) : (
                     <div className="overflow-x-auto">
                       <Table>
@@ -201,7 +238,11 @@ const Locations = () => {
                           {serviceLocations.length === 0 ? (
                             <TableRow>
                               <TableCell colSpan={4} className="text-center py-8">
-                                No service locations found
+                                {allServiceLocations.length === 0 
+                                  ? 'No service locations loaded. Please check if "Pincode Serviceability.csv" is in the public folder.'
+                                  : searchQuery || selectedStateCode
+                                    ? 'No service locations found matching your search criteria'
+                                    : 'No service locations available'}
                               </TableCell>
                             </TableRow>
                           ) : (
