@@ -16,12 +16,12 @@ export const Footer = () => {
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4" />
                 <a 
-                  href="https://www.visakhacouriers.com" 
+                  href="https://visakhacouriers.in" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-sm hover:text-white transition-colors"
                 >
-                  WWW.VISAKHACOURIERS.COM
+                  WWW.VISAKHACOURIERS.IN
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -107,7 +107,9 @@ export const Footer = () => {
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
                 <span className="text-sm">
-                  Visakhapatnam, India
+                  7-17-7/2, Opp. Redcherry Bakery<br />
+                  Old Gajuwaka, Visakhapatnam - 530026<br />
+                  Andhra Pradesh, India
                 </span>
               </li>
               <li className="flex items-start gap-2">

@@ -810,14 +810,19 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
-      const website = data.website || 'WWW.VISAKHACOURIERS.COM';
+      const website = data.website || 'WWW.VISAKHACOURIERS.IN';
       const email = data.email || 'INFO@VISAKHACOURIERS.COM';
+      const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
       doc.text(companyName, logoX, addressY);
-      doc.text(website, logoX, addressY + 4);
-      doc.text(email, logoX, addressY + 8);
+      const addressLines = doc.splitTextToSize(companyAddress, leftSectionWidth - 4);
+      addressLines.forEach((line: string, idx: number) => {
+        doc.text(line, logoX, addressY + 4 + (idx * 3.5));
+      });
+      doc.text(website, logoX, addressY + 4 + (addressLines.length * 3.5));
+      doc.text(email, logoX, addressY + 8 + (addressLines.length * 3.5));
       
-      logoH = logoHeight + 15; // Adjust total height to include address
+      logoH = logoHeight + 12 + (addressLines.length * 3.5); // Adjust total height to include address
     } else {
       logoH = logoHeight; // No address for custom logo
     }
@@ -1119,13 +1124,31 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   // ---------- FOOTER ----------
   const pageCount = doc.getNumberOfPages();
   doc.setPage(pageCount);
-  doc.setFontSize(8);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  const footerY = PAGE_CONFIG.height - PAGE_CONFIG.marginBottom;
+  const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
+  const website = data.website || 'WWW.VISAKHACOURIERS.IN';
+  
+  // Calculate spacing - start from bottom
+  let currentY = footerY;
+  
+  // GST Number at bottom
   doc.setFont('helvetica', 'bold');
-  doc.text(
-    `GST No: ${data.gstNo}`,
-    PAGE_CONFIG.margin,
-    PAGE_CONFIG.height - PAGE_CONFIG.marginBottom
-  );
+  doc.text(`GST No: ${data.gstNo}`, PAGE_CONFIG.margin, currentY);
+  currentY -= 4;
+  
+  // Website
+  doc.setFont('helvetica', 'normal');
+  doc.text(website, PAGE_CONFIG.margin, currentY);
+  currentY -= 4;
+  
+  // Address lines (from bottom to top)
+  const addressLines = doc.splitTextToSize(companyAddress, contentWidth);
+  addressLines.reverse().forEach((line: string) => {
+    currentY -= 3.5;
+    doc.text(line, PAGE_CONFIG.margin, currentY);
+  });
 
   // Return PDF as blob instead of saving directly
   const pdfBlob = doc.output('blob');
