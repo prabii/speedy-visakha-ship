@@ -810,7 +810,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
-      const website = data.website || 'HTTPS://VISAKHACOURIERS.IN/';
+      const website = data.website || 'visakhacouriers.in';
       const email = data.email || 'INFO@VISAKHACOURIERS.COM';
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
@@ -1126,13 +1126,8 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   doc.setPage(pageCount);
   doc.setFontSize(7);
   const footerY = PAGE_CONFIG.height - PAGE_CONFIG.marginBottom;
-  const website = data.website || 'HTTPS://VISAKHACOURIERS.IN/';
   
-  // Website
-  doc.setFont('helvetica', 'normal');
-  doc.text(website, PAGE_CONFIG.margin, footerY - 4);
-  
-  // GST Number
+  // GST Number only
   doc.setFont('helvetica', 'bold');
   doc.text(`GST No: ${data.gstNo}`, PAGE_CONFIG.margin, footerY);
 
