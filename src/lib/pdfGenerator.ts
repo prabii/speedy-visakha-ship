@@ -810,7 +810,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
-      const website = data.website || 'WWW.VISAKHACOURIERS.IN';
+      const website = data.website || 'HTTPS://VISAKHACOURIERS.IN/';
       const email = data.email || 'INFO@VISAKHACOURIERS.COM';
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
@@ -1125,30 +1125,16 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   const pageCount = doc.getNumberOfPages();
   doc.setPage(pageCount);
   doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
   const footerY = PAGE_CONFIG.height - PAGE_CONFIG.marginBottom;
-  const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
-  const website = data.website || 'WWW.VISAKHACOURIERS.IN';
-  
-  // Calculate spacing - start from bottom
-  let currentY = footerY;
-  
-  // GST Number at bottom
-  doc.setFont('helvetica', 'bold');
-  doc.text(`GST No: ${data.gstNo}`, PAGE_CONFIG.margin, currentY);
-  currentY -= 4;
+  const website = data.website || 'HTTPS://VISAKHACOURIERS.IN/';
   
   // Website
   doc.setFont('helvetica', 'normal');
-  doc.text(website, PAGE_CONFIG.margin, currentY);
-  currentY -= 4;
+  doc.text(website, PAGE_CONFIG.margin, footerY - 4);
   
-  // Address lines (from bottom to top)
-  const addressLines = doc.splitTextToSize(companyAddress, contentWidth);
-  addressLines.reverse().forEach((line: string) => {
-    currentY -= 3.5;
-    doc.text(line, PAGE_CONFIG.margin, currentY);
-  });
+  // GST Number
+  doc.setFont('helvetica', 'bold');
+  doc.text(`GST No: ${data.gstNo}`, PAGE_CONFIG.margin, footerY);
 
   // Return PDF as blob instead of saving directly
   const pdfBlob = doc.output('blob');
