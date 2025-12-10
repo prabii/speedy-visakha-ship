@@ -811,7 +811,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
       const website = data.website || 'visakhacouriers.in';
-      const email = data.email || 'INFO@VISAKHACOURIERS.COM';
+      const email = data.email || 'INFO@VISAKHACOURIERS.IN';
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
       doc.text(companyName, logoX, addressY);
