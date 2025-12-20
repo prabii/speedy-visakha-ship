@@ -810,12 +810,9 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
-      // Normalize website: replace WWW.VISAKHACOURIERS.COM with Visakhacouriers.in
-      let website = data.website || 'Visakhacouriers.in';
-      if (website.toUpperCase().includes('WWW.VISAKHACOURIERS.COM')) {
-        website = 'Visakhacouriers.in';
-      }
-      // Remove email - no longer displayed
+      // Always use Visakhacouriers.in (replacing WWW.VISAKHACOURIERS.COM)
+      const website = 'Visakhacouriers.in';
+      // Email removed - no longer displayed
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
       doc.text(companyName, logoX, addressY);
