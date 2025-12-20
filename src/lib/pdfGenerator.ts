@@ -810,8 +810,12 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
-      const website = data.website || 'visakhacouriers.in';
-      const email = data.email || 'INFO@VISAKHACOURIERS.IN';
+      // Normalize website: replace WWW.VISAKHACOURIERS.COM with Visakhacouriers.in
+      let website = data.website || 'Visakhacouriers.in';
+      if (website.toUpperCase().includes('WWW.VISAKHACOURIERS.COM')) {
+        website = 'Visakhacouriers.in';
+      }
+      // Remove email - no longer displayed
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
       doc.text(companyName, logoX, addressY);
@@ -820,7 +824,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
         doc.text(line, logoX, addressY + 4 + (idx * 3.5));
       });
       doc.text(website, logoX, addressY + 4 + (addressLines.length * 3.5));
-      doc.text(email, logoX, addressY + 8 + (addressLines.length * 3.5));
+      // Email line removed
       
       logoH = logoHeight + 12 + (addressLines.length * 3.5); // Adjust total height to include address
     } else {
