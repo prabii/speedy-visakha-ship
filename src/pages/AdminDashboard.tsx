@@ -217,9 +217,14 @@ const AdminDashboard = () => {
       setUpdateStatus(awb.status || '');
       setUpdateLocation('');
       setUpdateDescription('');
-      // Set current date/time as default
+      // Set current date/time as default (format: YYYY-MM-DDTHH:mm for datetime-local)
       const now = new Date();
-      const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
       setUpdateDateTime(localDateTime);
     } catch (error: any) {
       toast({
@@ -246,12 +251,34 @@ const AdminDashboard = () => {
 
     setIsUpdating(true);
     try {
+      // Convert datetime-local string to ISO string properly
+      // datetime-local gives us "YYYY-MM-DDTHH:mm" in local time
+      // We need to treat it as local time and convert to ISO
+      let timestampISO = undefined;
+      if (updateDateTime) {
+        // Parse the datetime-local string (format: YYYY-MM-DDTHH:mm)
+        const [datePart, timePart] = updateDateTime.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        
+        // Create a Date object in local time
+        const localDate = new Date(year, month - 1, day, hours, minutes);
+        
+        // Check if date is valid
+        if (!isNaN(localDate.getTime())) {
+          timestampISO = localDate.toISOString();
+        } else {
+          // Fallback to current time if invalid
+          timestampISO = new Date().toISOString();
+        }
+      }
+      
       await api.awb.updateTrackingByAWBNo(selectedAWB.awbNo, {
         status: updateStatus,
         location: updateLocation || undefined,
         description: updateDescription || undefined,
         updatedBy: 'Admin',
-        timestamp: updateDateTime ? new Date(updateDateTime).toISOString() : undefined,
+        timestamp: timestampISO,
       });
       
       toast({
@@ -266,7 +293,12 @@ const AdminDashboard = () => {
       setUpdateDescription('');
       // Reset date/time to current
       const now = new Date();
-      const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
       setUpdateDateTime(localDateTime);
       
       // Reload AWBs list
