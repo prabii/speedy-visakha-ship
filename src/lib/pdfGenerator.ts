@@ -812,7 +812,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
       // Always use Visakhacouriers.in (replacing WWW.VISAKHACOURIERS.COM)
       const website = 'Visakhacouriers.in';
-      // Email removed - no longer displayed
+      const email = 'Visakhacourier@gmail.com';
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
       doc.text(companyName, logoX, addressY);
@@ -820,10 +820,24 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       addressLines.forEach((line: string, idx: number) => {
         doc.text(line, logoX, addressY + 4 + (idx * 3.5));
       });
-      doc.text(website, logoX, addressY + 4 + (addressLines.length * 3.5));
-      // Email line removed
       
-      logoH = logoHeight + 12 + (addressLines.length * 3.5); // Adjust total height to include address
+      // Calculate Y position for website, email, and GST
+      let currentY = addressY + 4 + (addressLines.length * 3.5);
+      doc.text(website, logoX, currentY);
+      currentY += 3.5;
+      doc.text(email, logoX, currentY);
+      currentY += 3.5;
+      
+      // Add GST number with better styling (larger font, bold)
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`GST No: ${data.gstNo}`, logoX, currentY);
+      
+      // Reset font size for rest of document
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      
+      logoH = logoHeight + 12 + (addressLines.length * 3.5) + 10.5; // Adjust total height to include address, website, email, and GST
     } else {
       logoH = logoHeight; // No address for custom logo
     }
@@ -1123,14 +1137,8 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   y += termsBoxHeight + 4;
 
   // ---------- FOOTER ----------
-  const pageCount = doc.getNumberOfPages();
-  doc.setPage(pageCount);
-  doc.setFontSize(7);
-  const footerY = PAGE_CONFIG.height - PAGE_CONFIG.marginBottom;
-  
-  // GST Number only
-  doc.setFont('helvetica', 'bold');
-  doc.text(`GST No: ${data.gstNo}`, PAGE_CONFIG.margin, footerY);
+  // GST number has been moved to header section, so footer is now empty or can be used for other info
+  // Footer section removed as GST is now in header
 
   // Return PDF as blob instead of saving directly
   const pdfBlob = doc.output('blob');
