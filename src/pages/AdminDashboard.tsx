@@ -34,6 +34,7 @@ const AdminDashboard = () => {
   const [updateStatus, setUpdateStatus] = useState('');
   const [updateLocation, setUpdateLocation] = useState('');
   const [updateDescription, setUpdateDescription] = useState('');
+  const [updateDateTime, setUpdateDateTime] = useState('');
   const [isLoadingAWBs, setIsLoadingAWBs] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   
@@ -216,6 +217,10 @@ const AdminDashboard = () => {
       setUpdateStatus(awb.status || '');
       setUpdateLocation('');
       setUpdateDescription('');
+      // Set current date/time as default
+      const now = new Date();
+      const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      setUpdateDateTime(localDateTime);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -246,6 +251,7 @@ const AdminDashboard = () => {
         location: updateLocation || undefined,
         description: updateDescription || undefined,
         updatedBy: 'Admin',
+        timestamp: updateDateTime ? new Date(updateDateTime).toISOString() : undefined,
       });
       
       toast({
@@ -258,6 +264,10 @@ const AdminDashboard = () => {
       setSelectedAWB(updatedAWB);
       setUpdateLocation('');
       setUpdateDescription('');
+      // Reset date/time to current
+      const now = new Date();
+      const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      setUpdateDateTime(localDateTime);
       
       // Reload AWBs list
       loadAWBs();
@@ -530,6 +540,15 @@ const AdminDashboard = () => {
                             placeholder="Enter description"
                             value={updateDescription}
                             onChange={(e) => setUpdateDescription(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Date & Time</Label>
+                          <Input
+                            type="datetime-local"
+                            value={updateDateTime}
+                            onChange={(e) => setUpdateDateTime(e.target.value)}
+                            className="w-full"
                           />
                         </div>
                         <Button onClick={handleUpdateStatus} disabled={isUpdating || !updateStatus}>
