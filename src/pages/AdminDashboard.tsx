@@ -248,38 +248,65 @@ const AdminDashboard = () => {
       });
       return;
     }
+    
+    if (!updateDateTime || !updateDateTime.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please select a date and time',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsUpdating(true);
     try {
       // Convert datetime-local string to ISO string properly
       // datetime-local gives us "YYYY-MM-DDTHH:mm" in local time
       // We need to treat it as local time and convert to ISO
-      let timestampISO = undefined;
-      if (updateDateTime) {
+      let timestampISO;
+      if (updateDateTime && updateDateTime.trim()) {
         // Parse the datetime-local string (format: YYYY-MM-DDTHH:mm)
         const [datePart, timePart] = updateDateTime.split('T');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hours, minutes] = timePart.split(':').map(Number);
-        
-        // Create a Date object in local time
-        const localDate = new Date(year, month - 1, day, hours, minutes);
-        
-        // Check if date is valid
-        if (!isNaN(localDate.getTime())) {
-          timestampISO = localDate.toISOString();
+        if (datePart && timePart) {
+          const [year, month, day] = datePart.split('-').map(Number);
+          const [hours, minutes] = timePart.split(':').map(Number);
+          
+          // Create a Date object in local time
+          const localDate = new Date(year, month - 1, day, hours, minutes || 0);
+          
+          // Check if date is valid
+          if (!isNaN(localDate.getTime())) {
+            timestampISO = localDate.toISOString();
+            console.log('Converted datetime:', {
+              input: updateDateTime,
+              output: timestampISO,
+              localDate: localDate.toString()
+            });
+          } else {
+            // Fallback to current time if invalid
+            console.warn('Invalid date, using current time');
+            timestampISO = new Date().toISOString();
+          }
         } else {
-          // Fallback to current time if invalid
           timestampISO = new Date().toISOString();
         }
+      } else {
+        // Use current time if no date/time provided
+        timestampISO = new Date().toISOString();
+        console.log('No date/time provided, using current time:', timestampISO);
       }
       
-      await api.awb.updateTrackingByAWBNo(selectedAWB.awbNo, {
+      const updateData = {
         status: updateStatus,
         location: updateLocation || undefined,
         description: updateDescription || undefined,
         updatedBy: 'Admin',
         timestamp: timestampISO,
-      });
+      };
+      
+      console.log('Sending update request:', updateData);
+      
+      await api.awb.updateTrackingByAWBNo(selectedAWB.awbNo, updateData);
       
       toast({
         title: 'Success',
@@ -575,13 +602,20 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Date & Time</Label>
+                          <Label>Date & Time *</Label>
                           <Input
                             type="datetime-local"
                             value={updateDateTime}
-                            onChange={(e) => setUpdateDateTime(e.target.value)}
+                            onChange={(e) => {
+                              console.log('Date/time changed:', e.target.value);
+                              setUpdateDateTime(e.target.value);
+                            }}
                             className="w-full"
+                            required
                           />
+                          <p className="text-xs text-muted-foreground">
+                            Select the date and time for this status update
+                          </p>
                         </div>
                         <Button onClick={handleUpdateStatus} disabled={isUpdating || !updateStatus}>
                           <Edit className="mr-2 h-4 w-4" />

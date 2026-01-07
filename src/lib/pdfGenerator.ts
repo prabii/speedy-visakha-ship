@@ -806,7 +806,7 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     
     // Add company address below logo ONLY if using default logo (not custom uploaded logo)
     if (!hasCustomLogo) {
-      const addressY = logoY + logoHeight + 3;
+      const addressY = logoY + logoHeight + 2; // Reduced gap from logo
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
@@ -815,20 +815,25 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       const email = 'Visakhacourier@gmail.com';
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
       
+      // Company name
       doc.text(companyName, logoX, addressY);
+      
+      // Address lines - tighter spacing
+      let currentY = addressY + 3.5; // Reduced gap after company name
       const addressLines = doc.splitTextToSize(companyAddress, leftSectionWidth - 4);
-      addressLines.forEach((line: string, idx: number) => {
-        doc.text(line, logoX, addressY + 4 + (idx * 3.5));
+      addressLines.forEach((line: string) => {
+        doc.text(line, logoX, currentY);
+        currentY += 3; // Tighter spacing between address lines
       });
       
-      // Calculate Y position for website, email, and GST
-      let currentY = addressY + 4 + (addressLines.length * 3.5);
+      // Website, email, and GST - all grouped together
+      currentY += 2; // Small gap after address
       doc.text(website, logoX, currentY);
-      currentY += 3.5;
+      currentY += 3; // Tighter spacing
       doc.text(email, logoX, currentY);
-      currentY += 3.5;
+      currentY += 3; // Tighter spacing
       
-      // Add GST number with better styling (larger font, bold)
+      // GST number
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.text(`GST No: ${data.gstNo}`, logoX, currentY);
@@ -837,7 +842,8 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       
-      logoH = logoHeight + 12 + (addressLines.length * 3.5) + 10.5; // Adjust total height to include address, website, email, and GST
+      // Calculate total height - all elements grouped together
+      logoH = logoHeight + 2 + 3.5 + (addressLines.length * 3) + 2 + 3 + 3 + 4; // All elements with tighter spacing
     } else {
       logoH = logoHeight; // No address for custom logo
     }
