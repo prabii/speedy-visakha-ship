@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateInvoicePDF, generateAWBPDF } from '@/lib/pdfGenerator';
 import type { InvoiceData, AWBData } from '@/lib/pdfGenerator';
 import api from '@/lib/api';
+import { format } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -220,7 +221,9 @@ const InvoiceHistory = () => {
           origin: awb.origin,
           destination: awb.destination,
           service: awb.service,
-          bookingDate: awb.bookingDate,
+          bookingDate: awb.bookingDate 
+            ? format(new Date(awb.bookingDate), 'dd/MM/yyyy HH:mm')
+            : format(new Date(), 'dd/MM/yyyy HH:mm'),
           companyName: 'VISAKHA INTERNATIONAL COURIERS',
           website: 'WWW.VISAKHACOURIERS.COM',
           email: 'INFO@VISAKHACOURIERS.COM',

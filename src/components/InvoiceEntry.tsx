@@ -1086,7 +1086,9 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
       origin: shipper.origin || 'HYDERABAD',
       destination: consignee.destination || consignee.country || '',
       service: serviceDetails.vendor || serviceDetails.service || 'PXC-SELF', // Use vendor name for AWB display
-      bookingDate: format(new Date(accountDetails.bookDate), 'dd/MM/yyyy'),
+      bookingDate: accountDetails.bookDate 
+        ? format(new Date(accountDetails.bookDate), 'dd/MM/yyyy HH:mm')
+        : format(new Date(), 'dd/MM/yyyy HH:mm'),
       companyName: 'VISAKHA INTERNATIONAL COURIERS',
       website: 'WWW.VISAKHACOURIERS.COM',
       email: 'INFO@VISAKHACOURIERS.COM',

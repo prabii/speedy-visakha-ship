@@ -1041,12 +1041,51 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     'BOOKING DATE',
   ]);
 
+  // Format booking date with time
+  let formattedBookingDate = '';
+  if (data.bookingDate) {
+    try {
+      // Try to parse the date (could be ISO string, formatted string, etc.)
+      const date = new Date(data.bookingDate);
+      if (!isNaN(date.getTime())) {
+        // Format as DD/MM/YYYY HH:mm
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        formattedBookingDate = `${day}/${month}/${year} ${hours}:${minutes}`;
+      } else {
+        // If parsing fails, use the string as-is (might already be formatted)
+        formattedBookingDate = data.bookingDate;
+      }
+    } catch (e) {
+      // If any error, use current date/time
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      formattedBookingDate = `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+  } else {
+    // If no booking date provided, use current date/time
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    formattedBookingDate = `${day}/${month}/${year} ${hours}:${minutes}`;
+  }
+
   y = drawValueRow(margin, y, widths, [
     data.description || '',
     data.pieces || '',
     data.chargeableWeight || '',
     data.shipmentValue || '',
-    data.bookingDate || '',
+    formattedBookingDate,
   ]);
 
   // Add small gap after Description of Goods table (before SHIPPER AGREEMENT)

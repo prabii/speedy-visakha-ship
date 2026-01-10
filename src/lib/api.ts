@@ -59,7 +59,7 @@ export const api = {
   
   // Invoices API
   invoices: {
-    getAll: (params?: { page?: number; limit?: number; search?: string; status?: string; accountNo?: string; startDate?: string; endDate?: string }) => {
+    getAll: (params?: { page?: number; limit?: number; search?: string; status?: string; accountNo?: string; startDate?: string; endDate?: string; vendorId?: string; userRole?: string }) => {
       const queryParams = new URLSearchParams();
       if (params?.page) queryParams.append('page', params.page.toString());
       if (params?.limit) queryParams.append('limit', params.limit.toString());
@@ -68,6 +68,8 @@ export const api = {
       if (params?.accountNo) queryParams.append('accountNo', params.accountNo);
       if (params?.startDate) queryParams.append('startDate', params.startDate);
       if (params?.endDate) queryParams.append('endDate', params.endDate);
+      if (params?.vendorId) queryParams.append('vendorId', params.vendorId);
+      if (params?.userRole) queryParams.append('userRole', params.userRole);
       return api.fetch(`/invoices?${queryParams}`);
     },
     getStats: (params?: { startDate?: string; endDate?: string }) => {
@@ -87,7 +89,7 @@ export const api = {
   
   // AWB API
   awb: {
-    getAll: (params?: { page?: number; limit?: number; search?: string; status?: string; accountNo?: string; startDate?: string; endDate?: string }) => {
+    getAll: (params?: { page?: number; limit?: number; search?: string; status?: string; accountNo?: string; startDate?: string; endDate?: string; vendorId?: string; userRole?: string }) => {
       const queryParams = new URLSearchParams();
       if (params?.page) queryParams.append('page', params.page.toString());
       if (params?.limit) queryParams.append('limit', params.limit.toString());
@@ -96,6 +98,8 @@ export const api = {
       if (params?.accountNo) queryParams.append('accountNo', params.accountNo);
       if (params?.startDate) queryParams.append('startDate', params.startDate);
       if (params?.endDate) queryParams.append('endDate', params.endDate);
+      if (params?.vendorId) queryParams.append('vendorId', params.vendorId);
+      if (params?.userRole) queryParams.append('userRole', params.userRole);
       return api.fetch(`/awb?${queryParams}`);
     },
     getStats: (params?: { startDate?: string; endDate?: string }) => {
@@ -111,6 +115,8 @@ export const api = {
     getByAccount: (accountNo: string) => api.fetch(`/awb/account/${accountNo}`),
     create: (data: any) => api.fetch('/awb', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => api.fetch(`/awb/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    updateBookingDate: (id: string, bookingDate: string, userRole: string) => api.fetch(`/awb/${id}/booking-date`, { method: 'PUT', body: JSON.stringify({ bookingDate, userRole }) }),
+    updateBookingDateByAWBNo: (awbNo: string, bookingDate: string, userRole: string) => api.fetch(`/awb/number/${awbNo}/booking-date`, { method: 'PUT', body: JSON.stringify({ bookingDate, userRole }) }),
     updateTracking: (id: string, data: any) => api.fetch(`/awb/${id}/tracking`, { method: 'PUT', body: JSON.stringify(data) }),
     updateTrackingByAWBNo: (awbNo: string, data: any) => api.fetch(`/awb/number/${awbNo}/tracking`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => api.fetch(`/awb/${id}`, { method: 'DELETE' }),
@@ -128,6 +134,17 @@ export const api = {
     create: (data: any) => api.fetch('/branch-locations', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => api.fetch(`/branch-locations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => api.fetch(`/branch-locations/${id}`, { method: 'DELETE' }),
+  },
+  
+  // Users API
+  users: {
+    login: (data: { username: string; password: string }) => api.fetch('/users/login', { method: 'POST', body: JSON.stringify(data) }),
+    getAll: () => api.fetch('/users'),
+    getById: (id: string) => api.fetch(`/users/${id}`),
+    create: (data: any) => api.fetch('/users', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => api.fetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => api.fetch(`/users/${id}`, { method: 'DELETE' }),
+    changePassword: (data: { userId: string; oldPassword: string; newPassword: string }) => api.fetch('/users/change-password', { method: 'POST', body: JSON.stringify(data) }),
   },
 };
 

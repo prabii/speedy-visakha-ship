@@ -35,8 +35,10 @@ const AdminDashboard = () => {
   const [updateLocation, setUpdateLocation] = useState('');
   const [updateDescription, setUpdateDescription] = useState('');
   const [updateDateTime, setUpdateDateTime] = useState('');
+  const [updateBookingDate, setUpdateBookingDate] = useState('');
   const [isLoadingAWBs, setIsLoadingAWBs] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdatingBookingDate, setIsUpdatingBookingDate] = useState(false);
   
   // Branch Locations state
   const [branchLocations, setBranchLocations] = useState<any[]>([]);
@@ -226,6 +228,20 @@ const AdminDashboard = () => {
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
       setUpdateDateTime(localDateTime);
+      
+      // Set booking date from AWB or current date/time
+      if (awb.bookingDate) {
+        const bookingDate = new Date(awb.bookingDate);
+        const bYear = bookingDate.getFullYear();
+        const bMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
+        const bDay = String(bookingDate.getDate()).padStart(2, '0');
+        const bHours = String(bookingDate.getHours()).padStart(2, '0');
+        const bMinutes = String(bookingDate.getMinutes()).padStart(2, '0');
+        const bookingDateTime = `${bYear}-${bMonth}-${bDay}T${bHours}:${bMinutes}`;
+        setUpdateBookingDate(bookingDateTime);
+      } else {
+        setUpdateBookingDate(localDateTime);
+      }
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -338,6 +354,71 @@ const AdminDashboard = () => {
       });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // Update booking date/time
+  const handleUpdateBookingDate = async () => {
+    if (!selectedAWB || !updateBookingDate) {
+      toast({
+        title: 'Error',
+        description: 'Please select a booking date and time',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUpdatingBookingDate(true);
+    try {
+      // Convert datetime-local string to ISO string
+      const [datePart, timePart] = updateBookingDate.split('T');
+      if (datePart && timePart) {
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        
+        // Create a Date object in local time
+        const localDate = new Date(year, month - 1, day, hours, minutes || 0);
+        
+        if (!isNaN(localDate.getTime())) {
+          const timestampISO = localDate.toISOString();
+          
+          await api.awb.updateBookingDateByAWBNo(selectedAWB.awbNo, timestampISO);
+          
+          toast({
+            title: 'Success',
+            description: 'Booking date and time updated successfully',
+          });
+          
+          // Reload AWB data
+          const updatedAWB = await api.awb.getByAWBNo(selectedAWB.awbNo);
+          setSelectedAWB(updatedAWB);
+          
+          // Update booking date display
+          const bDate = new Date(updatedAWB.bookingDate);
+          const bYear = bDate.getFullYear();
+          const bMonth = String(bDate.getMonth() + 1).padStart(2, '0');
+          const bDay = String(bDate.getDate()).padStart(2, '0');
+          const bHours = String(bDate.getHours()).padStart(2, '0');
+          const bMinutes = String(bDate.getMinutes()).padStart(2, '0');
+          const bookingDateTime = `${bYear}-${bMonth}-${bDay}T${bHours}:${bMinutes}`;
+          setUpdateBookingDate(bookingDateTime);
+          
+          // Reload AWBs list
+          loadAWBs();
+        } else {
+          throw new Error('Invalid date format');
+        }
+      } else {
+        throw new Error('Invalid date format');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update booking date',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingBookingDate(false);
     }
   };
 
@@ -620,6 +701,51 @@ const AdminDashboard = () => {
                         <Button onClick={handleUpdateStatus} disabled={isUpdating || !updateStatus}>
                           <Edit className="mr-2 h-4 w-4" />
                           {isUpdating ? 'Updating...' : 'Update Status'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Update Booking Date Form */}
+                  {selectedAWB && (
+                    <Card className="bg-green-50/50 border-green-200">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Update Booking Date & Time: {selectedAWB.awbNo}</CardTitle>
+                        <CardDescription>
+                          Current Booking Date: {selectedAWB.bookingDate 
+                            ? new Date(selectedAWB.bookingDate).toLocaleString('en-IN', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })
+                            : 'Not set'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Booking Date & Time *</Label>
+                          <Input
+                            type="datetime-local"
+                            value={updateBookingDate}
+                            onChange={(e) => {
+                              setUpdateBookingDate(e.target.value);
+                            }}
+                            className="w-full"
+                            required
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Select the booking date and time for this AWB
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={handleUpdateBookingDate} 
+                          disabled={isUpdatingBookingDate || !updateBookingDate}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          {isUpdatingBookingDate ? 'Updating...' : 'Update Booking Date'}
                         </Button>
                       </CardContent>
                     </Card>
