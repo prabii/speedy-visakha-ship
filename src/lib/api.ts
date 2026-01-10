@@ -82,7 +82,10 @@ export const api = {
     getByInvoiceNo: (invoiceNo: string) => api.fetch(`/invoices/number/${invoiceNo}`),
     getByCustomer: (customerId: string) => api.fetch(`/invoices/customer/${customerId}`),
     getByAccount: (accountNo: string) => api.fetch(`/invoices/account/${accountNo}`),
-    create: (data: any) => api.fetch('/invoices', { method: 'POST', body: JSON.stringify(data) }),
+    create: (data: any, vendorId?: string) => {
+      const payload = vendorId ? { ...data, vendorId } : data;
+      return api.fetch('/invoices', { method: 'POST', body: JSON.stringify(payload) });
+    },
     update: (id: string, data: any) => api.fetch(`/invoices/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => api.fetch(`/invoices/${id}`, { method: 'DELETE' }),
   },
@@ -113,7 +116,10 @@ export const api = {
     getByAWBNo: (awbNo: string) => api.fetch(`/awb/number/${awbNo}`),
     getByCustomer: (customerId: string) => api.fetch(`/awb/customer/${customerId}`),
     getByAccount: (accountNo: string) => api.fetch(`/awb/account/${accountNo}`),
-    create: (data: any) => api.fetch('/awb', { method: 'POST', body: JSON.stringify(data) }),
+    create: (data: any, vendorId?: string) => {
+      const payload = vendorId ? { ...data, vendorId } : data;
+      return api.fetch('/awb', { method: 'POST', body: JSON.stringify(payload) });
+    },
     update: (id: string, data: any) => api.fetch(`/awb/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     updateBookingDate: (id: string, bookingDate: string, userRole: string) => api.fetch(`/awb/${id}/booking-date`, { method: 'PUT', body: JSON.stringify({ bookingDate, userRole }) }),
     updateBookingDateByAWBNo: (awbNo: string, bookingDate: string, userRole: string) => api.fetch(`/awb/number/${awbNo}/booking-date`, { method: 'PUT', body: JSON.stringify({ bookingDate, userRole }) }),

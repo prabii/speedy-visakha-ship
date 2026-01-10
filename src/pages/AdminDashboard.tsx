@@ -16,7 +16,7 @@ import InvoiceHistory from '@/components/InvoiceHistory';
 import api from '@/lib/api';
 
 const AdminDashboard = () => {
-  const { isAuthenticated, logout, changePassword } = useAuth();
+  const { isAuthenticated, logout, changePassword, user, isAdmin, isVendor } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [oldPassword, setOldPassword] = useState('');
@@ -50,6 +50,18 @@ const AdminDashboard = () => {
     mobileNumber: '',
     email: '',
     contactPerson: '',
+  });
+  
+  // Vendor Users state
+  const [vendorUsers, setVendorUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [userForm, setUserForm] = useState({
+    username: '',
+    password: '',
+    vendorName: '',
+    role: 'vendor',
+    isActive: true,
   });
 
   useEffect(() => {
@@ -188,7 +200,15 @@ const AdminDashboard = () => {
   const loadAWBs = async () => {
     setIsLoadingAWBs(true);
     try {
-      const response = await api.awb.getAll({ limit: 50, page: 1 });
+      const params: any = { limit: 50, page: 1 };
+      // If vendor, only show their AWBs
+      if (isVendor() && user?._id) {
+        params.vendorId = user._id;
+        params.userRole = 'vendor';
+      } else if (isAdmin()) {
+        params.userRole = 'admin';
+      }
+      const response = await api.awb.getAll(params);
       setAwbs(response.awbs || []);
     } catch (error: any) {
       toast({
@@ -357,8 +377,17 @@ const AdminDashboard = () => {
     }
   };
 
-  // Update booking date/time
+  // Update booking date/time (Admin only)
   const handleUpdateBookingDate = async () => {
+    if (!isAdmin()) {
+      toast({
+        title: 'Access Denied',
+        description: 'Only admin can update booking date and time',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     if (!selectedAWB || !updateBookingDate) {
       toast({
         title: 'Error',
@@ -382,7 +411,7 @@ const AdminDashboard = () => {
         if (!isNaN(localDate.getTime())) {
           const timestampISO = localDate.toISOString();
           
-          await api.awb.updateBookingDateByAWBNo(selectedAWB.awbNo, timestampISO);
+          await api.awb.updateBookingDateByAWBNo(selectedAWB.awbNo, timestampISO, user?.role || 'admin');
           
           toast({
             title: 'Success',
@@ -446,6 +475,103 @@ const AdminDashboard = () => {
     }
     return <Badge>{status}</Badge>;
   };
+
+  // Vendor Users functions
+  const loadVendorUsers = async () => {
+    if (!isAdmin()) return;
+    setIsLoadingUsers(true);
+    try {
+      const users = await api.users.getAll();
+      setVendorUsers(users);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load vendor users',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleSaveUser = async () => {
+    if (!userForm.username || !userForm.vendorName || (!editingUser && !userForm.password)) {
+      toast({
+        title: 'Error',
+        description: 'Please fill all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!editingUser && userForm.password.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (editingUser) {
+        const updateData: any = {
+          vendorName: userForm.vendorName,
+          isActive: userForm.isActive,
+        };
+        if (userForm.password) {
+          updateData.password = userForm.password;
+        }
+        await api.users.update(editingUser._id, updateData);
+        toast({
+          title: 'Success',
+          description: 'Vendor user updated successfully',
+        });
+      } else {
+        await api.users.create(userForm);
+        toast({
+          title: 'Success',
+          description: 'Vendor user created successfully',
+        });
+      }
+      setEditingUser(null);
+      setUserForm({ username: '', password: '', vendorName: '', role: 'vendor', isActive: true });
+      loadVendorUsers();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save vendor user',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this vendor user?')) {
+      return;
+    }
+
+    try {
+      await api.users.delete(userId);
+      toast({
+        title: 'Success',
+        description: 'Vendor user deleted successfully',
+      });
+      loadVendorUsers();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete vendor user',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin() && activeTab === 'users') {
+      loadVendorUsers();
+    }
+  }, [activeTab, isAdmin]);
 
   const handleLogout = () => {
     logout();
@@ -706,8 +832,8 @@ const AdminDashboard = () => {
                     </Card>
                   )}
 
-                  {/* Update Booking Date Form */}
-                  {selectedAWB && (
+                  {/* Update Booking Date Form (Admin only) */}
+                  {selectedAWB && isAdmin() && (
                     <Card className="bg-green-50/50 border-green-200">
                       <CardHeader>
                         <CardTitle className="text-lg">Update Booking Date & Time: {selectedAWB.awbNo}</CardTitle>
@@ -955,6 +1081,156 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Vendor Users Tab (Admin only) */}
+          {isAdmin() && (
+            <TabsContent value="users" className="space-y-4">
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Vendor User Management
+                  </CardTitle>
+                  <CardDescription>Create and manage vendor user accounts</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-6">
+                  {/* Add/Edit User Form */}
+                  <Card className="bg-gray-50 border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        {editingUser ? 'Edit Vendor User' : 'Create New Vendor User'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Username *</Label>
+                          <Input
+                            placeholder="Enter username"
+                            value={userForm.username}
+                            onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                            disabled={!!editingUser}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Vendor Name *</Label>
+                          <Input
+                            placeholder="Enter vendor name"
+                            value={userForm.vendorName}
+                            onChange={(e) => setUserForm({ ...userForm, vendorName: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Password {editingUser ? '(leave blank to keep current)' : '*'}</Label>
+                          <Input
+                            type="password"
+                            placeholder={editingUser ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
+                            value={userForm.password}
+                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Status</Label>
+                          <Select 
+                            value={userForm.isActive ? 'active' : 'inactive'} 
+                            onValueChange={(value) => setUserForm({ ...userForm, isActive: value === 'active' })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleSaveUser} className="flex-1">
+                          {editingUser ? 'Update' : 'Create'} User
+                        </Button>
+                        {editingUser && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setEditingUser(null);
+                              setUserForm({ username: '', password: '', vendorName: '', role: 'vendor', isActive: true });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Users List */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Vendor Users</h3>
+                    {isLoadingUsers ? (
+                      <div className="text-center py-8">Loading...</div>
+                    ) : vendorUsers.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">No vendor users found</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {vendorUsers.map((vendorUser) => (
+                          <Card key={vendorUser._id} className="bg-white border-gray-200">
+                            <CardContent className="pt-6">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-2 flex-1">
+                                  <div className="mb-2">
+                                    <h4 className="font-bold text-lg text-blue-600">{vendorUser.vendorName}</h4>
+                                    <p className="text-sm text-gray-500 mt-1">Username: {vendorUser.username}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Badge className={vendorUser.role === 'admin' ? 'bg-purple-500' : 'bg-blue-500'}>
+                                      {vendorUser.role}
+                                    </Badge>
+                                    <Badge className={vendorUser.isActive ? 'bg-green-500' : 'bg-gray-500'}>
+                                      {vendorUser.isActive ? 'Active' : 'Inactive'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingUser(vendorUser);
+                                      setUserForm({
+                                        username: vendorUser.username,
+                                        password: '',
+                                        vendorName: vendorUser.vendorName,
+                                        role: vendorUser.role,
+                                        isActive: vendorUser.isActive,
+                                      });
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit
+                                  </Button>
+                                  {vendorUser.role !== 'admin' && (
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleDeleteUser(vendorUser._id)}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      Delete
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="settings" className="space-y-4">
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">

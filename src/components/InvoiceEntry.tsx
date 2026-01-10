@@ -24,11 +24,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { countryCodes, documentTypes, searchCountries, CountryCode } from '@/lib/countryCodes';
 import { vendors, services, products, searchVendors, searchServices, searchProducts, Vendor, Service, Product } from '@/lib/vendors';
 import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface InvoiceEntryProps {}
 
 const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   const { toast } = useToast();
+  const { user, isVendor } = useAuth();
   
   // PDF Preview State
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
@@ -921,7 +923,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           // Clear editing state after successful update
           setEditingInvoiceId(null);
         } else {
-          await api.invoices.create(invoicePayload);
+          await api.invoices.create(invoicePayload, isVendor() && user?._id ? user._id : undefined);
           toast({
             title: 'Success',
             description: 'Invoice PDF generated and saved to database successfully',
@@ -1221,7 +1223,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
         // Log payload to verify status is correct
         console.log('AWB Payload Status:', awbPayload.status);
         
-        await api.awb.create(awbPayload);
+        await api.awb.create(awbPayload, isVendor() && user?._id ? user._id : undefined);
         
         // Also save/update invoice if invoice number exists
         if (invoiceNo && invoiceDate) {
@@ -1298,13 +1300,13 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                   console.log('Invoice updated (found by invoice number) with AWB:', finalAwbNo);
                 } else {
                   // Create new invoice
-                  await api.invoices.create(invoicePayload);
+                  await api.invoices.create(invoicePayload, isVendor() && user?._id ? user._id : undefined);
                   console.log('Invoice created successfully with AWB:', finalAwbNo);
                 }
               } catch (lookupError: any) {
                 // If lookup fails, try to create (might be new invoice)
                 try {
-                  await api.invoices.create(invoicePayload);
+                  await api.invoices.create(invoicePayload, isVendor() && user?._id ? user._id : undefined);
                   console.log('Invoice created successfully with AWB:', finalAwbNo);
                 } catch (createError: any) {
                   // If create fails due to duplicate, try to update by invoice number

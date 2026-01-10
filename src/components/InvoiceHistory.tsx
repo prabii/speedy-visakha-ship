@@ -11,6 +11,7 @@ import { generateInvoicePDF, generateAWBPDF } from '@/lib/pdfGenerator';
 import type { InvoiceData, AWBData } from '@/lib/pdfGenerator';
 import api from '@/lib/api';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,6 +87,7 @@ const InvoiceHistory = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const { toast } = useToast();
+  const { user, isVendor, isAdmin } = useAuth();
   
   // PDF Preview State
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
@@ -102,18 +104,33 @@ const InvoiceHistory = () => {
     try {
       setLoading(true);
       
+      // Prepare params with vendor filtering
+      const invoiceParams: any = {
+        page: currentPage,
+        limit: 10,
+        search: searchQuery || undefined,
+      };
+      const awbParams: any = {
+        page: currentPage,
+        limit: 10,
+        search: searchQuery || undefined,
+      };
+      
+      // If vendor, only show their invoices and AWBs
+      if (isVendor() && user?._id) {
+        invoiceParams.vendorId = user._id;
+        invoiceParams.userRole = 'vendor';
+        awbParams.vendorId = user._id;
+        awbParams.userRole = 'vendor';
+      } else if (isAdmin()) {
+        invoiceParams.userRole = 'admin';
+        awbParams.userRole = 'admin';
+      }
+      
       // Fetch both invoices and AWBs in parallel
       const [invoicesData, awbsData] = await Promise.all([
-        api.invoices.getAll({
-          page: currentPage,
-          limit: 10,
-          search: searchQuery || undefined,
-        }).catch(() => ({ invoices: [], totalPages: 1, total: 0 })),
-        api.awb.getAll({
-          page: currentPage,
-          limit: 10,
-          search: searchQuery || undefined,
-        }).catch(() => ({ awbs: [], totalPages: 1, total: 0 })),
+        api.invoices.getAll(invoiceParams).catch(() => ({ invoices: [], totalPages: 1, total: 0 })),
+        api.awb.getAll(awbParams).catch(() => ({ awbs: [], totalPages: 1, total: 0 })),
       ]);
       
       // Combine and sort by date (newest first)

@@ -15,20 +15,34 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(username, password)) {
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome to Admin Dashboard',
-      });
-      navigate('/admin/dashboard');
-    } else {
+    setIsLoading(true);
+    try {
+      const success = await login(username, password);
+      if (success) {
+        toast({
+          title: 'Login Successful',
+          description: 'Welcome to Dashboard',
+        });
+        navigate('/admin/dashboard');
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: 'Invalid username or password',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: 'Invalid username or password',
+        description: error.message || 'Invalid username or password',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,8 +75,8 @@ const AdminLogin = () => {
               />
             )}
             <div className="text-center">
-              <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
-              <CardDescription>Enter your credentials to access the admin panel</CardDescription>
+              <CardTitle className="text-2xl font-bold">Login</CardTitle>
+              <CardDescription>Enter your credentials to access the dashboard</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -98,8 +112,8 @@ const AdminLogin = () => {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full" size="lg">
-              Login
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
         </CardContent>
