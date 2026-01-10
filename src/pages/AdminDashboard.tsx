@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus } from 'lucide-react';
+import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus, UserCog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InvoiceEntry from '@/components/InvoiceEntry';
 import InvoiceHistory from '@/components/InvoiceHistory';
@@ -721,6 +721,15 @@ const AdminDashboard = () => {
               <Building2 className="mr-2 h-4 w-4" />
               Branch Locations
             </TabsTrigger>
+            {isAdmin() && (
+              <TabsTrigger 
+                value="users"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              >
+                <UserCog className="mr-2 h-4 w-4" />
+                Vendor Users
+              </TabsTrigger>
+            )}
             <TabsTrigger 
               value="settings"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
