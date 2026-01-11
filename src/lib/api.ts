@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vz-karr.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vz-ztf8.onrender.com/api';
 
 export const api = {
   baseURL: API_BASE_URL,
