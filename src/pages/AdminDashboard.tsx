@@ -666,6 +666,40 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleCreatePriceSheet = async () => {
+    if (!priceSheetForm.sheetName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a sheet name',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await api.priceSheets.create({
+        sheetName: priceSheetForm.sheetName,
+        description: priceSheetForm.description,
+        isDefault: priceSheetForm.isDefault,
+        uploadedBy: user?._id
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Price sheet created successfully',
+      });
+      
+      setPriceSheetForm({ sheetName: '', description: '', isDefault: false });
+      loadPriceSheets();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create price sheet',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleDeletePriceSheet = async (id: string) => {
     if (!confirm('Are you sure you want to delete this price sheet?')) {
       return;
@@ -1520,10 +1554,28 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <Button onClick={handleUploadPriceSheet} disabled={!uploadFile || !priceSheetForm.sheetName} className="w-full">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Price Sheet
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={handleCreatePriceSheet} 
+                          disabled={!priceSheetForm.sheetName} 
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Empty Sheet
+                        </Button>
+                        <Button 
+                          onClick={handleUploadPriceSheet} 
+                          disabled={!uploadFile || !priceSheetForm.sheetName} 
+                          className="flex-1"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload from Excel
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Create an empty price sheet to add items manually, or upload from Excel file
+                      </p>
                     </CardContent>
                   </Card>
 

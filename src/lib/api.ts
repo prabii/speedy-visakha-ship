@@ -164,6 +164,7 @@ export const api = {
     },
     getActive: () => api.fetch('/price-sheets/active'),
     getById: (id: string) => api.fetch(`/price-sheets/${id}`),
+    create: (data: any) => api.fetch('/price-sheets', { method: 'POST', body: JSON.stringify(data) }),
     upload: (formData: FormData) => {
       return fetch(`${API_BASE_URL}/price-sheets/upload`, {
         method: 'POST',
