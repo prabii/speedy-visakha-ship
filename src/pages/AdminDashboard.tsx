@@ -1925,9 +1925,6 @@ const AdminDashboard = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
-                      </CardContent>
-                    </Card>
-                  )}
                 </CardContent>
               </Card>
             </TabsContent>
