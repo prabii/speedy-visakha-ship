@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { 
   Package, 
   FileText, 
@@ -86,55 +85,41 @@ export const Services = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((service, index) => (
-            <HoverCard key={index} openDelay={200} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <Card className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-primary rounded-full flex items-center justify-center group-hover:shadow-glow transition-all duration-300">
-                      <service.icon className="text-white" size={32} />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-3 text-foreground">
-                      {service.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {service.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80 p-0 bg-white" side="top">
-                <div className="relative">
-                  <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
-                    <img 
-                      src={service.image} 
-                      alt={service.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Fallback to gradient if image fails to load
-                        const target = e.currentTarget;
-                        target.style.display = 'none';
-                        const fallback = target.parentElement?.querySelector('.image-fallback');
-                        if (fallback) {
-                          (fallback as HTMLElement).classList.remove('hidden');
-                        }
-                      }}
-                    />
-                    <div className="hidden image-fallback absolute inset-0 w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                      <service.icon className="text-white" size={64} />
-                    </div>
-                  </div>
-                  <div className="p-4 bg-white">
-                    <h4 className="font-bold text-lg mb-2 text-foreground">{service.title}</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {service.description}
-                    </p>
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {service.details}
-                    </p>
-                  </div>
+            <Card key={index} className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+              <div className="relative w-full h-48 overflow-hidden">
+                <img 
+                  src={service.image} 
+                  alt={service.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    // Fallback to gradient if image fails to load
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    const fallback = target.parentElement?.querySelector('.image-fallback');
+                    if (fallback) {
+                      (fallback as HTMLElement).classList.remove('hidden');
+                    }
+                  }}
+                />
+                <div className="hidden image-fallback absolute inset-0 w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <service.icon className="text-white" size={64} />
                 </div>
-              </HoverCardContent>
-            </HoverCard>
+                <div className="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+                  <service.icon className="text-blue-600" size={24} />
+                </div>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-2 text-foreground">
+                  {service.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed mb-3">
+                  {service.description}
+                </p>
+                <p className="text-foreground text-sm leading-relaxed">
+                  {service.details}
+                </p>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
