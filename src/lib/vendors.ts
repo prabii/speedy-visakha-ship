@@ -10,6 +10,10 @@ export const vendors: Vendor[] = [
   { name: 'ICL', code: 'ICL' },
   { name: 'FEDEX PROMO', code: 'FXP' },
   { name: 'FEDERAL EXPRESS CORPORATION', code: 'FDX' },
+  { name: 'ATLANTIC COURIER', code: 'ATL' },
+  { name: 'PACIFIC EXP', code: 'PAC' },
+  { name: 'EXPLUS LOGISTICS', code: 'EXP' },
+  { name: 'SKYNET WORLDWIDE', code: 'SKY' },
 ];
 
 // Service data (linked to vendors)
@@ -29,6 +33,18 @@ export const services: Service[] = [
   { name: 'EXPRESS', vendorCode: 'ICL' },
   { name: 'ECONOMY FREIGHT', vendorCode: 'FDX' },
   { name: 'ECONOMY', vendorCode: 'FDX' },
+  { name: 'EXPRESS SERVICE', vendorCode: 'ATL' },
+  { name: 'STANDARD SERVICE', vendorCode: 'ATL' },
+  { name: 'ECONOMY SERVICE', vendorCode: 'ATL' },
+  { name: 'EXPRESS DELIVERY', vendorCode: 'PAC' },
+  { name: 'STANDARD DELIVERY', vendorCode: 'PAC' },
+  { name: 'ECONOMY DELIVERY', vendorCode: 'PAC' },
+  { name: 'EXPRESS LOGISTICS', vendorCode: 'EXP' },
+  { name: 'STANDARD LOGISTICS', vendorCode: 'EXP' },
+  { name: 'ECONOMY LOGISTICS', vendorCode: 'EXP' },
+  { name: 'WORLDWIDE EXPRESS', vendorCode: 'SKY' },
+  { name: 'WORLDWIDE STANDARD', vendorCode: 'SKY' },
+  { name: 'WORLDWIDE ECONOMY', vendorCode: 'SKY' },
 ];
 
 // Product data

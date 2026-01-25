@@ -1,8 +1,18 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+import api from "@/lib/api";
 
 const Pricing = () => {
-  const pricingData = [
+  const [priceSheet, setPriceSheet] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fallback pricing data
+  const fallbackPricingData = [
     {
       destination: "USA/Canada",
       documents: "₹800",
@@ -41,6 +51,25 @@ const Pricing = () => {
     }
   ];
 
+  useEffect(() => {
+    const loadPriceSheet = async () => {
+      try {
+        setLoading(true);
+        const data = await api.priceSheets.getActive();
+        setPriceSheet(data);
+        setError(null);
+      } catch (err: any) {
+        console.log('No active price sheet found, using fallback data');
+        setError(err.message);
+        setPriceSheet(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPriceSheet();
+  }, []);
+
   return (
     <main className="min-h-screen py-20">
       <div className="container mx-auto px-4">
@@ -54,41 +83,109 @@ const Pricing = () => {
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {pricingData.map((item, index) => (
-            <Card key={index} className="hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="bg-gradient-primary text-white text-center">
-                <CardTitle className="text-xl">{item.destination}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Documents:</span>
-                    <span className="text-lg font-bold text-primary">{item.documents}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Parcels:</span>
-                    <span className="text-lg font-bold text-primary">{item.parcels}</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 mb-6">
-                  {item.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="w-1.5 h-1.5 bg-gradient-secondary rounded-full"></div>
-                      {feature}
+        {/* Price Sheet Table */}
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading pricing information...</p>
+          </div>
+        ) : priceSheet && priceSheet.items && priceSheet.items.length > 0 ? (
+          <Card className="mb-16">
+            <CardHeader className="bg-gradient-primary text-white">
+              <CardTitle className="text-2xl text-center">
+                {priceSheet.sheetName || 'Current Pricing Rates'}
+              </CardTitle>
+              {priceSheet.description && (
+                <p className="text-center opacity-90 mt-2">{priceSheet.description}</p>
+              )}
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="font-semibold">Item Name</TableHead>
+                      {priceSheet.items[0]?.hsnCode && (
+                        <TableHead className="font-semibold">HSN Code</TableHead>
+                      )}
+                      {priceSheet.items[0]?.weight && (
+                        <TableHead className="font-semibold">Weight</TableHead>
+                      )}
+                      {priceSheet.items[0]?.destination && (
+                        <TableHead className="font-semibold">Destination</TableHead>
+                      )}
+                      {priceSheet.items[0]?.serviceType && (
+                        <TableHead className="font-semibold">Service Type</TableHead>
+                      )}
+                      <TableHead className="font-semibold text-right">Rate (₹)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {priceSheet.items.map((item: any, index: number) => (
+                      <TableRow key={item._id || index} className="hover:bg-gray-50">
+                        <TableCell className="font-medium">{item.itemName}</TableCell>
+                        {priceSheet.items[0]?.hsnCode && (
+                          <TableCell>{item.hsnCode || '-'}</TableCell>
+                        )}
+                        {priceSheet.items[0]?.weight && (
+                          <TableCell>{item.weight || '-'}</TableCell>
+                        )}
+                        {priceSheet.items[0]?.destination && (
+                          <TableCell>{item.destination || '-'}</TableCell>
+                        )}
+                        {priceSheet.items[0]?.serviceType && (
+                          <TableCell>
+                            {item.serviceType && (
+                              <Badge variant="outline">{item.serviceType}</Badge>
+                            )}
+                          </TableCell>
+                        )}
+                        <TableCell className="text-right font-bold text-primary">
+                          ₹{item.rate?.toLocaleString('en-IN') || '0'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          /* Fallback Pricing Cards */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {fallbackPricingData.map((item, index) => (
+              <Card key={index} className="hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
+                <CardHeader className="bg-gradient-primary text-white text-center">
+                  <CardTitle className="text-xl">{item.destination}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4 mb-6">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Documents:</span>
+                      <span className="text-lg font-bold text-primary">{item.documents}</span>
                     </div>
-                  ))}
-                </div>
-                
-                <Button variant="outline" className="w-full hover:bg-gradient-secondary hover:text-white hover:border-transparent">
-                  Get Quote
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Parcels:</span>
+                      <span className="text-lg font-bold text-primary">{item.parcels}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 mb-6">
+                    {item.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="w-1.5 h-1.5 bg-gradient-secondary rounded-full"></div>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button variant="outline" className="w-full hover:bg-gradient-secondary hover:text-white hover:border-transparent">
+                    Get Quote
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">

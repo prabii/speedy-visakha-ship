@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus, UserCog } from 'lucide-react';
+import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus, UserCog, Upload, FileSpreadsheet } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InvoiceEntry from '@/components/InvoiceEntry';
 import InvoiceHistory from '@/components/InvoiceHistory';
@@ -62,6 +62,17 @@ const AdminDashboard = () => {
     vendorName: '',
     role: 'vendor',
     isActive: true,
+  });
+  
+  // Price Sheets state
+  const [priceSheets, setPriceSheets] = useState<any[]>([]);
+  const [isLoadingPriceSheets, setIsLoadingPriceSheets] = useState(false);
+  const [editingPriceSheet, setEditingPriceSheet] = useState<any>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [priceSheetForm, setPriceSheetForm] = useState({
+    sheetName: '',
+    description: '',
+    isDefault: false,
   });
 
   useEffect(() => {
@@ -567,9 +578,116 @@ const AdminDashboard = () => {
     }
   };
 
+  // Price Sheets functions
+  const loadPriceSheets = async () => {
+    if (!isAdmin()) return;
+    setIsLoadingPriceSheets(true);
+    try {
+      const sheets = await api.priceSheets.getAll();
+      setPriceSheets(sheets);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load price sheets',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingPriceSheets(false);
+    }
+  };
+
+  const handleUploadPriceSheet = async () => {
+    if (!uploadFile) {
+      toast({
+        title: 'Error',
+        description: 'Please select an Excel file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!priceSheetForm.sheetName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a sheet name',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+      formData.append('sheetName', priceSheetForm.sheetName);
+      formData.append('description', priceSheetForm.description);
+      formData.append('isDefault', priceSheetForm.isDefault.toString());
+      if (user?._id) {
+        formData.append('uploadedBy', user._id);
+      }
+
+      await api.priceSheets.upload(formData);
+      
+      toast({
+        title: 'Success',
+        description: 'Price sheet uploaded successfully',
+      });
+      
+      setUploadFile(null);
+      setPriceSheetForm({ sheetName: '', description: '', isDefault: false });
+      loadPriceSheets();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to upload price sheet',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeletePriceSheet = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this price sheet?')) {
+      return;
+    }
+
+    try {
+      await api.priceSheets.delete(id);
+      toast({
+        title: 'Success',
+        description: 'Price sheet deleted successfully',
+      });
+      loadPriceSheets();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete price sheet',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await api.priceSheets.update(id, { isDefault: true });
+      toast({
+        title: 'Success',
+        description: 'Default price sheet updated',
+      });
+      loadPriceSheets();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update default price sheet',
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
     if (isAdmin() && activeTab === 'users') {
       loadVendorUsers();
+    }
+    if (isAdmin() && activeTab === 'price-sheets') {
+      loadPriceSheets();
     }
   }, [activeTab, isAdmin]);
 
@@ -721,6 +839,15 @@ const AdminDashboard = () => {
               <Building2 className="mr-2 h-4 w-4" />
               Branch Locations
             </TabsTrigger>
+            {isAdmin() && (
+              <TabsTrigger 
+                value="price-sheets"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Price Sheets
+              </TabsTrigger>
+            )}
             {isAdmin() && (
               <TabsTrigger 
                 value="users"
@@ -1090,6 +1217,146 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Price Sheets Tab (Admin only) */}
+          {isAdmin() && (
+            <TabsContent value="price-sheets" className="space-y-4">
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+                    Price Sheet Management
+                  </CardTitle>
+                  <CardDescription>Upload and manage rate charts from Excel files</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-6">
+                  {/* Upload Price Sheet Form */}
+                  <Card className="bg-gray-50 border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Upload New Price Sheet</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Sheet Name *</Label>
+                          <Input
+                            placeholder="Enter price sheet name"
+                            value={priceSheetForm.sheetName}
+                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, sheetName: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Input
+                            placeholder="Enter description (optional)"
+                            value={priceSheetForm.description}
+                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, description: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Excel File *</Label>
+                          <Input
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadFile(file);
+                                if (!priceSheetForm.sheetName) {
+                                  setPriceSheetForm({ ...priceSheetForm, sheetName: file.name.replace(/\.[^/.]+$/, '') });
+                                }
+                              }
+                            }}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Supported formats: .xlsx, .xls, .csv
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Set as Default</Label>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={priceSheetForm.isDefault}
+                              onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isDefault: e.target.checked })}
+                              className="w-4 h-4"
+                            />
+                            <span className="text-sm text-muted-foreground">Make this the default price sheet</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button onClick={handleUploadPriceSheet} disabled={!uploadFile || !priceSheetForm.sheetName} className="w-full">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Price Sheet
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Price Sheets List */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Price Sheets</h3>
+                    {isLoadingPriceSheets ? (
+                      <div className="text-center py-8">Loading...</div>
+                    ) : priceSheets.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">No price sheets found. Upload your first price sheet above.</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {priceSheets.map((sheet) => (
+                          <Card key={sheet._id} className="bg-white border-gray-200">
+                            <CardContent className="pt-6">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-2 flex-1">
+                                  <div className="mb-2">
+                                    <h4 className="font-bold text-lg text-blue-600">{sheet.sheetName}</h4>
+                                    {sheet.description && (
+                                      <p className="text-sm text-gray-500 mt-1">{sheet.description}</p>
+                                    )}
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      Uploaded: {new Date(sheet.createdAt).toLocaleDateString()} | 
+                                      Items: {sheet.items?.length || 0}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    {sheet.isDefault && (
+                                      <Badge className="bg-green-500">Default</Badge>
+                                    )}
+                                    {sheet.isActive ? (
+                                      <Badge className="bg-blue-500">Active</Badge>
+                                    ) : (
+                                      <Badge className="bg-gray-500">Inactive</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  {!sheet.isDefault && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleSetDefault(sheet._id)}
+                                    >
+                                      Set Default
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeletePriceSheet(sheet._id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           {/* Vendor Users Tab (Admin only) */}
           {isAdmin() && (

@@ -152,6 +152,35 @@ export const api = {
     delete: (id: string) => api.fetch(`/users/${id}`, { method: 'DELETE' }),
     changePassword: (data: { userId: string; oldPassword: string; newPassword: string }) => api.fetch('/users/change-password', { method: 'POST', body: JSON.stringify(data) }),
   },
+  
+  // Price Sheets API
+  priceSheets: {
+    getAll: (params?: { isActive?: boolean; isDefault?: boolean }) => {
+      const queryParams = new URLSearchParams();
+      if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+      if (params?.isDefault !== undefined) queryParams.append('isDefault', params.isDefault.toString());
+      const query = queryParams.toString();
+      return api.fetch(`/price-sheets${query ? `?${query}` : ''}`);
+    },
+    getActive: () => api.fetch('/price-sheets/active'),
+    getById: (id: string) => api.fetch(`/price-sheets/${id}`),
+    upload: (formData: FormData) => {
+      return fetch(`${API_BASE_URL}/price-sheets/upload`, {
+        method: 'POST',
+        body: formData,
+      }).then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: `${response.status} ${response.statusText}` }));
+          throw new Error(errorData.message || `${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      });
+    },
+    update: (id: string, data: any) => api.fetch(`/price-sheets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    updateItem: (id: string, itemId: string, data: any) => api.fetch(`/price-sheets/${id}/items/${itemId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteItem: (id: string, itemId: string) => api.fetch(`/price-sheets/${id}/items/${itemId}`, { method: 'DELETE' }),
+    delete: (id: string) => api.fetch(`/price-sheets/${id}`, { method: 'DELETE' }),
+  },
 };
 
 export default api;
