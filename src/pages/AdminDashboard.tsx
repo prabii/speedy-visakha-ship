@@ -1737,121 +1737,148 @@ const AdminDashboard = () => {
 
                         {/* Editable Items Table */}
                         <div>
-                          <h4 className="font-semibold mb-4">Items ({editedItems.length || selectedPriceSheet.items?.length || 0})</h4>
+                          <h4 className="font-semibold text-lg mb-4">Price Items ({editedItems.length || selectedPriceSheet.items?.length || 0})</h4>
                           {editedItems.length > 0 ? (
-                            <div className="border rounded-lg overflow-hidden">
+                            <div className="border rounded-lg overflow-hidden bg-white">
                               <div className="overflow-x-auto">
                                 <Table>
                                   <TableHeader>
                                     <TableRow className="bg-gray-50">
-                                      <TableHead className="w-[200px]">Item Name</TableHead>
-                                      <TableHead className="w-[100px]">HSN</TableHead>
-                                      <TableHead className="w-[100px]">Weight</TableHead>
-                                      <TableHead className="w-[150px]">Country</TableHead>
-                                      <TableHead className="w-[150px]">Destination</TableHead>
-                                      <TableHead className="w-[120px]">Service</TableHead>
-                                      <TableHead className="w-[120px] text-right">Rate</TableHead>
-                                      <TableHead className="w-[100px]">Actions</TableHead>
+                                      <TableHead className="font-semibold text-base">Item Name</TableHead>
+                                      {editedItems.some((i: any) => i.hsnCode) && (
+                                        <TableHead className="font-semibold text-base">HSN Code</TableHead>
+                                      )}
+                                      {editedItems.some((i: any) => i.weight) && (
+                                        <TableHead className="font-semibold text-base">Weight</TableHead>
+                                      )}
+                                      {editedItems.some((i: any) => i.country) && (
+                                        <TableHead className="font-semibold text-base">Country</TableHead>
+                                      )}
+                                      {editedItems.some((i: any) => i.destination) && (
+                                        <TableHead className="font-semibold text-base">Destination</TableHead>
+                                      )}
+                                      {editedItems.some((i: any) => i.serviceType) && (
+                                        <TableHead className="font-semibold text-base">Service Type</TableHead>
+                                      )}
+                                      <TableHead className="font-semibold text-base text-right">Rate</TableHead>
+                                      <TableHead className="font-semibold text-base text-center">Actions</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
                                     {editedItems.map((item: any, index: number) => (
                                       <TableRow key={item._id || index} className="hover:bg-gray-50">
-                                        <TableCell>
+                                        <TableCell className="py-3">
                                           <Input
                                             value={item.itemName || ''}
                                             onChange={(e) => handleCellEdit(index, 'itemName', e.target.value)}
-                                            className="h-8 text-sm"
+                                            className="h-9 text-base"
                                             onBlur={() => handleSaveRow(index)}
+                                            placeholder="Item name"
                                           />
                                         </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            value={item.hsnCode || ''}
-                                            onChange={(e) => handleCellEdit(index, 'hsnCode', e.target.value)}
-                                            className="h-8 text-sm"
-                                            onBlur={() => handleSaveRow(index)}
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            value={item.weight || ''}
-                                            onChange={(e) => handleCellEdit(index, 'weight', e.target.value)}
-                                            className="h-8 text-sm"
-                                            onBlur={() => handleSaveRow(index)}
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <div className="flex gap-1">
+                                        {editedItems.some((i: any) => i.hsnCode) && (
+                                          <TableCell className="py-3">
                                             <Input
-                                              value={item.country || ''}
-                                              readOnly
-                                              className="h-8 text-sm flex-1"
-                                              onClick={() => {
-                                                setCountryDialogFor({ row: index, field: 'country' });
-                                                setShowCountryDialog(true);
-                                              }}
+                                              value={item.hsnCode || ''}
+                                              onChange={(e) => handleCellEdit(index, 'hsnCode', e.target.value)}
+                                              className="h-9 text-base"
+                                              onBlur={() => handleSaveRow(index)}
+                                              placeholder="HSN code"
                                             />
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              className="h-8 px-2"
-                                              onClick={() => {
-                                                setCountryDialogFor({ row: index, field: 'country' });
-                                                setShowCountryDialog(true);
-                                              }}
-                                            >
-                                              <Edit className="h-3 w-3" />
-                                            </Button>
-                                          </div>
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            value={item.destination || ''}
-                                            onChange={(e) => handleCellEdit(index, 'destination', e.target.value)}
-                                            className="h-8 text-sm"
-                                            onBlur={() => handleSaveRow(index)}
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            value={item.serviceType || ''}
-                                            onChange={(e) => handleCellEdit(index, 'serviceType', e.target.value)}
-                                            className="h-8 text-sm"
-                                            onBlur={() => handleSaveRow(index)}
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <div className="flex items-center gap-1 justify-end">
-                                            <span className="text-xs text-gray-500">{item.currency || 'INR'}</span>
+                                          </TableCell>
+                                        )}
+                                        {editedItems.some((i: any) => i.weight) && (
+                                          <TableCell className="py-3">
+                                            <Input
+                                              value={item.weight || ''}
+                                              onChange={(e) => handleCellEdit(index, 'weight', e.target.value)}
+                                              className="h-9 text-base"
+                                              onBlur={() => handleSaveRow(index)}
+                                              placeholder="Weight"
+                                            />
+                                          </TableCell>
+                                        )}
+                                        {editedItems.some((i: any) => i.country) && (
+                                          <TableCell className="py-3">
+                                            <div className="flex items-center gap-2">
+                                              {item.country ? (
+                                                <Badge variant="outline" className="text-sm px-3 py-1.5 flex-1 justify-center">
+                                                  {item.country}
+                                                </Badge>
+                                              ) : (
+                                                <span className="text-gray-400 text-sm">-</span>
+                                              )}
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0"
+                                                onClick={() => {
+                                                  setCountryDialogFor({ row: index, field: 'country' });
+                                                  setShowCountryDialog(true);
+                                                }}
+                                                title="Change country"
+                                              >
+                                                <Edit className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          </TableCell>
+                                        )}
+                                        {editedItems.some((i: any) => i.destination) && (
+                                          <TableCell className="py-3">
+                                            <Input
+                                              value={item.destination || ''}
+                                              onChange={(e) => handleCellEdit(index, 'destination', e.target.value)}
+                                              className="h-9 text-base"
+                                              onBlur={() => handleSaveRow(index)}
+                                              placeholder="Destination"
+                                            />
+                                          </TableCell>
+                                        )}
+                                        {editedItems.some((i: any) => i.serviceType) && (
+                                          <TableCell className="py-3">
+                                            <Input
+                                              value={item.serviceType || ''}
+                                              onChange={(e) => handleCellEdit(index, 'serviceType', e.target.value)}
+                                              className="h-9 text-base"
+                                              onBlur={() => handleSaveRow(index)}
+                                              placeholder="Service type"
+                                            />
+                                          </TableCell>
+                                        )}
+                                        <TableCell className="py-3">
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <span className="text-sm text-gray-500">{item.currency || 'INR'}</span>
                                             <Input
                                               type="number"
                                               value={item.rate || 0}
                                               onChange={(e) => handleCellEdit(index, 'rate', parseFloat(e.target.value) || 0)}
-                                              className="h-8 text-sm w-20 text-right font-bold"
+                                              className="h-9 text-base w-28 text-right font-bold"
                                               onBlur={() => handleSaveRow(index)}
+                                              placeholder="0"
                                             />
                                           </div>
                                         </TableCell>
-                                        <TableCell>
-                                          <div className="flex gap-1">
+                                        <TableCell className="py-3">
+                                          <div className="flex gap-2 justify-center">
                                             <Button
                                               size="sm"
-                                              variant="ghost"
+                                              variant="outline"
                                               onClick={() => handleSaveRow(index)}
-                                              className="h-8 px-2"
+                                              className="h-8 px-3"
                                               title="Save changes"
                                             >
-                                              <Edit className="h-3 w-3 text-green-600" />
+                                              <Edit className="h-4 w-4 mr-1" />
+                                              Save
                                             </Button>
                                             <Button
                                               size="sm"
-                                              variant="ghost"
+                                              variant="outline"
                                               onClick={() => handleDeleteItem(selectedPriceSheet._id, item._id)}
-                                              className="h-8 px-2"
+                                              className="h-8 px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
                                               title="Delete item"
                                             >
-                                              <Trash2 className="h-3 w-3 text-red-600" />
+                                              <Trash2 className="h-4 w-4 mr-1" />
+                                              Delete
                                             </Button>
                                           </div>
                                         </TableCell>

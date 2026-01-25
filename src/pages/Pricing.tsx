@@ -104,20 +104,20 @@ const Pricing = () => {
             <CardContent className="p-6">
               {/* Filters */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="space-y-2">
-                  <Label>Filter by Country</Label>
+                <div>
                   <Input
                     placeholder="Search country..."
                     value={filterCountry}
                     onChange={(e) => setFilterCountry(e.target.value)}
+                    className="h-10 text-base"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Filter by Service Type</Label>
+                <div>
                   <Input
                     placeholder="Search service type..."
                     value={filterService}
                     onChange={(e) => setFilterService(e.target.value)}
+                    className="h-10 text-base"
                   />
                 </div>
               </div>
@@ -127,23 +127,23 @@ const Pricing = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold">Item Name</TableHead>
+                      <TableHead className="font-semibold text-base">Item Name</TableHead>
                       {priceSheet.items.some((i: any) => i.hsnCode) && (
-                        <TableHead className="font-semibold">HSN Code</TableHead>
+                        <TableHead className="font-semibold text-base">HSN Code</TableHead>
                       )}
                       {priceSheet.items.some((i: any) => i.weight) && (
-                        <TableHead className="font-semibold">Weight</TableHead>
+                        <TableHead className="font-semibold text-base">Weight</TableHead>
                       )}
                       {priceSheet.items.some((i: any) => i.country) && (
-                        <TableHead className="font-semibold">Country</TableHead>
+                        <TableHead className="font-semibold text-base">Country</TableHead>
                       )}
                       {priceSheet.items.some((i: any) => i.destination) && (
-                        <TableHead className="font-semibold">Destination</TableHead>
+                        <TableHead className="font-semibold text-base">Destination</TableHead>
                       )}
                       {priceSheet.items.some((i: any) => i.serviceType) && (
-                        <TableHead className="font-semibold">Service Type</TableHead>
+                        <TableHead className="font-semibold text-base">Service Type</TableHead>
                       )}
-                      <TableHead className="font-semibold text-right">Rate</TableHead>
+                      <TableHead className="font-semibold text-base text-right">Rate</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -155,37 +155,53 @@ const Pricing = () => {
                           (item.serviceType && item.serviceType.toLowerCase().includes(filterService.toLowerCase()));
                         return countryMatch && serviceMatch;
                       })
-                      .map((item: any, index: number) => (
-                        <TableRow key={item._id || index} className="hover:bg-gray-50">
-                          <TableCell className="font-medium">{item.itemName}</TableCell>
-                          {priceSheet.items.some((i: any) => i.hsnCode) && (
-                            <TableCell>{item.hsnCode || '-'}</TableCell>
-                          )}
-                          {priceSheet.items.some((i: any) => i.weight) && (
-                            <TableCell>{item.weight || '-'}</TableCell>
-                          )}
-                          {priceSheet.items.some((i: any) => i.country) && (
-                            <TableCell>
-                              {item.country && (
-                                <Badge variant="outline">{item.country}</Badge>
-                              )}
+                      .map((item: any, index: number) => {
+                        // Clean item name - remove FEDEX and service type mentions
+                        let cleanItemName = item.itemName || '';
+                        if (cleanItemName) {
+                          // Remove "FEDEX - " prefix and service type mentions
+                          cleanItemName = cleanItemName.replace(/^FEDEX\s*-\s*/i, '');
+                          cleanItemName = cleanItemName.replace(/\s*-\s*FEDEX\s*/i, '');
+                          // Remove service type from item name if it's already in serviceType column
+                          if (item.serviceType) {
+                            cleanItemName = cleanItemName.replace(new RegExp(`\\s*-\\s*${item.serviceType}\\s*`, 'i'), '');
+                          }
+                        }
+                        
+                        return (
+                          <TableRow key={item._id || index} className="hover:bg-gray-50">
+                            <TableCell className="font-medium text-base">{cleanItemName || '-'}</TableCell>
+                            {priceSheet.items.some((i: any) => i.hsnCode) && (
+                              <TableCell className="text-base">{item.hsnCode || '-'}</TableCell>
+                            )}
+                            {priceSheet.items.some((i: any) => i.weight) && (
+                              <TableCell className="text-base">{item.weight || '-'}</TableCell>
+                            )}
+                            {priceSheet.items.some((i: any) => i.country) && (
+                              <TableCell>
+                                {item.country && (
+                                  <Badge variant="outline" className="text-sm px-3 py-1">{item.country}</Badge>
+                                )}
+                              </TableCell>
+                            )}
+                            {priceSheet.items.some((i: any) => i.destination) && (
+                              <TableCell className="text-base">{item.destination || '-'}</TableCell>
+                            )}
+                            {priceSheet.items.some((i: any) => i.serviceType) && (
+                              <TableCell>
+                                {item.serviceType && (
+                                  <Badge variant="outline" className="text-sm px-3 py-1">{item.serviceType}</Badge>
+                                )}
+                              </TableCell>
+                            )}
+                            <TableCell className="text-right">
+                              <span className="font-bold text-lg text-blue-600">
+                                {item.currency || 'INR'} {item.rate?.toLocaleString('en-IN') || '0'}
+                              </span>
                             </TableCell>
-                          )}
-                          {priceSheet.items.some((i: any) => i.destination) && (
-                            <TableCell>{item.destination || '-'}</TableCell>
-                          )}
-                          {priceSheet.items.some((i: any) => i.serviceType) && (
-                            <TableCell>
-                              {item.serviceType && (
-                                <Badge variant="outline">{item.serviceType}</Badge>
-                              )}
-                            </TableCell>
-                          )}
-                          <TableCell className="text-right font-bold text-primary">
-                            {item.currency || 'INR'} {item.rate?.toLocaleString('en-IN') || '0'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                          </TableRow>
+                        );
+                      })}
                   </TableBody>
                 </Table>
               </div>
