@@ -91,11 +91,12 @@ const AdminDashboard = () => {
     currency: 'INR',
   });
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [editingCell, setEditingCell] = useState<{row: number, field: string} | null>(null);
+  const [editedItems, setEditedItems] = useState<any[]>([]);
   const [showCountryDialog, setShowCountryDialog] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
-  const [bulkImportMode, setBulkImportMode] = useState(false);
-  const [bulkImportText, setBulkImportText] = useState('');
-  const [isImporting, setIsImporting] = useState(false);
+  const [countryDialogFor, setCountryDialogFor] = useState<{row: number, field: string} | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -821,7 +822,57 @@ const AdminDashboard = () => {
       if (selectedPriceSheet?._id === sheetId) {
         const updated = await api.priceSheets.getById(sheetId);
         setSelectedPriceSheet(updated);
+        setEditedItems([...updated.items]);
       }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCellEdit = (rowIndex: number, field: string, value: any) => {
+    const updated = [...editedItems];
+    updated[rowIndex] = { ...updated[rowIndex], [field]: value };
+    setEditedItems(updated);
+  };
+
+  const handleSaveRow = async (rowIndex: number) => {
+    const item = editedItems[rowIndex];
+    if (!item.itemName || !item.rate) {
+      toast({
+        title: 'Error',
+        description: 'Item name and rate are required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await api.priceSheets.updateItem(selectedPriceSheet._id, item._id, {
+        itemName: item.itemName,
+        hsnCode: item.hsnCode || '',
+        weight: item.weight || '',
+        rate: parseFloat(item.rate?.toString() || '0'),
+        destination: item.destination || '',
+        country: item.country || '',
+        countryCode: item.countryCode || '',
+        serviceType: item.serviceType || '',
+        currency: item.currency || 'INR'
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Item updated successfully',
+      });
+      
+      setEditingCell(null);
+      // Reload to get fresh data
+      const updated = await api.priceSheets.getById(selectedPriceSheet._id);
+      setSelectedPriceSheet(updated);
+      setEditedItems([...updated.items]);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -857,99 +908,20 @@ const AdminDashboard = () => {
   };
 
   const selectCountry = (country: CountryCode) => {
-    setItemForm({ ...itemForm, country: country.name, countryCode: country.code });
+    if (countryDialogFor) {
+      // Update country in editable table
+      handleCellEdit(countryDialogFor.row, 'country', country.name);
+      handleCellEdit(countryDialogFor.row, 'countryCode', country.code);
+      setCountryDialogFor(null);
+    } else {
+      // Update country in form
+      setItemForm({ ...itemForm, country: country.name, countryCode: country.code });
+    }
     setShowCountryDialog(false);
     setCountrySearch('');
   };
 
   const countryResults = searchCountries(countrySearch);
-
-  const handleBulkImport = async (sheetId: string) => {
-    if (!bulkImportText.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please paste data from Excel',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsImporting(true);
-    try {
-      // Parse pasted data - support both tab-separated and comma-separated
-      const lines = bulkImportText.trim().split('\n').filter(line => line.trim());
-      const items = [];
-
-      for (const line of lines) {
-        // Try tab first (Excel default), then comma
-        const parts = line.includes('\t') 
-          ? line.split('\t').map(p => p.trim())
-          : line.split(',').map(p => p.trim());
-
-        if (parts.length < 2) continue; // Skip if not enough columns
-
-        // Expected format: ItemName, HSN, Weight, Rate, Country, Destination, ServiceType
-        // Or: ItemName, Rate (minimum required)
-        const itemName = parts[0] || '';
-        const hsnCode = parts[1] || '';
-        const weight = parts[2] || '';
-        const rate = parts[3] || parts[1]; // If only 2 columns, second is rate
-        const country = parts[4] || '';
-        const destination = parts[5] || '';
-        const serviceType = parts[6] || '';
-
-        // Parse rate (remove currency symbols, commas, etc.)
-        const parsedRate = parseFloat(rate.toString().replace(/[₹,$,\s]/g, ''));
-
-        if (itemName && parsedRate && !isNaN(parsedRate)) {
-          items.push({
-            itemName,
-            hsnCode: parts.length > 2 ? hsnCode : '', // Only if we have more than 2 columns
-            weight: parts.length > 2 ? weight : '',
-            rate: parsedRate,
-            destination,
-            country,
-            countryCode: '',
-            serviceType,
-            currency: 'INR'
-          });
-        }
-      }
-
-      if (items.length === 0) {
-        toast({
-          title: 'Error',
-          description: 'No valid items found. Please check your data format.',
-          variant: 'destructive',
-        });
-        setIsImporting(false);
-        return;
-      }
-
-      const result = await api.priceSheets.addBulkItems(sheetId, items);
-      
-      toast({
-        title: 'Success',
-        description: `Successfully imported ${result.addedCount} item(s)`,
-      });
-
-      setBulkImportText('');
-      setBulkImportMode(false);
-      loadPriceSheets();
-      if (selectedPriceSheet?._id === sheetId) {
-        const updated = await api.priceSheets.getById(sheetId);
-        setSelectedPriceSheet(updated);
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to import items',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   useEffect(() => {
     if (isAdmin() && activeTab === 'users') {
@@ -1499,10 +1471,10 @@ const AdminDashboard = () => {
                   <CardDescription>Upload and manage rate charts from Excel files</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-6">
-                  {/* Upload Price Sheet Form */}
+                  {/* Create New Price Sheet Form */}
                   <Card className="bg-gray-50 border-gray-200">
                     <CardHeader>
-                      <CardTitle className="text-lg">Upload New Price Sheet</CardTitle>
+                      <CardTitle className="text-lg">Create New Price Sheet</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1522,26 +1494,7 @@ const AdminDashboard = () => {
                             onChange={(e) => setPriceSheetForm({ ...priceSheetForm, description: e.target.value })}
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label>Excel File *</Label>
-                          <Input
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setUploadFile(file);
-                                if (!priceSheetForm.sheetName) {
-                                  setPriceSheetForm({ ...priceSheetForm, sheetName: file.name.replace(/\.[^/.]+$/, '') });
-                                }
-                              }
-                            }}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Supported formats: .xlsx, .xls, .csv
-                          </p>
-                        </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:col-span-2">
                           <Label>Set as Default</Label>
                           <div className="flex items-center space-x-2">
                             <input
@@ -1554,27 +1507,16 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={handleCreatePriceSheet} 
-                          disabled={!priceSheetForm.sheetName} 
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Empty Sheet
-                        </Button>
-                        <Button 
-                          onClick={handleUploadPriceSheet} 
-                          disabled={!uploadFile || !priceSheetForm.sheetName} 
-                          className="flex-1"
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Upload from Excel
-                        </Button>
-                      </div>
+                      <Button 
+                        onClick={handleCreatePriceSheet} 
+                        disabled={!priceSheetForm.sheetName} 
+                        className="w-full"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Price Sheet
+                      </Button>
                       <p className="text-xs text-muted-foreground text-center">
-                        Create an empty price sheet to add items manually, or upload from Excel file
+                        Create a new price sheet and add items manually using the editable table
                       </p>
                     </CardContent>
                   </Card>
@@ -1621,6 +1563,10 @@ const AdminDashboard = () => {
                                     onClick={async () => {
                                       const sheetData = await api.priceSheets.getById(sheet._id);
                                       setSelectedPriceSheet(sheetData);
+                                      setEditedItems([...sheetData.items]);
+                                      setEditingItem(null);
+                                      setEditingItemIndex(null);
+                                      setEditingCell(null);
                                     }}
                                   >
                                     <Edit className="h-4 w-4 mr-1" />
@@ -1666,6 +1612,8 @@ const AdminDashboard = () => {
                             onClick={() => {
                               setSelectedPriceSheet(null);
                               setEditingItem(null);
+                              setEditingItemIndex(null);
+                              setEditedItems([]);
                               setItemForm({
                                 itemName: '',
                                 hsnCode: '',
@@ -1684,51 +1632,12 @@ const AdminDashboard = () => {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-6">
-                        {/* Add/Edit Item Form */}
+                        {/* Add New Item Form */}
                         <Card className="bg-white border-gray-200">
                           <CardHeader>
-                            <div className="flex justify-between items-center">
-                              <CardTitle className="text-lg">
-                                {editingItem ? 'Edit Item' : bulkImportMode ? 'Bulk Import Items' : 'Add New Item'}
-                              </CardTitle>
-                              {!editingItem && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setBulkImportMode(!bulkImportMode)}
-                                >
-                                  {bulkImportMode ? 'Switch to Single Entry' : 'Switch to Bulk Import'}
-                                </Button>
-                              )}
-                            </div>
+                            <CardTitle className="text-lg">Add New Item</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            {bulkImportMode ? (
-                              <>
-                                <div className="space-y-2">
-                                  <Label>Paste Data from Excel</Label>
-                                  <Textarea
-                                    placeholder={`Paste your Excel data here (tab or comma separated).\n\nFormat: ItemName, HSN, Weight, Rate, Country, Destination, ServiceType\n\nExample:\nDocument, 4901, 0.5kg, 500, India, Mumbai, Express\nParcel, 4901, 1kg, 800, USA, New York, Standard`}
-                                    value={bulkImportText}
-                                    onChange={(e) => setBulkImportText(e.target.value)}
-                                    rows={10}
-                                    className="font-mono text-sm"
-                                  />
-                                  <p className="text-xs text-muted-foreground">
-                                    Tip: Copy data from Excel and paste here. Each row will be imported as a separate item.
-                                    Minimum required: Item Name and Rate.
-                                  </p>
-                                </div>
-                                <Button
-                                  onClick={() => handleBulkImport(selectedPriceSheet._id)}
-                                  disabled={!bulkImportText.trim() || isImporting}
-                                  className="w-full"
-                                >
-                                  {isImporting ? 'Importing...' : 'Import Items'}
-                                </Button>
-                              </>
-                            ) : (
-                              <>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <Label>Item Name *</Label>
@@ -1815,111 +1724,134 @@ const AdminDashboard = () => {
                                 </Select>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => {
-                                  if (editingItem) {
-                                    handleEditItem(selectedPriceSheet._id, editingItem._id);
-                                  } else {
-                                    handleAddItem(selectedPriceSheet._id);
-                                  }
-                                }}
-                                disabled={!itemForm.itemName || !itemForm.rate}
-                                className="flex-1"
-                              >
-                                <Plus className="mr-2 h-4 w-4" />
-                                {editingItem ? 'Update Item' : 'Add Item'}
-                              </Button>
-                              {editingItem && (
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingItem(null);
-                                    setItemForm({
-                                      itemName: '',
-                                      hsnCode: '',
-                                      weight: '',
-                                      rate: '',
-                                      destination: '',
-                                      country: '',
-                                      countryCode: '',
-                                      serviceType: '',
-                                      currency: 'INR',
-                                    });
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                              )}
-                            </div>
-                              </>
-                            )}
+                            <Button
+                              onClick={() => handleAddItem(selectedPriceSheet._id)}
+                              disabled={!itemForm.itemName || !itemForm.rate}
+                              className="w-full"
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Item
+                            </Button>
                           </CardContent>
                         </Card>
 
-                        {/* Items Table */}
+                        {/* Editable Items Table */}
                         <div>
-                          <h4 className="font-semibold mb-4">Items ({selectedPriceSheet.items?.length || 0})</h4>
-                          {selectedPriceSheet.items && selectedPriceSheet.items.length > 0 ? (
+                          <h4 className="font-semibold mb-4">Items ({editedItems.length || selectedPriceSheet.items?.length || 0})</h4>
+                          {editedItems.length > 0 ? (
                             <div className="border rounded-lg overflow-hidden">
                               <div className="overflow-x-auto">
                                 <Table>
                                   <TableHeader>
                                     <TableRow className="bg-gray-50">
-                                      <TableHead>Item Name</TableHead>
-                                      <TableHead>HSN</TableHead>
-                                      <TableHead>Weight</TableHead>
-                                      <TableHead>Country</TableHead>
-                                      <TableHead>Destination</TableHead>
-                                      <TableHead>Service</TableHead>
-                                      <TableHead className="text-right">Rate</TableHead>
-                                      <TableHead>Actions</TableHead>
+                                      <TableHead className="w-[200px]">Item Name</TableHead>
+                                      <TableHead className="w-[100px]">HSN</TableHead>
+                                      <TableHead className="w-[100px]">Weight</TableHead>
+                                      <TableHead className="w-[150px]">Country</TableHead>
+                                      <TableHead className="w-[150px]">Destination</TableHead>
+                                      <TableHead className="w-[120px]">Service</TableHead>
+                                      <TableHead className="w-[120px] text-right">Rate</TableHead>
+                                      <TableHead className="w-[100px]">Actions</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {selectedPriceSheet.items.map((item: any, index: number) => (
-                                      <TableRow key={item._id || index}>
-                                        <TableCell className="font-medium">{item.itemName}</TableCell>
-                                        <TableCell>{item.hsnCode || '-'}</TableCell>
-                                        <TableCell>{item.weight || '-'}</TableCell>
+                                    {editedItems.map((item: any, index: number) => (
+                                      <TableRow key={item._id || index} className="hover:bg-gray-50">
                                         <TableCell>
-                                          {item.country && (
-                                            <Badge variant="outline">{item.country}</Badge>
-                                          )}
-                                        </TableCell>
-                                        <TableCell>{item.destination || '-'}</TableCell>
-                                        <TableCell>{item.serviceType || '-'}</TableCell>
-                                        <TableCell className="text-right font-bold">
-                                          {item.currency || 'INR'} {item.rate?.toLocaleString('en-IN') || '0'}
+                                          <Input
+                                            value={item.itemName || ''}
+                                            onChange={(e) => handleCellEdit(index, 'itemName', e.target.value)}
+                                            className="h-8 text-sm"
+                                            onBlur={() => handleSaveRow(index)}
+                                          />
                                         </TableCell>
                                         <TableCell>
-                                          <div className="flex gap-2">
+                                          <Input
+                                            value={item.hsnCode || ''}
+                                            onChange={(e) => handleCellEdit(index, 'hsnCode', e.target.value)}
+                                            className="h-8 text-sm"
+                                            onBlur={() => handleSaveRow(index)}
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            value={item.weight || ''}
+                                            onChange={(e) => handleCellEdit(index, 'weight', e.target.value)}
+                                            className="h-8 text-sm"
+                                            onBlur={() => handleSaveRow(index)}
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex gap-1">
+                                            <Input
+                                              value={item.country || ''}
+                                              readOnly
+                                              className="h-8 text-sm flex-1"
+                                              onClick={() => {
+                                                setCountryDialogFor({ row: index, field: 'country' });
+                                                setShowCountryDialog(true);
+                                              }}
+                                            />
                                             <Button
                                               size="sm"
-                                              variant="outline"
+                                              variant="ghost"
+                                              className="h-8 px-2"
                                               onClick={() => {
-                                                setEditingItem(item);
-                                                setItemForm({
-                                                  itemName: item.itemName || '',
-                                                  hsnCode: item.hsnCode || '',
-                                                  weight: item.weight || '',
-                                                  rate: item.rate?.toString() || '',
-                                                  destination: item.destination || '',
-                                                  country: item.country || '',
-                                                  countryCode: item.countryCode || '',
-                                                  serviceType: item.serviceType || '',
-                                                  currency: item.currency || 'INR',
-                                                });
+                                                setCountryDialogFor({ row: index, field: 'country' });
+                                                setShowCountryDialog(true);
                                               }}
                                             >
                                               <Edit className="h-3 w-3" />
                                             </Button>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            value={item.destination || ''}
+                                            onChange={(e) => handleCellEdit(index, 'destination', e.target.value)}
+                                            className="h-8 text-sm"
+                                            onBlur={() => handleSaveRow(index)}
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            value={item.serviceType || ''}
+                                            onChange={(e) => handleCellEdit(index, 'serviceType', e.target.value)}
+                                            className="h-8 text-sm"
+                                            onBlur={() => handleSaveRow(index)}
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex items-center gap-1 justify-end">
+                                            <span className="text-xs text-gray-500">{item.currency || 'INR'}</span>
+                                            <Input
+                                              type="number"
+                                              value={item.rate || 0}
+                                              onChange={(e) => handleCellEdit(index, 'rate', parseFloat(e.target.value) || 0)}
+                                              className="h-8 text-sm w-20 text-right font-bold"
+                                              onBlur={() => handleSaveRow(index)}
+                                            />
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex gap-1">
                                             <Button
                                               size="sm"
-                                              variant="destructive"
-                                              onClick={() => handleDeleteItem(selectedPriceSheet._id, item._id)}
+                                              variant="ghost"
+                                              onClick={() => handleSaveRow(index)}
+                                              className="h-8 px-2"
+                                              title="Save changes"
                                             >
-                                              <Trash2 className="h-3 w-3" />
+                                              <Edit className="h-3 w-3 text-green-600" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => handleDeleteItem(selectedPriceSheet._id, item._id)}
+                                              className="h-8 px-2"
+                                              title="Delete item"
+                                            >
+                                              <Trash2 className="h-3 w-3 text-red-600" />
                                             </Button>
                                           </div>
                                         </TableCell>
@@ -1928,6 +1860,10 @@ const AdminDashboard = () => {
                                   </TableBody>
                                 </Table>
                               </div>
+                            </div>
+                          ) : selectedPriceSheet.items && selectedPriceSheet.items.length > 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                              Loading items...
                             </div>
                           ) : (
                             <div className="text-center py-8 text-gray-500">
