@@ -177,6 +177,8 @@ export const api = {
       });
     },
     update: (id: string, data: any) => api.fetch(`/price-sheets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    addItem: (id: string, data: any) => api.fetch(`/price-sheets/${id}/items`, { method: 'POST', body: JSON.stringify(data) }),
+    addBulkItems: (id: string, items: any[]) => api.fetch(`/price-sheets/${id}/items/bulk`, { method: 'POST', body: JSON.stringify({ items }) }),
     updateItem: (id: string, itemId: string, data: any) => api.fetch(`/price-sheets/${id}/items/${itemId}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteItem: (id: string, itemId: string) => api.fetch(`/price-sheets/${id}/items/${itemId}`, { method: 'DELETE' }),
     delete: (id: string) => api.fetch(`/price-sheets/${id}`, { method: 'DELETE' }),

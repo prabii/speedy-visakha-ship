@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus, UserCog, Upload, FileSpreadsheet } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import InvoiceEntry from '@/components/InvoiceEntry';
 import InvoiceHistory from '@/components/InvoiceHistory';
 import api from '@/lib/api';
+import { countryCodes, searchCountries, CountryCode } from '@/lib/countryCodes';
 
 const AdminDashboard = () => {
   const { isAuthenticated, logout, changePassword, user, isAdmin, isVendor } = useAuth();
@@ -68,12 +72,30 @@ const AdminDashboard = () => {
   const [priceSheets, setPriceSheets] = useState<any[]>([]);
   const [isLoadingPriceSheets, setIsLoadingPriceSheets] = useState(false);
   const [editingPriceSheet, setEditingPriceSheet] = useState<any>(null);
+  const [selectedPriceSheet, setSelectedPriceSheet] = useState<any>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [priceSheetForm, setPriceSheetForm] = useState({
     sheetName: '',
     description: '',
     isDefault: false,
   });
+  const [itemForm, setItemForm] = useState({
+    itemName: '',
+    hsnCode: '',
+    weight: '',
+    rate: '',
+    destination: '',
+    country: '',
+    countryCode: '',
+    serviceType: '',
+    currency: 'INR',
+  });
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [showCountryDialog, setShowCountryDialog] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [bulkImportMode, setBulkImportMode] = useState(false);
+  const [bulkImportText, setBulkImportText] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -679,6 +701,219 @@ const AdminDashboard = () => {
         description: error.message || 'Failed to update default price sheet',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleAddItem = async (sheetId: string) => {
+    if (!itemForm.itemName || !itemForm.rate) {
+      toast({
+        title: 'Error',
+        description: 'Item name and rate are required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await api.priceSheets.addItem(sheetId, {
+        ...itemForm,
+        rate: parseFloat(itemForm.rate) || 0
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Item added successfully',
+      });
+      
+      setItemForm({
+        itemName: '',
+        hsnCode: '',
+        weight: '',
+        rate: '',
+        destination: '',
+        country: '',
+        countryCode: '',
+        serviceType: '',
+        currency: 'INR',
+      });
+      loadPriceSheets();
+      if (selectedPriceSheet?._id === sheetId) {
+        const updated = await api.priceSheets.getById(sheetId);
+        setSelectedPriceSheet(updated);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditItem = async (sheetId: string, itemId: string) => {
+    if (!itemForm.itemName || !itemForm.rate) {
+      toast({
+        title: 'Error',
+        description: 'Item name and rate are required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await api.priceSheets.updateItem(sheetId, itemId, {
+        ...itemForm,
+        rate: parseFloat(itemForm.rate) || 0
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Item updated successfully',
+      });
+      
+      setEditingItem(null);
+      setItemForm({
+        itemName: '',
+        hsnCode: '',
+        weight: '',
+        rate: '',
+        destination: '',
+        country: '',
+        countryCode: '',
+        serviceType: '',
+        currency: 'INR',
+      });
+      loadPriceSheets();
+      if (selectedPriceSheet?._id === sheetId) {
+        const updated = await api.priceSheets.getById(sheetId);
+        setSelectedPriceSheet(updated);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteItem = async (sheetId: string, itemId: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+
+    try {
+      await api.priceSheets.deleteItem(sheetId, itemId);
+      toast({
+        title: 'Success',
+        description: 'Item deleted successfully',
+      });
+      loadPriceSheets();
+      if (selectedPriceSheet?._id === sheetId) {
+        const updated = await api.priceSheets.getById(sheetId);
+        setSelectedPriceSheet(updated);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const selectCountry = (country: CountryCode) => {
+    setItemForm({ ...itemForm, country: country.name, countryCode: country.code });
+    setShowCountryDialog(false);
+    setCountrySearch('');
+  };
+
+  const countryResults = searchCountries(countrySearch);
+
+  const handleBulkImport = async (sheetId: string) => {
+    if (!bulkImportText.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please paste data from Excel',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      // Parse pasted data - support both tab-separated and comma-separated
+      const lines = bulkImportText.trim().split('\n').filter(line => line.trim());
+      const items = [];
+
+      for (const line of lines) {
+        // Try tab first (Excel default), then comma
+        const parts = line.includes('\t') 
+          ? line.split('\t').map(p => p.trim())
+          : line.split(',').map(p => p.trim());
+
+        if (parts.length < 2) continue; // Skip if not enough columns
+
+        // Expected format: ItemName, HSN, Weight, Rate, Country, Destination, ServiceType
+        // Or: ItemName, Rate (minimum required)
+        const itemName = parts[0] || '';
+        const hsnCode = parts[1] || '';
+        const weight = parts[2] || '';
+        const rate = parts[3] || parts[1]; // If only 2 columns, second is rate
+        const country = parts[4] || '';
+        const destination = parts[5] || '';
+        const serviceType = parts[6] || '';
+
+        // Parse rate (remove currency symbols, commas, etc.)
+        const parsedRate = parseFloat(rate.toString().replace(/[₹,$,\s]/g, ''));
+
+        if (itemName && parsedRate && !isNaN(parsedRate)) {
+          items.push({
+            itemName,
+            hsnCode: parts.length > 2 ? hsnCode : '', // Only if we have more than 2 columns
+            weight: parts.length > 2 ? weight : '',
+            rate: parsedRate,
+            destination,
+            country,
+            countryCode: '',
+            serviceType,
+            currency: 'INR'
+          });
+        }
+      }
+
+      if (items.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'No valid items found. Please check your data format.',
+          variant: 'destructive',
+        });
+        setIsImporting(false);
+        return;
+      }
+
+      const result = await api.priceSheets.addBulkItems(sheetId, items);
+      
+      toast({
+        title: 'Success',
+        description: `Successfully imported ${result.addedCount} item(s)`,
+      });
+
+      setBulkImportText('');
+      setBulkImportMode(false);
+      loadPriceSheets();
+      if (selectedPriceSheet?._id === sheetId) {
+        const updated = await api.priceSheets.getById(sheetId);
+        setSelectedPriceSheet(updated);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to import items',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -1328,6 +1563,17 @@ const AdminDashboard = () => {
                                   </div>
                                 </div>
                                 <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={async () => {
+                                      const sheetData = await api.priceSheets.getById(sheet._id);
+                                      setSelectedPriceSheet(sheetData);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Manage Items
+                                  </Button>
                                   {!sheet.isDefault && (
                                     <Button
                                       size="sm"
@@ -1353,6 +1599,347 @@ const AdminDashboard = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Selected Price Sheet - Item Management */}
+                  {selectedPriceSheet && (
+                    <Card className="bg-blue-50/50 border-blue-200 mt-6">
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle className="text-lg">
+                            Manage Items: {selectedPriceSheet.sheetName}
+                          </CardTitle>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPriceSheet(null);
+                              setEditingItem(null);
+                              setItemForm({
+                                itemName: '',
+                                hsnCode: '',
+                                weight: '',
+                                rate: '',
+                                destination: '',
+                                country: '',
+                                countryCode: '',
+                                serviceType: '',
+                                currency: 'INR',
+                              });
+                            }}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {/* Add/Edit Item Form */}
+                        <Card className="bg-white border-gray-200">
+                          <CardHeader>
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-lg">
+                                {editingItem ? 'Edit Item' : bulkImportMode ? 'Bulk Import Items' : 'Add New Item'}
+                              </CardTitle>
+                              {!editingItem && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setBulkImportMode(!bulkImportMode)}
+                                >
+                                  {bulkImportMode ? 'Switch to Single Entry' : 'Switch to Bulk Import'}
+                                </Button>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {bulkImportMode ? (
+                              <>
+                                <div className="space-y-2">
+                                  <Label>Paste Data from Excel</Label>
+                                  <Textarea
+                                    placeholder={`Paste your Excel data here (tab or comma separated).\n\nFormat: ItemName, HSN, Weight, Rate, Country, Destination, ServiceType\n\nExample:\nDocument, 4901, 0.5kg, 500, India, Mumbai, Express\nParcel, 4901, 1kg, 800, USA, New York, Standard`}
+                                    value={bulkImportText}
+                                    onChange={(e) => setBulkImportText(e.target.value)}
+                                    rows={10}
+                                    className="font-mono text-sm"
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Tip: Copy data from Excel and paste here. Each row will be imported as a separate item.
+                                    Minimum required: Item Name and Rate.
+                                  </p>
+                                </div>
+                                <Button
+                                  onClick={() => handleBulkImport(selectedPriceSheet._id)}
+                                  disabled={!bulkImportText.trim() || isImporting}
+                                  className="w-full"
+                                >
+                                  {isImporting ? 'Importing...' : 'Import Items'}
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Item Name *</Label>
+                                <Input
+                                  placeholder="Enter item name"
+                                  value={itemForm.itemName}
+                                  onChange={(e) => setItemForm({ ...itemForm, itemName: e.target.value })}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>HSN Code</Label>
+                                <Input
+                                  placeholder="Enter HSN code"
+                                  value={itemForm.hsnCode}
+                                  onChange={(e) => setItemForm({ ...itemForm, hsnCode: e.target.value })}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Weight</Label>
+                                <Input
+                                  placeholder="e.g., 1kg, 500g"
+                                  value={itemForm.weight}
+                                  onChange={(e) => setItemForm({ ...itemForm, weight: e.target.value })}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Rate (₹) *</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="Enter rate"
+                                  value={itemForm.rate}
+                                  onChange={(e) => setItemForm({ ...itemForm, rate: e.target.value })}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Country</Label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Select country"
+                                    value={itemForm.country}
+                                    readOnly
+                                    onClick={() => setShowCountryDialog(true)}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowCountryDialog(true)}
+                                  >
+                                    Select
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Destination</Label>
+                                <Input
+                                  placeholder="Enter destination city"
+                                  value={itemForm.destination}
+                                  onChange={(e) => setItemForm({ ...itemForm, destination: e.target.value })}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Service Type</Label>
+                                <Input
+                                  placeholder="e.g., Express, Standard"
+                                  value={itemForm.serviceType}
+                                  onChange={(e) => setItemForm({ ...itemForm, serviceType: e.target.value })}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Currency</Label>
+                                <Select
+                                  value={itemForm.currency}
+                                  onValueChange={(value) => setItemForm({ ...itemForm, currency: value })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="INR">INR (₹)</SelectItem>
+                                    <SelectItem value="USD">USD ($)</SelectItem>
+                                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (editingItem) {
+                                    handleEditItem(selectedPriceSheet._id, editingItem._id);
+                                  } else {
+                                    handleAddItem(selectedPriceSheet._id);
+                                  }
+                                }}
+                                disabled={!itemForm.itemName || !itemForm.rate}
+                                className="flex-1"
+                              >
+                                <Plus className="mr-2 h-4 w-4" />
+                                {editingItem ? 'Update Item' : 'Add Item'}
+                              </Button>
+                              {editingItem && (
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingItem(null);
+                                    setItemForm({
+                                      itemName: '',
+                                      hsnCode: '',
+                                      weight: '',
+                                      rate: '',
+                                      destination: '',
+                                      country: '',
+                                      countryCode: '',
+                                      serviceType: '',
+                                      currency: 'INR',
+                                    });
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              )}
+                            </div>
+                              </>
+                            )}
+                          </CardContent>
+                        </Card>
+
+                        {/* Items Table */}
+                        <div>
+                          <h4 className="font-semibold mb-4">Items ({selectedPriceSheet.items?.length || 0})</h4>
+                          {selectedPriceSheet.items && selectedPriceSheet.items.length > 0 ? (
+                            <div className="border rounded-lg overflow-hidden">
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-gray-50">
+                                      <TableHead>Item Name</TableHead>
+                                      <TableHead>HSN</TableHead>
+                                      <TableHead>Weight</TableHead>
+                                      <TableHead>Country</TableHead>
+                                      <TableHead>Destination</TableHead>
+                                      <TableHead>Service</TableHead>
+                                      <TableHead className="text-right">Rate</TableHead>
+                                      <TableHead>Actions</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {selectedPriceSheet.items.map((item: any, index: number) => (
+                                      <TableRow key={item._id || index}>
+                                        <TableCell className="font-medium">{item.itemName}</TableCell>
+                                        <TableCell>{item.hsnCode || '-'}</TableCell>
+                                        <TableCell>{item.weight || '-'}</TableCell>
+                                        <TableCell>
+                                          {item.country && (
+                                            <Badge variant="outline">{item.country}</Badge>
+                                          )}
+                                        </TableCell>
+                                        <TableCell>{item.destination || '-'}</TableCell>
+                                        <TableCell>{item.serviceType || '-'}</TableCell>
+                                        <TableCell className="text-right font-bold">
+                                          {item.currency || 'INR'} {item.rate?.toLocaleString('en-IN') || '0'}
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex gap-2">
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => {
+                                                setEditingItem(item);
+                                                setItemForm({
+                                                  itemName: item.itemName || '',
+                                                  hsnCode: item.hsnCode || '',
+                                                  weight: item.weight || '',
+                                                  rate: item.rate?.toString() || '',
+                                                  destination: item.destination || '',
+                                                  country: item.country || '',
+                                                  countryCode: item.countryCode || '',
+                                                  serviceType: item.serviceType || '',
+                                                  currency: item.currency || 'INR',
+                                                });
+                                              }}
+                                            >
+                                              <Edit className="h-3 w-3" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="destructive"
+                                              onClick={() => handleDeleteItem(selectedPriceSheet._id, item._id)}
+                                            >
+                                              <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              No items found. Add your first item above.
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Country Selection Dialog */}
+                  <Dialog open={showCountryDialog} onOpenChange={setShowCountryDialog}>
+                    <DialogContent className="max-w-3xl max-h-[80vh]">
+                      <DialogHeader>
+                        <DialogTitle>Select Country</DialogTitle>
+                        <DialogDescription>
+                          Search and select a country for the price item
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <Input
+                          placeholder="Search country..."
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                        />
+                        <ScrollArea className="h-[400px]">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Country Name</TableHead>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Action</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {countryResults.length > 0 ? (
+                                countryResults.map((country, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell>{country.name}</TableCell>
+                                    <TableCell>{country.code}</TableCell>
+                                    <TableCell>
+                                      <Button size="sm" onClick={() => selectCountry(country)}>
+                                        Select
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              ) : (
+                                <TableRow>
+                                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                                    No countries found
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </ScrollArea>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                      </CardContent>
+                    </Card>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
