@@ -56,12 +56,13 @@ export const Header = () => {
           </Link>
           
           <nav className="hidden md:flex items-center gap-3 lg:gap-4 flex-shrink">
-            <Link to="/" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Home</Link>
-            <Link to="/about" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">About</Link>
-            <Link to="/services" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Services</Link>
-            <Link to="/pricing" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Pricing</Link>
-            <Link to="/locations" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Locations</Link>
-            <Link to="/contact" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Contact</Link>
+            <Link to="/" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">Home</Link>
+            <Link to="/about" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">About</Link>
+            <Link to="/services" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">Services</Link>
+            <Link to="/pricing" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">Pricing</Link>
+            <Link to="/gallery" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">Gallery</Link>
+            <Link to="/locations" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">Locations</Link>
+            <Link to="/contact" className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">Contact</Link>
           </nav>
           
           <div className="flex items-center gap-2 flex-shrink-0">

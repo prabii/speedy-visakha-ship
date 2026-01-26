@@ -184,6 +184,27 @@ export const api = {
     deleteItem: (id: string, itemId: string) => api.fetch(`/price-sheets/${id}/items/${itemId}`, { method: 'DELETE' }),
     delete: (id: string) => api.fetch(`/price-sheets/${id}`, { method: 'DELETE' }),
   },
+  
+  // Gallery API
+  gallery: {
+    getAll: () => api.fetch('/gallery'),
+    getById: (id: string) => api.fetch(`/gallery/${id}`),
+    create: (data: any) => api.fetch('/gallery', { method: 'POST', body: JSON.stringify(data) }),
+    upload: (formData: FormData) => {
+      return fetch(`${API_BASE_URL}/gallery/upload`, {
+        method: 'POST',
+        body: formData,
+      }).then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: `${response.status} ${response.statusText}` }));
+          throw new Error(errorData.message || `${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      });
+    },
+    update: (id: string, data: any) => api.fetch(`/gallery/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => api.fetch(`/gallery/${id}`, { method: 'DELETE' }),
+  },
 };
 
 export default api;

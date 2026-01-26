@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus, UserCog, Upload, FileSpreadsheet } from 'lucide-react';
+import { FileText, LogOut, Package, Users, History, Settings, Lock, Eye, EyeOff, Search, Edit, Building2, Trash2, Plus, UserCog, Upload, FileSpreadsheet, Image as ImageIcon, Video, Youtube, Link as LinkIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -98,6 +98,19 @@ const AdminDashboard = () => {
   const [showCountryDialog, setShowCountryDialog] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [countryDialogFor, setCountryDialogFor] = useState<{row: number, field: string} | null>(null);
+  
+  // Gallery state
+  const [galleryItems, setGalleryItems] = useState<any[]>([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+  const [galleryForm, setGalleryForm] = useState({
+    type: 'image' as 'image' | 'video' | 'youtube' | 'imageUrl',
+    url: '',
+    title: '',
+    description: '',
+  });
+  const [galleryUploadFile, setGalleryUploadFile] = useState<File | null>(null);
+  const [showGalleryDialog, setShowGalleryDialog] = useState(false);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<any>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -931,11 +944,151 @@ const AdminDashboard = () => {
     if (isAdmin() && activeTab === 'price-sheets') {
       loadPriceSheets();
     }
+    if (isAdmin() && activeTab === 'gallery') {
+      loadGalleryItems();
+    }
   }, [activeTab, isAdmin]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  // Gallery functions
+  const loadGalleryItems = async () => {
+    setIsLoadingGallery(true);
+    try {
+      const data = await api.gallery.getAll();
+      setGalleryItems(data || []);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load gallery items',
+        variant: 'destructive',
+      });
+      setGalleryItems([]);
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  };
+
+  const handleGalleryUpload = async () => {
+    if (!galleryUploadFile && galleryForm.type !== 'youtube' && galleryForm.type !== 'imageUrl') {
+      toast({
+        title: 'Error',
+        description: 'Please select a file to upload',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if ((galleryForm.type === 'youtube' || galleryForm.type === 'imageUrl') && !galleryForm.url.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a URL',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (galleryForm.type === 'youtube' || galleryForm.type === 'imageUrl') {
+        // Create item with URL
+        const itemData = {
+          type: galleryForm.type,
+          url: galleryForm.url.trim(),
+          title: galleryForm.title.trim() || undefined,
+          description: galleryForm.description.trim() || undefined,
+        };
+        
+        if (editingGalleryItem) {
+          await api.gallery.update(editingGalleryItem._id, itemData);
+          toast({
+            title: 'Success',
+            description: 'Gallery item updated successfully',
+          });
+        } else {
+          await api.gallery.create(itemData);
+          toast({
+            title: 'Success',
+            description: 'Gallery item added successfully',
+          });
+        }
+      } else {
+        // Upload file
+        const formData = new FormData();
+        formData.append('file', galleryUploadFile!);
+        formData.append('type', galleryForm.type);
+        if (galleryForm.title.trim()) formData.append('title', galleryForm.title.trim());
+        if (galleryForm.description.trim()) formData.append('description', galleryForm.description.trim());
+        
+        if (editingGalleryItem) {
+          formData.append('_id', editingGalleryItem._id);
+          await api.gallery.upload(formData);
+          toast({
+            title: 'Success',
+            description: 'Gallery item updated successfully',
+          });
+        } else {
+          await api.gallery.upload(formData);
+          toast({
+            title: 'Success',
+            description: 'Gallery item uploaded successfully',
+          });
+        }
+      }
+      
+      setShowGalleryDialog(false);
+      setGalleryForm({ type: 'image', url: '', title: '', description: '' });
+      setGalleryUploadFile(null);
+      setEditingGalleryItem(null);
+      loadGalleryItems();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save gallery item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteGalleryItem = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this gallery item?')) {
+      return;
+    }
+
+    try {
+      await api.gallery.delete(id);
+      toast({
+        title: 'Success',
+        description: 'Gallery item deleted successfully',
+      });
+      loadGalleryItems();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete gallery item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditGalleryItem = (item: any) => {
+    setEditingGalleryItem(item);
+    setGalleryForm({
+      type: item.type,
+      url: item.url || '',
+      title: item.title || '',
+      description: item.description || '',
+    });
+    setShowGalleryDialog(true);
+  };
+
+  const handleNewGalleryItem = () => {
+    setEditingGalleryItem(null);
+    setGalleryForm({ type: 'image', url: '', title: '', description: '' });
+    setGalleryUploadFile(null);
+    setShowGalleryDialog(true);
   };
 
   const handleChangePassword = (e: React.FormEvent) => {
@@ -1133,6 +1286,15 @@ const AdminDashboard = () => {
               >
                 <UserCog className="mr-2 h-4 w-4" />
                 Vendor Users
+              </TabsTrigger>
+            )}
+            {isAdmin() && (
+              <TabsTrigger 
+                value="gallery"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              >
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Gallery
               </TabsTrigger>
             )}
             <TabsTrigger 
@@ -2154,6 +2316,254 @@ const AdminDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+
+          {/* Gallery Tab (Admin only) */}
+          {isAdmin() && (
+            <TabsContent value="gallery" className="space-y-4">
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5 text-blue-600" />
+                        Gallery Management
+                      </CardTitle>
+                      <CardDescription>Upload and manage gallery images, videos, and YouTube links</CardDescription>
+                    </div>
+                    <Button onClick={handleNewGalleryItem} className="bg-gradient-primary text-white hover:opacity-90">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Item
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {isLoadingGallery ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">Loading gallery items...</p>
+                    </div>
+                  ) : galleryItems.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-muted-foreground text-lg">No gallery items yet</p>
+                      <p className="text-muted-foreground text-sm mt-2">Click "Add Item" to upload images, videos, or add YouTube links</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {galleryItems.map((item) => (
+                        <Card key={item._id} className="overflow-hidden">
+                          <CardContent className="p-0">
+                            {item.type === 'youtube' ? (
+                              <div className="relative aspect-video bg-gray-100">
+                                {(() => {
+                                  const videoId = item.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)?.[1];
+                                  return (
+                                    <>
+                                      <img
+                                        src={videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '/placeholder-video.jpg'}
+                                        alt={item.title || 'YouTube Video'}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                        <Youtube className="h-8 w-8 text-white" />
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            ) : item.type === 'video' ? (
+                              <div className="relative aspect-video bg-gray-100">
+                                <video
+                                  src={item.url}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <Video className="h-8 w-8 text-white" />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative aspect-square bg-gray-100">
+                                <img
+                                  src={item.url}
+                                  alt={item.title || 'Gallery Image'}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div className="p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {item.type === 'youtube' ? 'YouTube' : item.type === 'video' ? 'Video' : 'Image'}
+                                </Badge>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditGalleryItem(item)}
+                                    className="h-7 px-2"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteGalleryItem(item._id)}
+                                    className="h-7 px-2 text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                              {item.title && (
+                                <h4 className="font-semibold text-sm mb-1">{item.title}</h4>
+                              )}
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Add/Edit Gallery Item Dialog */}
+              <Dialog open={showGalleryDialog} onOpenChange={setShowGalleryDialog}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingGalleryItem ? 'Edit Gallery Item' : 'Add Gallery Item'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Upload images/videos, add YouTube links, or provide image URLs
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label>Type *</Label>
+                      <Select
+                        value={galleryForm.type}
+                        onValueChange={(value: 'image' | 'video' | 'youtube' | 'imageUrl') => {
+                          setGalleryForm({ ...galleryForm, type: value, url: '' });
+                          setGalleryUploadFile(null);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="image">
+                            <div className="flex items-center gap-2">
+                              <ImageIcon className="h-4 w-4" />
+                              Upload Image
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="video">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-4 w-4" />
+                              Upload Video
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="youtube">
+                            <div className="flex items-center gap-2">
+                              <Youtube className="h-4 w-4" />
+                              YouTube Link
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="imageUrl">
+                            <div className="flex items-center gap-2">
+                              <LinkIcon className="h-4 w-4" />
+                              Image URL
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {(galleryForm.type === 'image' || galleryForm.type === 'video') && (
+                      <div className="space-y-2">
+                        <Label>
+                          {galleryForm.type === 'image' ? 'Upload Image' : 'Upload Video'} *
+                        </Label>
+                        <Input
+                          type="file"
+                          accept={galleryForm.type === 'image' ? 'image/*' : 'video/*'}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setGalleryUploadFile(file);
+                            }
+                          }}
+                        />
+                        {galleryUploadFile && (
+                          <p className="text-sm text-muted-foreground">
+                            Selected: {galleryUploadFile.name}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {(galleryForm.type === 'youtube' || galleryForm.type === 'imageUrl') && (
+                      <div className="space-y-2">
+                        <Label>
+                          {galleryForm.type === 'youtube' ? 'YouTube URL' : 'Image URL'} *
+                        </Label>
+                        <Input
+                          type="url"
+                          placeholder={
+                            galleryForm.type === 'youtube'
+                              ? 'https://www.youtube.com/watch?v=...'
+                              : 'https://example.com/image.jpg'
+                          }
+                          value={galleryForm.url}
+                          onChange={(e) => setGalleryForm({ ...galleryForm, url: e.target.value })}
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label>Title (Optional)</Label>
+                      <Input
+                        type="text"
+                        placeholder="Enter title"
+                        value={galleryForm.title}
+                        onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Description (Optional)</Label>
+                      <Textarea
+                        placeholder="Enter description"
+                        value={galleryForm.description}
+                        onChange={(e) => setGalleryForm({ ...galleryForm, description: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowGalleryDialog(false);
+                          setGalleryForm({ type: 'image', url: '', title: '', description: '' });
+                          setGalleryUploadFile(null);
+                          setEditingGalleryItem(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleGalleryUpload}>
+                        {editingGalleryItem ? 'Update' : 'Add'} Item
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
           )}
 
