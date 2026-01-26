@@ -56,6 +56,8 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [exporterRef, setExporterRef] = useState('ICL');
   const [awbNo, setAwbNo] = useState('');
+  const [manualAWBEnabled, setManualAWBEnabled] = useState(false);
+  const [manualAWBNo, setManualAWBNo] = useState('');
   const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null); // Track if we're editing
   const [pieces, setPieces] = useState('0');
   const [piecesUnit, setPiecesUnit] = useState('SPX');
@@ -1057,15 +1059,45 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   };
 
   const generateAWB = async () => {
-    // ALWAYS generate a new AWB number - never reuse existing ones
-    // This ensures unique AWB numbers every time
-    let finalAwbNo = await generateAWBNumber();
+    let finalAwbNo: string;
     
-    // Update state with the generated number
-    setAwbNo(finalAwbNo);
-    
-    // Log for debugging
-    console.log('Generated AWB Number:', finalAwbNo);
+    // Check if manual AWB entry is enabled
+    if (manualAWBEnabled && manualAWBNo.trim()) {
+      // Validate manual AWB number
+      const manualAwb = manualAWBNo.trim();
+      
+      // Check if AWB number already exists
+      try {
+        const existingAWB = await api.awb.getByAWBNo(manualAwb);
+        if (existingAWB && existingAWB.awbNo) {
+          toast({
+            title: 'Error',
+            description: `AWB number ${manualAwb} already exists. Please use a different number.`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      } catch (error: any) {
+        // AWB not found is good - means we can use this number
+        if (error.message && !error.message.includes('not found')) {
+          console.error('Error checking AWB:', error);
+        }
+      }
+      
+      finalAwbNo = manualAwb;
+      setAwbNo(finalAwbNo);
+      console.log('Using manual AWB Number:', finalAwbNo);
+    } else {
+      // ALWAYS generate a new AWB number - never reuse existing ones
+      // This ensures unique AWB numbers every time
+      finalAwbNo = await generateAWBNumber();
+      
+      // Update state with the generated number
+      setAwbNo(finalAwbNo);
+      
+      // Log for debugging
+      console.log('Generated AWB Number:', finalAwbNo);
+    }
 
     if (!accountDetails.accountNo || !accountDetails.clientName) {
       toast({
@@ -1223,7 +1255,20 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
         // Log payload to verify status is correct
         console.log('AWB Payload Status:', awbPayload.status);
         
-        await api.awb.create(awbPayload, isVendor() && user?._id ? user._id : undefined);
+        try {
+          await api.awb.create(awbPayload, isVendor() && user?._id ? user._id : undefined);
+        } catch (createError: any) {
+          // Handle duplicate AWB number error
+          if (createError.message && createError.message.includes('already exists')) {
+            toast({
+              title: 'Error',
+              description: `AWB number ${finalAwbNo} already exists. Please use a different number.`,
+              variant: 'destructive',
+            });
+            return;
+          }
+          throw createError; // Re-throw other errors
+        }
         
         // Also save/update invoice if invoice number exists
         if (invoiceNo && invoiceDate) {
@@ -3039,15 +3084,60 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-end gap-4">
-        <Button onClick={generateAWB} size="lg" variant="outline">
-          <FileDown className="mr-2 h-4 w-4" />
-          Generate AWB
-        </Button>
-        <Button onClick={generatePDF} size="lg">
-          <FileDown className="mr-2 h-4 w-4" />
-          Generate Invoice
-        </Button>
+      <div className="space-y-4">
+        {/* Manual AWB Entry Option */}
+        <Card className="bg-blue-50/50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <Switch
+                  checked={manualAWBEnabled}
+                  onCheckedChange={(checked) => {
+                    setManualAWBEnabled(checked);
+                    if (!checked) {
+                      setManualAWBNo('');
+                      setAwbNo('');
+                    }
+                  }}
+                />
+                <Label className="font-semibold cursor-pointer">
+                  Use Manual AWB Number
+                </Label>
+              </div>
+              {manualAWBEnabled && (
+                <div className="flex items-center gap-2 flex-1 max-w-md">
+                  <Label className="whitespace-nowrap">AWB Number:</Label>
+                  <Input
+                    type="text"
+                    placeholder="Enter AWB number (e.g., V100000001)"
+                    value={manualAWBNo}
+                    onChange={(e) => {
+                      setManualAWBNo(e.target.value);
+                      setAwbNo(e.target.value);
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+              )}
+            </div>
+            {manualAWBEnabled && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Enter a custom AWB number. It will be validated for uniqueness before generation.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4">
+          <Button onClick={generateAWB} size="lg" variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Generate AWB
+          </Button>
+          <Button onClick={generatePDF} size="lg">
+            <FileDown className="mr-2 h-4 w-4" />
+            Generate Invoice
+          </Button>
+        </div>
       </div>
 
       {/* PDF Preview Dialog */}
