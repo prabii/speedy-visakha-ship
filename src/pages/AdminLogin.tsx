@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,24 @@ import { useToast } from '@/hooks/use-toast';
 import { Lock, User } from 'lucide-react';
 
 const AdminLogin = () => {
+  const [searchParams] = useSearchParams();
+  const loginTypeParam = searchParams.get('type');
+  const isVendorLogin = loginTypeParam === 'vendor';
+  const isAdminLogin = loginTypeParam === 'admin';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginType, setLoginType] = useState<'admin' | 'vendor'>(isVendorLogin ? 'vendor' : 'admin');
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isVendorLogin) {
+      setLoginType('vendor');
+    } else if (isAdminLogin) {
+      setLoginType('admin');
+    }
+  }, [isVendorLogin, isAdminLogin]);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,15 +94,39 @@ const AdminLogin = () => {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Login Type Selection - Only show if no specific type is requested */}
+          {!isVendorLogin && !isAdminLogin && (
+            <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-lg">
+              <Button
+                type="button"
+                variant={loginType === 'admin' ? 'default' : 'ghost'}
+                className={`flex-1 ${loginType === 'admin' ? '' : 'bg-transparent hover:bg-gray-200'}`}
+                onClick={() => setLoginType('admin')}
+              >
+                Admin Login
+              </Button>
+              <Button
+                type="button"
+                variant={loginType === 'vendor' ? 'default' : 'ghost'}
+                className={`flex-1 ${loginType === 'vendor' ? '' : 'bg-transparent hover:bg-gray-200'}`}
+                onClick={() => setLoginType('vendor')}
+              >
+                Vendor Login
+              </Button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">
+                {loginType === 'vendor' ? 'Vendor Username / Account Number' : 'Username'}
+              </Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Enter username"
+                  placeholder={loginType === 'vendor' ? 'Enter vendor username or account number' : 'Enter username'}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"
@@ -113,7 +150,7 @@ const AdminLogin = () => {
               </div>
             </div>
             <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Logging in...' : `Login as ${loginType === 'vendor' ? 'Vendor' : 'Admin'}`}
             </Button>
           </form>
         </CardContent>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, Globe, Clock, X } from "lucide-react";
+import { Package, Globe, X } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { TrackingResult } from "./TrackingResult";
 import { useToast } from "@/hooks/use-toast";
@@ -111,59 +111,17 @@ export const Hero = () => {
   return (
     <>
       <section className="relative min-h-[600px] flex items-center overflow-hidden">
-        {/* Background image with overlay */}
+        {/* Background image with lighter overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/20"></div>
         </div>
 
         <div className="relative z-10 container mx-auto px-4 py-12">
-          <div className="max-w-4xl mx-auto text-center text-white" data-tracking-section>
-            {/* Text with better visibility */}
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-6 md:p-8 mb-8">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight drop-shadow-2xl">
-                Shipping Worldwide with <br />
-                <span className="text-secondary">Trust & Speed</span>
-              </h1>
-              
-              <p className="text-lg sm:text-xl mb-8 opacity-95 drop-shadow-lg">
-                One stop solution for all your international logistics needs
-              </p>
-
-              {/* Quick actions */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-                <Link to="/book-shipment">
-                  <Button variant="hero" size="lg" className="h-12 sm:h-14 px-6 sm:px-8 w-full sm:w-auto">
-                    <Package className="mr-2" size={20} />
-                    Book Shipment
-                  </Button>
-                </Link>
-                <Link to="/rate-calculator">
-                  <Button variant="secondary" size="lg" className="h-12 sm:h-14 px-6 sm:px-8 w-full sm:w-auto">
-                    <Globe className="mr-2" size={20} />
-                    Rate Calculator
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8">
-              <div className="flex items-center justify-center gap-2 sm:gap-3 text-white/95 bg-black/20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-                <Clock size={20} className="sm:w-6 sm:h-6" />
-                <span className="text-base sm:text-lg">Fast & Reliable</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 sm:gap-3 text-white/95 bg-black/20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-                <Package size={20} className="sm:w-6 sm:h-6" />
-                <span className="text-base sm:text-lg">Secure Handling</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 sm:gap-3 text-white/95 bg-black/20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-                <Globe size={20} className="sm:w-6 sm:h-6" />
-                <span className="text-base sm:text-lg">Worldwide Delivery</span>
-              </div>
-            </div>
+          <div className="max-w-2xl mx-auto text-center space-y-6" data-tracking-section>
+            {/* Content hidden */}
           </div>
         </div>
       </section>

@@ -935,7 +935,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate('/');
   };
 
   const handleChangePassword = (e: React.FormEvent) => {

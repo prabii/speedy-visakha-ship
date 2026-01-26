@@ -28,13 +28,13 @@ export const Header = () => {
 
   return (
     <header className="bg-white shadow-elegant border-b border-border/10 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
             <img 
               src="/VZlogo.png" 
               alt="Visakha International Couriers Logo" 
-              className="h-14 md:h-16 w-auto object-contain max-w-[200px]"
+              className="h-12 md:h-14 w-auto object-contain max-w-[150px]"
               onError={(e) => {
                 // Fallback if logo doesn't load
                 const target = e.target as HTMLImageElement;
@@ -49,42 +49,48 @@ export const Header = () => {
             >
               <Plane className="text-white" size={24} />
             </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight">Visakha International Couriers</h1>
-              <p className="text-xs md:text-sm text-muted-foreground">Shipping Worldwide with Trust & Speed</p>
+            <div className="hidden lg:block">
+              <h1 className="text-base md:text-lg font-bold text-foreground leading-tight">Visakha International Couriers</h1>
+              <p className="text-xs text-muted-foreground">Shipping Worldwide with Trust & Speed</p>
             </div>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-            <Link to="/about" className="text-foreground hover:text-primary transition-colors">About</Link>
-            <Link to="/services" className="text-foreground hover:text-primary transition-colors">Services</Link>
-            <Link to="/pricing" className="text-foreground hover:text-primary transition-colors">Pricing</Link>
-            <Link to="/locations" className="text-foreground hover:text-primary transition-colors">Locations</Link>
-            <Link to="/contact" className="text-foreground hover:text-primary transition-colors">Contact</Link>
+          <nav className="hidden md:flex items-center gap-3 lg:gap-4 flex-shrink">
+            <Link to="/" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Home</Link>
+            <Link to="/about" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">About</Link>
+            <Link to="/services" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Services</Link>
+            <Link to="/pricing" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Pricing</Link>
+            <Link to="/locations" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Locations</Link>
+            <Link to="/contact" className="text-xs text-foreground hover:text-primary transition-colors whitespace-nowrap">Contact</Link>
           </nav>
           
-          <div className="flex items-center gap-3">
-            <Link to="/admin/login" className="hidden md:block">
-              <Button variant="outline" size="sm">
-                <User size={16} />
-                Admin
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link to="/admin/login?type=admin" className="hidden md:block">
+              <Button variant="outline" size="sm" className="text-xs px-2 md:px-3">
+                <User size={12} className="mr-1" />
+                <span className="hidden lg:inline">Admin</span>
+              </Button>
+            </Link>
+            <Link to="/admin/login?type=vendor" className="hidden md:block">
+              <Button variant="outline" size="sm" className="text-xs px-2 md:px-3 bg-blue-50 hover:bg-blue-100 border-blue-200">
+                <User size={12} className="mr-1" />
+                <span className="hidden lg:inline">Vendor</span>
               </Button>
             </Link>
             
             {/* Tracking Input */}
-            <form onSubmit={handleTrack} className="flex items-center gap-2">
-              <span className="font-bold text-foreground hidden lg:inline">TRACKING:</span>
+            <form onSubmit={handleTrack} className="flex items-center gap-1 md:gap-2">
+              <span className="font-bold text-foreground hidden xl:inline text-xs">TRACKING:</span>
               <Input
                 type="text"
                 placeholder="Track By AWB No:"
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
-                className="w-48 md:w-56 h-9 text-sm border-gray-300"
+                className="w-32 md:w-40 lg:w-48 h-8 md:h-9 text-xs md:text-sm border-gray-300"
               />
               <Button 
                 type="submit"
-                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 h-9"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-2 md:px-4 h-8 md:h-9 text-xs md:text-sm"
               >
                 GO
               </Button>
