@@ -14,6 +14,12 @@ export const vendors: Vendor[] = [
   { name: 'PACIFIC EXP', code: 'PAC' },
   { name: 'EXPLUS LOGISTICS', code: 'EXP' },
   { name: 'SKYNET WORLDWIDE', code: 'SKY' },
+  // Domestic vendors
+  { name: 'DTDC', code: 'DTDC' },
+  { name: 'SREEMARUTHICOURIERS', code: 'SMC' },
+  { name: 'VISAKHA COURIERS', code: 'VSC' },
+  { name: 'BLUDART', code: 'BLD' },
+  { name: 'delhivery.com', code: 'DLV' },
 ];
 
 // Service data (linked to vendors)

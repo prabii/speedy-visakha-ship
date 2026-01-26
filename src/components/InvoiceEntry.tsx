@@ -52,6 +52,9 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
     clientCode: '',
   });
   
+  // Domestic Invoice/AWB Toggle
+  const [isDomestic, setIsDomestic] = useState(false);
+  
   const [invoiceNo, setInvoiceNo] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [exporterRef, setExporterRef] = useState('ICL');
@@ -1745,6 +1748,32 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 </Button>
               </div>
             </div>
+            <div className="space-y-2 md:col-span-2 lg:col-span-4">
+              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <Switch
+                  checked={isDomestic}
+                  onCheckedChange={(checked) => {
+                    setIsDomestic(checked);
+                    if (checked) {
+                      // Set country to India for both shipper and consignee
+                      updateShipper('country', 'INDIA');
+                      updateConsignee('country', 'INDIA');
+                      // Set origin to VISHAKAPATNAM VIS if not already set
+                      if (!shipper.origin || shipper.origin === '') {
+                        updateShipper('origin', 'VISHAKAPATNAM');
+                        updateShipper('originCode', 'VIS');
+                      }
+                    }
+                  }}
+                />
+                <Label htmlFor="domestic-toggle" className="text-sm font-semibold cursor-pointer">
+                  Domestic Invoice & AWB
+                </Label>
+                <span className="text-xs text-muted-foreground ml-2">
+                  (Enable for domestic shipments - shows simplified fields)
+                </span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -1789,18 +1818,30 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 </Button>
               </div>
             </div>
-            <div>
-              <Label>Contact Name</Label>
-              <Input value={shipper.contactName} onChange={(e) => updateShipper('contactName', e.target.value)} />
-            </div>
-            <div>
-              <Label>Address 1</Label>
-              <Input value={shipper.address1} onChange={(e) => updateShipper('address1', e.target.value)} />
-            </div>
-            <div>
-              <Label>Address 2</Label>
-              <Input value={shipper.address2} onChange={(e) => updateShipper('address2', e.target.value)} />
-            </div>
+            {!isDomestic && (
+              <>
+                <div>
+                  <Label>Contact Name</Label>
+                  <Input value={shipper.contactName} onChange={(e) => updateShipper('contactName', e.target.value)} />
+                </div>
+                <div>
+                  <Label>Address 1</Label>
+                  <Input value={shipper.address1} onChange={(e) => updateShipper('address1', e.target.value)} />
+                </div>
+                <div>
+                  <Label>Address 2</Label>
+                  <Input value={shipper.address2} onChange={(e) => updateShipper('address2', e.target.value)} />
+                </div>
+              </>
+            )}
+            {isDomestic && (
+              <>
+                <div>
+                  <Label>Address *</Label>
+                  <Input value={shipper.address1} onChange={(e) => updateShipper('address1', e.target.value)} />
+                </div>
+              </>
+            )}
             <div>
               <Label>Pincode</Label>
               <Input value={shipper.pincode} onChange={(e) => updateShipper('pincode', e.target.value)} />
@@ -1813,10 +1854,12 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
               <Label>State</Label>
               <Input value={shipper.state} onChange={(e) => updateShipper('state', e.target.value)} />
             </div>
-            <div>
-              <Label>Telephone</Label>
-              <Input value={shipper.telephone} onChange={(e) => updateShipper('telephone', e.target.value)} />
-            </div>
+            {!isDomestic && (
+              <div>
+                <Label>Telephone</Label>
+                <Input value={shipper.telephone} onChange={(e) => updateShipper('telephone', e.target.value)} />
+              </div>
+            )}
             <div>
               <Label>Mobile No.</Label>
               <Input value={shipper.mobileNo} onChange={(e) => updateShipper('mobileNo', e.target.value)} />
@@ -1827,7 +1870,12 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
             </div>
             <div>
               <Label>Country</Label>
-              <Input value={shipper.country} onChange={(e) => updateShipper('country', e.target.value)} />
+              <Input 
+                value={shipper.country} 
+                onChange={(e) => updateShipper('country', e.target.value)}
+                readOnly={isDomestic}
+                className={isDomestic ? 'bg-gray-100' : ''}
+              />
             </div>
             <div>
               <Label>IEC No.</Label>
@@ -1975,22 +2023,26 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 </Dialog>
               </div>
             </div>
+            {!isDomestic && (
+              <div>
+                <Label>Contact Name</Label>
+                <Input value={consignee.contactName} onChange={(e) => updateConsignee('contactName', e.target.value)} />
+              </div>
+            )}
             <div>
-              <Label>Contact Name</Label>
-              <Input value={consignee.contactName} onChange={(e) => updateConsignee('contactName', e.target.value)} />
-            </div>
-            <div>
-              <Label>Address 1 *</Label>
+              <Label>Address {isDomestic ? '*' : '1 *'}</Label>
               <Input 
                 value={consignee.address1} 
                 onChange={(e) => updateConsignee('address1', e.target.value)} 
                 className={!consignee.address1 ? 'border-red-500' : ''}
               />
             </div>
-            <div>
-              <Label>Apartment/Address 2</Label>
-              <Input value={consignee.address2} onChange={(e) => updateConsignee('address2', e.target.value)} />
-            </div>
+            {!isDomestic && (
+              <div>
+                <Label>Apartment/Address 2</Label>
+                <Input value={consignee.address2} onChange={(e) => updateConsignee('address2', e.target.value)} />
+              </div>
+            )}
             <div>
               <Label>Pincode *</Label>
               <Input 
@@ -2015,14 +2067,16 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 className={!consignee.state ? 'border-red-500' : ''}
               />
             </div>
-            <div>
-              <Label>Telephone *</Label>
-              <Input 
-                value={consignee.telephone} 
-                onChange={(e) => updateConsignee('telephone', e.target.value)} 
-                className={!consignee.telephone ? 'border-red-500' : ''}
-              />
-            </div>
+            {!isDomestic && (
+              <div>
+                <Label>Telephone *</Label>
+                <Input 
+                  value={consignee.telephone} 
+                  onChange={(e) => updateConsignee('telephone', e.target.value)} 
+                  className={!consignee.telephone ? 'border-red-500' : ''}
+                />
+              </div>
+            )}
             <div>
               <Label>Mobile No.</Label>
               <Input value={consignee.mobileNo} onChange={(e) => updateConsignee('mobileNo', e.target.value)} />
@@ -2033,7 +2087,12 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
             </div>
             <div>
               <Label>Country</Label>
-              <Input value={consignee.country} onChange={(e) => updateConsignee('country', e.target.value)} />
+              <Input 
+                value={consignee.country} 
+                onChange={(e) => updateConsignee('country', e.target.value)}
+                readOnly={isDomestic}
+                className={isDomestic ? 'bg-gray-100' : ''}
+              />
             </div>
             <div>
               <Label>IEC No.</Label>
