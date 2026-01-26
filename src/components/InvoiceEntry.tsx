@@ -1179,14 +1179,18 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
       email: 'INFO@VISAKHACOURIERS.COM',
       shipper: {
         companyName: shipper.companyName,
-        contactName: shipper.contactName,
+        // For domestic: use company name as contact name if company name is provided
+        contactName: isDomestic && shipper.companyName 
+          ? shipper.companyName 
+          : (shipper.contactName || shipper.companyName || ''),
         address1: shipper.address1,
         address2: shipper.address2 || undefined,
         city: shipper.city,
         state: shipper.state,
         pincode: shipper.pincode,
         country: shipper.country,
-        telephone: shipper.telephone,
+        // Use mobileNo as fallback if telephone is empty
+        telephone: shipper.telephone || shipper.mobileNo || '',
         mobileNo: shipper.mobileNo || undefined,
         email: shipper.email || undefined,
         documentType: shipper.documentType,
@@ -1194,14 +1198,18 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
       },
       consignee: {
         companyName: consignee.companyName,
-        contactName: consignee.contactName,
+        // For domestic: use company name as contact name if company name is provided
+        contactName: isDomestic && consignee.companyName 
+          ? consignee.companyName 
+          : (consignee.contactName || consignee.companyName || ''),
         address1: consignee.address1,
         address2: consignee.address2 || undefined,
         city: consignee.city,
         state: consignee.state,
         pincode: consignee.pincode,
         country: consignee.country,
-        telephone: consignee.telephone,
+        // Use mobileNo as fallback if telephone is empty
+        telephone: consignee.telephone || consignee.mobileNo || '',
         mobileNo: consignee.mobileNo || undefined,
         email: consignee.email || undefined,
       },
@@ -1257,14 +1265,18 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           email: 'INFO@VISAKHACOURIERS.COM',
           shipper: {
             companyName: shipper.companyName,
-            contactName: shipper.contactName,
+            // For domestic: use company name as contact name if company name is provided
+            contactName: isDomestic && shipper.companyName 
+              ? shipper.companyName 
+              : (shipper.contactName || shipper.companyName || ''),
             address1: shipper.address1,
             address2: shipper.address2 || undefined,
             city: shipper.city,
             state: shipper.state,
             pincode: shipper.pincode,
             country: shipper.country,
-            telephone: shipper.telephone,
+            // Use mobileNo as fallback if telephone is empty
+            telephone: shipper.telephone || shipper.mobileNo || '',
             mobileNo: shipper.mobileNo || undefined,
             email: shipper.email || undefined,
             documentType: shipper.documentType,
@@ -1272,14 +1284,18 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           },
           consignee: {
             companyName: consignee.companyName,
-            contactName: consignee.contactName,
+            // For domestic: use company name as contact name if company name is provided
+            contactName: isDomestic && consignee.companyName 
+              ? consignee.companyName 
+              : (consignee.contactName || consignee.companyName || ''),
             address1: consignee.address1,
             address2: consignee.address2 || undefined,
             city: consignee.city,
             state: consignee.state,
             pincode: consignee.pincode,
             country: consignee.country,
-            telephone: consignee.telephone,
+            // Use mobileNo as fallback if telephone is empty
+            telephone: consignee.telephone || consignee.mobileNo || '',
             mobileNo: consignee.mobileNo || undefined,
             email: consignee.email || undefined,
           },

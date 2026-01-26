@@ -1023,12 +1023,16 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     'COUNTRY',
   ]);
 
+  // Use mobileNo as fallback for telephone if telephone is empty
+  const shipperPhone = data.shipper.telephone || data.shipper.mobileNo || '';
+  const consigneePhone = data.consignee.telephone || data.consignee.mobileNo || '';
+  
   y = drawValueRow(margin, y, widths, [
     data.shipper.pincode || '',
-    data.shipper.telephone || '',
+    shipperPhone,
     data.consignee.pincode || '',
-    data.consignee.telephone || '',
-    data.destination || '',
+    consigneePhone,
+    data.consignee.country || data.destination || '',
   ]);
 
   // ========== SECOND GRID: GOODS / PIECES / WEIGHT / VALUE / DATE ==========
