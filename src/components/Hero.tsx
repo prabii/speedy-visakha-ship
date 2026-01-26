@@ -1,23 +1,32 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Search, Package, Globe, Clock, Loader2 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
-import heroImage from "@/assets/hero-logistics.jpg";
+import { Package, Globe, Clock, X } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { TrackingResult } from "./TrackingResult";
 import { useToast } from "@/hooks/use-toast";
+import heroImage from "@/assets/ChatGPT Image Jan 26, 2026, 12_24_50 PM.png";
 
 const DELHIVERY_API_KEY = "3fa572f5b2e80d1267e936d28dccacd86d24a700";
 const DELHIVERY_API_URL = "https://track.delhivery.com/api/v1/packages/json/";
 
 export const Hero = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingData, setTrackingData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const closeTracking = () => {
+    setTrackingData(null);
+    setError(null);
+    setTrackingNumber("");
+    // Remove track parameter from URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('track');
+    navigate(`/?${newSearchParams.toString()}`, { replace: true });
+  };
 
   // Check for tracking number in URL on mount
   useEffect(() => {
@@ -30,7 +39,7 @@ export const Hero = () => {
       }, 300);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const handleTrackWithNumber = async (awbNo: string) => {
     if (!awbNo.trim()) {
@@ -99,126 +108,92 @@ export const Hero = () => {
     }
   };
 
-  const handleTrack = async () => {
-    if (!trackingNumber.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a tracking number",
-        variant: "destructive",
-      });
-      return;
-    }
-    await handleTrackWithNumber(trackingNumber);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleTrack();
-    }
-  };
-
   return (
-    <section className="relative min-h-[600px] flex items-center overflow-hidden">
-      {/* Background image with overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-hero"></div>
-      </div>
+    <>
+      <section className="relative min-h-[600px] flex items-center overflow-hidden">
+        {/* Background image with overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50"></div>
+        </div>
 
-      <div className="relative z-10 container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center text-white" data-tracking-section>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-            Shipping Worldwide with <br />
-            <span className="text-secondary">Trust & Speed</span>
-          </h1>
-          
-          <p className="text-xl mb-8 opacity-90">
-            One stop solution for all your international logistics needs
-          </p>
+        <div className="relative z-10 container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto text-center text-white" data-tracking-section>
+            {/* Text with better visibility */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-6 md:p-8 mb-8">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight drop-shadow-2xl">
+                Shipping Worldwide with <br />
+                <span className="text-secondary">Trust & Speed</span>
+              </h1>
+              
+              <p className="text-lg sm:text-xl mb-8 opacity-95 drop-shadow-lg">
+                One stop solution for all your international logistics needs
+              </p>
 
-          {/* Tracking section */}
-          <Card className="bg-white/95 backdrop-blur-sm p-6 mb-8 shadow-elegant">
-            <h3 className="text-foreground text-lg font-semibold mb-4">Track Your Shipment</h3>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Enter waybill number"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="h-12 text-lg"
-                  disabled={isLoading}
-                />
+              {/* Quick actions */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+                <Link to="/book-shipment">
+                  <Button variant="hero" size="lg" className="h-12 sm:h-14 px-6 sm:px-8 w-full sm:w-auto">
+                    <Package className="mr-2" size={20} />
+                    Book Shipment
+                  </Button>
+                </Link>
+                <Link to="/rate-calculator">
+                  <Button variant="secondary" size="lg" className="h-12 sm:h-14 px-6 sm:px-8 w-full sm:w-auto">
+                    <Globe className="mr-2" size={20} />
+                    Rate Calculator
+                  </Button>
+                </Link>
               </div>
-              <Button 
-                variant="track" 
-                size="lg" 
-                className="h-12 px-8"
-                onClick={handleTrack}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 animate-spin" size={20} />
-                    Tracking...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2" size={20} />
-                    Track Now
-                  </>
-                )}
-              </Button>
             </div>
-            <p className="text-muted-foreground text-sm mt-2">
-              Enter waybill number to track your shipment
-            </p>
-          </Card>
 
-          {/* Tracking Results */}
-          {(trackingData || error) && (
-            <TrackingResult 
-              data={trackingData} 
-              error={error || undefined} 
-              waybill={trackingNumber}
-            />
-          )}
-
-          {/* Quick actions */}
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <Link to="/book-shipment">
-              <Button variant="hero" size="lg" className="h-14 px-8">
-                <Package className="mr-2" size={20} />
-                Book Shipment
-              </Button>
-            </Link>
-            <Link to="/rate-calculator">
-              <Button variant="secondary" size="lg" className="h-14 px-8">
-                <Globe className="mr-2" size={20} />
-                Rate Calculator
-              </Button>
-            </Link>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            <div className="flex items-center justify-center gap-3 text-white/90">
-              <Clock size={24} />
-              <span className="text-lg">Fast & Reliable</span>
-            </div>
-            <div className="flex items-center justify-center gap-3 text-white/90">
-              <Package size={24} />
-              <span className="text-lg">Secure Handling</span>
-            </div>
-            <div className="flex items-center justify-center gap-3 text-white/90">
-              <Globe size={24} />
-              <span className="text-lg">Worldwide Delivery</span>
+            {/* Features */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 text-white/95 bg-black/20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                <Clock size={20} className="sm:w-6 sm:h-6" />
+                <span className="text-base sm:text-lg">Fast & Reliable</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 sm:gap-3 text-white/95 bg-black/20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                <Package size={20} className="sm:w-6 sm:h-6" />
+                <span className="text-base sm:text-lg">Secure Handling</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 sm:gap-3 text-white/95 bg-black/20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                <Globe size={20} className="sm:w-6 sm:h-6" />
+                <span className="text-base sm:text-lg">Worldwide Delivery</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Tracking Results Section - Outside hero section */}
+      {(trackingData || error) && (
+        <section className="bg-gray-50 py-8">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-foreground">Tracking Details</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={closeTracking}
+                  className="flex items-center gap-2"
+                >
+                  <X size={16} />
+                  Close
+                </Button>
+              </div>
+              <TrackingResult 
+                data={trackingData} 
+                error={error || undefined} 
+                waybill={trackingNumber}
+              />
+            </div>
+          </div>
+        </section>
+      )}
+    </>
   );
 };

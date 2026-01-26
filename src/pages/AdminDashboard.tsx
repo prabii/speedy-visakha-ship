@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import InvoiceEntry from '@/components/InvoiceEntry';
 import InvoiceHistory from '@/components/InvoiceHistory';
+import Pricing from '@/pages/Pricing';
 import api from '@/lib/api';
 import { countryCodes, searchCountries, CountryCode } from '@/lib/countryCodes';
 
@@ -1024,19 +1025,42 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Admin Dashboard
+                  {isVendor() ? 'Vendor Dashboard' : 'Admin Dashboard'}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-0.5">Visakha International Couriers</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-4">
+              {/* Account Details for Vendors */}
+              {isVendor() && user && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="py-2 px-4">
+                    <div className="flex items-center gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Account Number:</span>
+                        <span className="font-semibold ml-2">{user.username}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Client Code:</span>
+                        <span className="font-semibold ml-2">{user.username}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Client Name:</span>
+                        <span className="font-semibold ml-2">{user.vendorName}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -1066,20 +1090,24 @@ const AdminDashboard = () => {
               <History className="mr-2 h-4 w-4" />
               Invoice History
             </TabsTrigger>
-            <TabsTrigger 
-              value="customers"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Customers
-            </TabsTrigger>
-            <TabsTrigger 
-              value="branches"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
-            >
-              <Building2 className="mr-2 h-4 w-4" />
-              Branch Locations
-            </TabsTrigger>
+            {isAdmin() && (
+              <TabsTrigger 
+                value="customers"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Customers
+              </TabsTrigger>
+            )}
+            {isAdmin() && (
+              <TabsTrigger 
+                value="branches"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                Branch Locations
+              </TabsTrigger>
+            )}
             {isAdmin() && (
               <TabsTrigger 
                 value="price-sheets"
@@ -1087,6 +1115,15 @@ const AdminDashboard = () => {
               >
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 Price Sheets
+              </TabsTrigger>
+            )}
+            {isVendor() && (
+              <TabsTrigger 
+                value="pricing"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Pricing
               </TabsTrigger>
             )}
             {isAdmin() && (
@@ -1303,27 +1340,30 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="customers" className="space-y-4">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  Customers
-                </CardTitle>
-                <CardDescription>Manage customer information</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="text-center py-12">
-                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-muted-foreground text-lg">Customer management coming soon...</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {isAdmin() && (
+            <TabsContent value="customers" className="space-y-4">
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Customers
+                  </CardTitle>
+                  <CardDescription>Manage customer information</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="text-center py-12">
+                    <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-muted-foreground text-lg">Customer management coming soon...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
-          <TabsContent value="branches" className="space-y-4">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          {isAdmin() && (
+            <TabsContent value="branches" className="space-y-4">
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-blue-600" />
                   Branch Location Management
@@ -1457,7 +1497,8 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {/* Price Sheets Tab (Admin only) */}
           {isAdmin() && (
@@ -1954,6 +1995,15 @@ const AdminDashboard = () => {
                   </Dialog>
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+
+          {/* Pricing Tab (Vendor only) */}
+          {isVendor() && (
+            <TabsContent value="pricing" className="space-y-4">
+              <div className="min-h-screen">
+                <Pricing />
+              </div>
             </TabsContent>
           )}
 

@@ -208,6 +208,19 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [productResults, setProductResults] = useState<Product[]>([]);
 
+  // Auto-fill account details for vendors
+  useEffect(() => {
+    if (isVendor() && user) {
+      setAccountDetails(prev => ({
+        ...prev,
+        accountNo: user.username || prev.accountNo || '',
+        clientCode: user.username || prev.clientCode || '',
+        clientName: user.vendorName || prev.clientName || '',
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVendor(), user]);
+
   // Load invoice data for editing
   useEffect(() => {
     const loadEditData = () => {
