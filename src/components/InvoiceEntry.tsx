@@ -425,12 +425,21 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
   }, [countrySearchQuery]);
 
   useEffect(() => {
+    // Filter vendors based on domestic toggle
+    const domesticVendorCodes = ['DTDC', 'ICL', 'SMC', 'VSC', 'BLD', 'DLV'];
+    const vendorsToSearch = isDomestic 
+      ? vendors.filter(v => domesticVendorCodes.includes(v.code))
+      : vendors;
+    
     if (vendorSearchQuery) {
-      setVendorResults(searchVendors(vendorSearchQuery));
+      const filtered = searchVendors(vendorSearchQuery).filter(v => 
+        isDomestic ? domesticVendorCodes.includes(v.code) : true
+      );
+      setVendorResults(filtered);
     } else {
-      setVendorResults(vendors);
+      setVendorResults(vendorsToSearch);
     }
-  }, [vendorSearchQuery]);
+  }, [vendorSearchQuery, isDomestic]);
 
   useEffect(() => {
     if (serviceSearchQuery) {
@@ -447,6 +456,32 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
       setProductResults(products);
     }
   }, [productSearchQuery]);
+
+  // Update vendor results when dialog opens or domestic toggle changes
+  useEffect(() => {
+    if (showVendorDialog) {
+      const domesticVendorCodes = ['DTDC', 'ICL', 'SMC', 'VSC', 'BLD', 'DLV'];
+      if (isDomestic) {
+        const domesticVendorsList = vendors.filter(v => 
+          domesticVendorCodes.includes(v.code)
+        );
+        if (vendorSearchQuery) {
+          const filtered = searchVendors(vendorSearchQuery).filter(v => 
+            domesticVendorCodes.includes(v.code)
+          );
+          setVendorResults(filtered);
+        } else {
+          setVendorResults(domesticVendorsList);
+        }
+      } else {
+        if (vendorSearchQuery) {
+          setVendorResults(searchVendors(vendorSearchQuery));
+        } else {
+          setVendorResults(vendors);
+        }
+      }
+    }
+  }, [showVendorDialog, isDomestic, vendorSearchQuery]);
 
   // Auto-calculate when pieces details change
   useEffect(() => {
@@ -1877,29 +1912,33 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 className={isDomestic ? 'bg-gray-100' : ''}
               />
             </div>
-            <div>
-              <Label>IEC No.</Label>
-              <Input value={shipper.iecNo} onChange={(e) => updateShipper('iecNo', e.target.value)} />
-            </div>
-            <div>
-              <Label>Document Type</Label>
-              <Select value={shipper.documentType} onValueChange={(v) => updateShipper('documentType', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  {documentTypes.map((docType) => (
-                    <SelectItem key={docType} value={docType}>
-                      {docType}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Document No.</Label>
-              <Input value={shipper.documentNo} onChange={(e) => updateShipper('documentNo', e.target.value)} />
-            </div>
+            {!isDomestic && (
+              <>
+                <div>
+                  <Label>IEC No.</Label>
+                  <Input value={shipper.iecNo} onChange={(e) => updateShipper('iecNo', e.target.value)} />
+                </div>
+                <div>
+                  <Label>Document Type</Label>
+                  <Select value={shipper.documentType} onValueChange={(v) => updateShipper('documentType', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documentTypes.map((docType) => (
+                        <SelectItem key={docType} value={docType}>
+                          {docType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Document No.</Label>
+                  <Input value={shipper.documentNo} onChange={(e) => updateShipper('documentNo', e.target.value)} />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -2094,29 +2133,33 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 className={isDomestic ? 'bg-gray-100' : ''}
               />
             </div>
-            <div>
-              <Label>IEC No.</Label>
-              <Input value={consignee.iecNo} onChange={(e) => updateConsignee('iecNo', e.target.value)} />
-            </div>
-            <div>
-              <Label>Document Type</Label>
-              <Select value={consignee.documentType} onValueChange={(v) => updateConsignee('documentType', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  {documentTypes.map((docType) => (
-                    <SelectItem key={docType} value={docType}>
-                      {docType}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Document No.</Label>
-              <Input value={consignee.documentNo} onChange={(e) => updateConsignee('documentNo', e.target.value)} />
-            </div>
+            {!isDomestic && (
+              <>
+                <div>
+                  <Label>IEC No.</Label>
+                  <Input value={consignee.iecNo} onChange={(e) => updateConsignee('iecNo', e.target.value)} />
+                </div>
+                <div>
+                  <Label>Document Type</Label>
+                  <Select value={consignee.documentType} onValueChange={(v) => updateConsignee('documentType', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documentTypes.map((docType) => (
+                        <SelectItem key={docType} value={docType}>
+                          {docType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Document No.</Label>
+                  <Input value={consignee.documentNo} onChange={(e) => updateConsignee('documentNo', e.target.value)} />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -2146,7 +2189,18 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                 size="icon"
                 onClick={() => {
                   setVendorSearchQuery('');
-                  setVendorResults(vendors);
+                  // Filter vendors based on domestic toggle
+                  if (isDomestic) {
+                    // Show only domestic vendors
+                    const domesticVendorCodes = ['DTDC', 'ICL', 'SMC', 'VSC', 'BLD', 'DLV'];
+                    const domesticVendorsList = vendors.filter(v => 
+                      domesticVendorCodes.includes(v.code)
+                    );
+                    setVendorResults(domesticVendorsList);
+                  } else {
+                    // Show all vendors
+                    setVendorResults(vendors);
+                  }
                   setShowVendorDialog(true);
                 }}
               >
