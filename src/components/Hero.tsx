@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, Package, Globe, Clock, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import heroImage from "@/assets/hero-logistics.jpg";
 import { TrackingResult } from "./TrackingResult";
 import { useToast } from "@/hooks/use-toast";
@@ -12,19 +12,28 @@ const DELHIVERY_API_KEY = "3fa572f5b2e80d1267e936d28dccacd86d24a700";
 const DELHIVERY_API_URL = "https://track.delhivery.com/api/v1/packages/json/";
 
 export const Hero = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingData, setTrackingData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleTrack = async () => {
-    if (!trackingNumber.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a tracking number",
-        variant: "destructive",
-      });
+  // Check for tracking number in URL on mount
+  useEffect(() => {
+    const trackParam = searchParams.get('track');
+    if (trackParam) {
+      setTrackingNumber(trackParam);
+      // Auto-track after a short delay to ensure component is ready
+      setTimeout(() => {
+        handleTrackWithNumber(trackParam);
+      }, 300);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleTrackWithNumber = async (awbNo: string) => {
+    if (!awbNo.trim()) {
       return;
     }
 
@@ -36,7 +45,7 @@ export const Hero = () => {
       // First, try to get tracking from our database
       const api = (await import('@/lib/api')).default;
       try {
-        const dbData = await api.awb.track(trackingNumber.trim());
+        const dbData = await api.awb.track(awbNo.trim());
         if (dbData && dbData.awbNo) {
           // Format data for our TrackingResult component
           setTrackingData({
@@ -59,7 +68,7 @@ export const Hero = () => {
       }
 
       // Fallback to Delhivery API
-      const url = `${DELHIVERY_API_URL}?waybill=${encodeURIComponent(trackingNumber.trim())}&ref_ids=`;
+      const url = `${DELHIVERY_API_URL}?waybill=${encodeURIComponent(awbNo.trim())}&ref_ids=`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -88,6 +97,18 @@ export const Hero = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTrack = async () => {
+    if (!trackingNumber.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a tracking number",
+        variant: "destructive",
+      });
+      return;
+    }
+    await handleTrackWithNumber(trackingNumber);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

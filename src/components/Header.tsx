@@ -1,12 +1,22 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Plane, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export const Header = () => {
   const navigate = useNavigate();
+  const [trackingNumber, setTrackingNumber] = useState('');
 
-  const handleTrackPackage = () => {
-    navigate('/');
+  const handleTrack = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!trackingNumber.trim()) {
+      return;
+    }
+    
+    // Navigate to home page with tracking number in URL
+    navigate(`/?track=${encodeURIComponent(trackingNumber.trim())}`);
+    
     // Scroll to tracking section after navigation
     setTimeout(() => {
       const trackingSection = document.querySelector('[data-tracking-section]');
@@ -55,15 +65,30 @@ export const Header = () => {
           </nav>
           
           <div className="flex items-center gap-3">
-            <Link to="/admin/login">
+            <Link to="/admin/login" className="hidden md:block">
               <Button variant="outline" size="sm">
                 <User size={16} />
                 Admin
               </Button>
             </Link>
-            <Button variant="hero" size="lg" onClick={handleTrackPackage}>
-              Track Package
-            </Button>
+            
+            {/* Tracking Input */}
+            <form onSubmit={handleTrack} className="flex items-center gap-2">
+              <span className="font-bold text-foreground hidden lg:inline">TRACKING:</span>
+              <Input
+                type="text"
+                placeholder="Track By AWB No:"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                className="w-48 md:w-56 h-9 text-sm border-gray-300"
+              />
+              <Button 
+                type="submit"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 h-9"
+              >
+                GO
+              </Button>
+            </form>
           </div>
         </div>
       </div>
