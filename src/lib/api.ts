@@ -187,7 +187,14 @@ export const api = {
   
   // Gallery API
   gallery: {
-    getAll: () => api.fetch('/gallery'),
+    getAll: (params?: { category?: string; type?: string; isActive?: boolean }) => {
+      const queryParams = new URLSearchParams();
+      if (params?.category) queryParams.append('category', params.category);
+      if (params?.type) queryParams.append('type', params.type);
+      if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+      const query = queryParams.toString();
+      return api.fetch(`/gallery${query ? `?${query}` : ''}`);
+    },
     getById: (id: string) => api.fetch(`/gallery/${id}`),
     create: (data: any) => api.fetch('/gallery', { method: 'POST', body: JSON.stringify(data) }),
     upload: (formData: FormData) => {

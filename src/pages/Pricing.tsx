@@ -96,11 +96,15 @@ const Pricing = () => {
     const loadPublicImages = async () => {
       try {
         setPublicLoading(true);
-        // Reuse gallery API: take active image/imageUrl items as pricing images
+        // Get only pricing category images from gallery API
         const data = await api.gallery.getAll();
         const items = (data || []) as PricingGalleryItem[];
         const images = items
-          .filter((item) => (item.type === "image" || item.type === "imageUrl") && item.isActive !== false)
+          .filter((item) => 
+            (item.type === "image" || item.type === "imageUrl") && 
+            item.isActive !== false &&
+            (item as any).category === 'pricing' // Only pricing category images
+          )
           .sort((a, b) => {
             if (!a.createdAt || !b.createdAt) return 0;
             return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();

@@ -28,7 +28,8 @@ const Gallery = () => {
   const loadGalleryItems = async () => {
     try {
       setLoading(true);
-      const data = await api.gallery.getAll();
+      // Only load gallery category items, exclude pricing images
+      const data = await api.gallery.getAll({ category: 'gallery' });
       setItems(data || []);
     } catch (error: any) {
       console.error('Error loading gallery:', error);

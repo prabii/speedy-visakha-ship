@@ -998,7 +998,8 @@ const AdminDashboard = () => {
   const loadGalleryItems = async () => {
     setIsLoadingGallery(true);
     try {
-      const data = await api.gallery.getAll();
+      // Only load gallery category items, exclude pricing images
+      const data = await api.gallery.getAll({ category: 'gallery' });
       setGalleryItems(data || []);
     } catch (error: any) {
       toast({
@@ -1033,12 +1034,13 @@ const AdminDashboard = () => {
 
     try {
       if (galleryForm.type === 'youtube' || galleryForm.type === 'imageUrl') {
-        // Create item with URL
+        // Create item with URL - mark as gallery category
         const itemData = {
           type: galleryForm.type,
           url: galleryForm.url.trim(),
           title: galleryForm.title.trim() || undefined,
           description: galleryForm.description.trim() || undefined,
+          category: 'gallery', // Mark as gallery item
         };
         
         if (editingGalleryItem) {
@@ -1055,10 +1057,11 @@ const AdminDashboard = () => {
           });
         }
       } else {
-        // Upload file
+        // Upload file - mark as gallery category
         const formData = new FormData();
         formData.append('file', galleryUploadFile!);
         formData.append('type', galleryForm.type);
+        formData.append('category', 'gallery'); // Mark as gallery item
         if (galleryForm.title.trim()) formData.append('title', galleryForm.title.trim());
         if (galleryForm.description.trim()) formData.append('description', galleryForm.description.trim());
         
@@ -1940,6 +1943,7 @@ const AdminDashboard = () => {
                               const formData = new FormData();
                               formData.append('file', galleryUploadFile);
                               formData.append('type', 'image');
+                              formData.append('category', 'pricing'); // Mark as pricing image
                               if (galleryForm.title) formData.append('title', galleryForm.title);
                               if (galleryForm.description) formData.append('description', galleryForm.description);
                               
@@ -1950,6 +1954,7 @@ const AdminDashboard = () => {
                                 url: galleryForm.url.trim(),
                                 title: galleryForm.title.trim() || undefined,
                                 description: galleryForm.description.trim() || undefined,
+                                category: 'pricing', // Mark as pricing image
                                 isActive: true
                               });
                             }
