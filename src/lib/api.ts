@@ -155,14 +155,18 @@ export const api = {
   
   // Price Sheets API
   priceSheets: {
-    getAll: (params?: { isActive?: boolean; isDefault?: boolean }) => {
+    getAll: (params?: { isActive?: boolean; isDefault?: boolean; vendorId?: string }) => {
       const queryParams = new URLSearchParams();
       if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
       if (params?.isDefault !== undefined) queryParams.append('isDefault', params.isDefault.toString());
+      if (params?.vendorId) queryParams.append('vendorId', params.vendorId);
       const query = queryParams.toString();
       return api.fetch(`/price-sheets${query ? `?${query}` : ''}`);
     },
-    getActive: () => api.fetch('/price-sheets/active'),
+    getActive: (vendorId?: string) => {
+      const query = vendorId ? `?vendorId=${vendorId}` : '';
+      return api.fetch(`/price-sheets/active${query}`);
+    },
     getById: (id: string) => api.fetch(`/price-sheets/${id}`),
     create: (data: any) => api.fetch('/price-sheets', { method: 'POST', body: JSON.stringify(data) }),
     upload: (formData: FormData) => {

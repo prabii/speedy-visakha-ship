@@ -79,6 +79,7 @@ const AdminDashboard = () => {
     sheetName: '',
     description: '',
     isDefault: false,
+    assignedVendors: [] as string[],
   });
   const [itemForm, setItemForm] = useState({
     itemName: '',
@@ -670,7 +671,7 @@ const AdminDashboard = () => {
       });
       
       setUploadFile(null);
-      setPriceSheetForm({ sheetName: '', description: '', isDefault: false });
+      setPriceSheetForm({ sheetName: '', description: '', isDefault: false, assignedVendors: [] });
       loadPriceSheets();
     } catch (error: any) {
       toast({
@@ -692,11 +693,15 @@ const AdminDashboard = () => {
     }
 
     try {
+      // Only send uploadedBy if it's a valid MongoDB ObjectId (24 hex characters)
+      const isValidObjectId = user?._id && /^[0-9a-fA-F]{24}$/.test(user._id);
+      
       await api.priceSheets.create({
         sheetName: priceSheetForm.sheetName,
         description: priceSheetForm.description,
         isDefault: priceSheetForm.isDefault,
-        uploadedBy: user?._id
+        uploadedBy: isValidObjectId ? user._id : undefined,
+        assignedVendors: priceSheetForm.assignedVendors
       });
       
       toast({
@@ -704,7 +709,7 @@ const AdminDashboard = () => {
         description: 'Price sheet created successfully',
       });
       
-      setPriceSheetForm({ sheetName: '', description: '', isDefault: false });
+      setPriceSheetForm({ sheetName: '', description: '', isDefault: false, assignedVendors: [] });
       loadPriceSheets();
     } catch (error: any) {
       toast({
@@ -983,6 +988,7 @@ const AdminDashboard = () => {
     }
     if (isAdmin() && activeTab === 'price-sheets') {
       loadPriceSheets();
+      loadVendorUsers(); // Load vendors for assignment dropdown
     }
     if (isAdmin() && activeTab === 'gallery') {
       loadGalleryItems();
@@ -1751,6 +1757,43 @@ const AdminDashboard = () => {
                             />
                             <span className="text-sm text-muted-foreground">Make this the default price sheet</span>
                           </div>
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label>Assign to Vendors</Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Select vendors who should see this price sheet. Leave empty to make it available to all vendors.
+                          </p>
+                          <ScrollArea className="h-32 border rounded-md p-2">
+                            {vendorUsers.length === 0 ? (
+                              <p className="text-sm text-muted-foreground text-center py-4">No vendors available</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {vendorUsers.map((vendor) => (
+                                  <div key={vendor._id} className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={priceSheetForm.assignedVendors.includes(vendor._id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setPriceSheetForm({
+                                            ...priceSheetForm,
+                                            assignedVendors: [...priceSheetForm.assignedVendors, vendor._id]
+                                          });
+                                        } else {
+                                          setPriceSheetForm({
+                                            ...priceSheetForm,
+                                            assignedVendors: priceSheetForm.assignedVendors.filter(id => id !== vendor._id)
+                                          });
+                                        }
+                                      }}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className="text-sm">{vendor.vendorName || vendor.username}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </ScrollArea>
                         </div>
                       </div>
                       <Button 

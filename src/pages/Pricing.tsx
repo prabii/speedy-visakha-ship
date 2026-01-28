@@ -49,13 +49,16 @@ const Pricing = () => {
       try {
         setLoading(true);
         setError(null);
-        // Try to get active price sheet
-        const data = await api.priceSheets.getActive();
+        // Get vendor ID for filtering
+        const vendorId = user?._id;
+        
+        // Try to get active price sheet (filtered by vendor if vendorId exists)
+        const data = await api.priceSheets.getActive(vendorId);
         if (data && data.items && data.items.length > 0) {
           setPriceSheet(data);
         } else {
-          // If no active, try to get any price sheet
-          const allSheets = await api.priceSheets.getAll({ isActive: true });
+          // If no active, try to get any price sheet (filtered by vendor)
+          const allSheets = await api.priceSheets.getAll({ isActive: true, vendorId });
           if (allSheets && allSheets.length > 0) {
             setPriceSheet(allSheets[0]);
           } else {
@@ -67,7 +70,8 @@ const Pricing = () => {
         console.log('No active price sheet found:', err);
         // Try to get any price sheet as fallback
         try {
-          const allSheets = await api.priceSheets.getAll({ isActive: true });
+          const vendorId = user?._id;
+          const allSheets = await api.priceSheets.getAll({ isActive: true, vendorId });
           if (allSheets && allSheets.length > 0) {
             setPriceSheet(allSheets[0]);
             setError(null);
