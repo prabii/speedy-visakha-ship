@@ -49,8 +49,10 @@ const Pricing = () => {
       try {
         setLoading(true);
         setError(null);
-        // Get vendor ID for filtering
-        const vendorId = user?._id;
+        // Get vendor ID for filtering - only pass if user is a vendor
+        const vendorId = vendorMode && user?._id ? user._id : undefined;
+        
+        console.log('Loading price sheet for vendor:', vendorId, 'User:', user);
         
         // Try to get active price sheet (filtered by vendor if vendorId exists)
         const data = await api.priceSheets.getActive(vendorId);
@@ -70,7 +72,7 @@ const Pricing = () => {
         console.log('No active price sheet found:', err);
         // Try to get any price sheet as fallback
         try {
-          const vendorId = user?._id;
+          const vendorId = vendorMode && user?._id ? user._id : undefined;
           const allSheets = await api.priceSheets.getAll({ isActive: true, vendorId });
           if (allSheets && allSheets.length > 0) {
             setPriceSheet(allSheets[0]);
