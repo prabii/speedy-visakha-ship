@@ -737,17 +737,6 @@ export const generateInvoicePDF = async (
     { align: 'right' }
   );
 
-  // GST at very bottom
-  const pageCount = doc.getNumberOfPages();
-  doc.setPage(pageCount);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(
-    `GST No: ${gstNo}`,
-    PAGE_CONFIG.margin,
-    PAGE_CONFIG.height - PAGE_CONFIG.marginBottom
-  );
-
   // Return PDF as blob instead of saving directly
   const pdfBlob = doc.output('blob');
   return pdfBlob;
@@ -765,52 +754,63 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   const contentWidth = pageWidth - 2 * margin;
   let y = PAGE_CONFIG.marginTop;
 
-  // ---------- HEADER: Logo (Left) + AWB (Right) ----------
-  // Pre-compute AWB box position (right side)
-  const awbBoxW = 60;
-  const awbBoxH = 16;
-  const awbBoxX = pageWidth - margin - awbBoxW;
-  const awbBoxY = y + 2;
+  // Track header top for enclosing box
+  const headerTopY = y;
+  const headerPadding = 2;
 
-  // Calculate left section width (for logo centering)
-  const leftSectionWidth = awbBoxX - margin - 4; // Leave some gap before AWB box
+  // ---------- HEADER: Single long box with Account | Logo + Address | AWB + Barcode ----------
+  // Section widths: Account (25mm) | Logo+Address (flexible) | AWB+Barcode (70mm)
+  const accountSectionWidth = 25;
+  const awbSectionWidth = 70;
+  const logoSectionStartX = margin + accountSectionWidth + headerPadding;
+  const logoSectionWidth = contentWidth - accountSectionWidth - awbSectionWidth - (headerPadding * 2);
+  const awbSectionStartX = pageWidth - margin - awbSectionWidth;
   
-  // Check if custom logo is being used (either passed as parameter or in localStorage)
+  // Check if custom logo is being used
   const hasCustomLogo = customLogo || (typeof window !== 'undefined' && localStorage.getItem('invoice_logo'));
   
-  // Load and position logo on the left side
+  // Load logo
   const logo = await loadLogo(customLogo);
   let logoH = 0;
+  let addressBottomY = y + headerPadding;
+  
+  // ==== SECTION 1: ACCOUNT (Left) ====
+  const accountBoxY = y + headerPadding;
+  const accountBoxHeight = 12;
+  doc.setLineWidth(0.3);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('ACCOUNT', margin + headerPadding, accountBoxY + 5);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(data.accountNo || '', margin + headerPadding, accountBoxY + 10);
+  
+  // ==== SECTION 2: LOGO + ADDRESS (Middle) ====
   if (logo) {
-    // Increased logo size to reduce empty space
-    const logoMaxWidth = 80; // Increased to 80mm
-    const logoMaxHeight = 40; // Increased to 40mm
+    const logoMaxWidth = 50;
+    const logoMaxHeight = 25;
     
-    // Calculate logo dimensions with aspect ratio
     const aspectRatio = logo.width / logo.height;
     let logoWidth = logoMaxWidth;
     let logoHeight = logoMaxWidth / aspectRatio;
     
-    // If height exceeds max, scale down proportionally
     if (logoHeight > logoMaxHeight) {
       logoHeight = logoMaxHeight;
       logoWidth = logoMaxHeight * aspectRatio;
     }
     
-    // Position logo on the left side (aligned to left margin)
-    const logoX = margin;
-    const logoY = y;
+    const logoX = logoSectionStartX + headerPadding;
+    const logoY = y + headerPadding;
     
     doc.addImage(logo.data, logo.format, logoX, logoY, logoWidth, logoHeight);
     logoH = logoHeight;
     
-    // Add company address below logo ONLY if using default logo (not custom uploaded logo)
+    // Add company address below logo ONLY if using default logo
     if (!hasCustomLogo) {
-      const addressY = logoY + logoHeight + 2; // Reduced gap from logo
+      const addressY = logoY + logoHeight + 2;
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
-      // Always use Visakhacouriers.in (replacing WWW.VISAKHACOURIERS.COM)
       const website = 'Visakhacouriers.in';
       const email = 'Visakhacourier@gmail.com';
       const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
@@ -818,60 +818,130 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       // Company name
       doc.text(companyName, logoX, addressY);
       
-      // Address lines - tighter spacing
-      let currentY = addressY + 3.5; // Reduced gap after company name
-      const addressLines = doc.splitTextToSize(companyAddress, leftSectionWidth - 4);
+      // Address lines
+      let currentY = addressY + 3.5;
+      const addressLines = doc.splitTextToSize(companyAddress, logoSectionWidth - (headerPadding * 2) - 4);
       addressLines.forEach((line: string) => {
         doc.text(line, logoX, currentY);
-        currentY += 3; // Tighter spacing between address lines
+        currentY += 3;
       });
       
-      // Website, email, and GST - all grouped together
-      currentY += 2; // Small gap after address
+      // Website, email, and GST
+      currentY += 2;
       doc.text(website, logoX, currentY);
-      currentY += 3; // Tighter spacing
+      currentY += 3;
       doc.text(email, logoX, currentY);
-      currentY += 3; // Tighter spacing
+      currentY += 3;
       
-      // GST number
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.text(`GST No: ${data.gstNo}`, logoX, currentY);
       
-      // Reset font size for rest of document
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       
-      // Calculate total height - all elements grouped together
-      logoH = logoHeight + 2 + 3.5 + (addressLines.length * 3) + 2 + 3 + 3 + 4; // All elements with tighter spacing
+      addressBottomY = currentY + 4;
+      logoH = logoHeight + 2 + 3.5 + (addressLines.length * 3) + 2 + 3 + 3 + 4;
     } else {
-      logoH = logoHeight; // No address for custom logo
+      addressBottomY = logoY + logoHeight + headerPadding;
+      logoH = logoHeight;
+    }
+  } else {
+    // No logo, just address
+    if (!hasCustomLogo) {
+      const addressY = y + headerPadding;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      const companyName = data.companyName || 'VISAKHA INTERNATIONAL COURIERS';
+      const website = 'Visakhacouriers.in';
+      const email = 'Visakhacourier@gmail.com';
+      const companyAddress = '7-17-7/2, Opp. Redcherry Bakery, Old Gajuwaka, Visakhapatnam - 530026, Andhra Pradesh, India';
+      
+      const logoX = logoSectionStartX + headerPadding;
+      doc.text(companyName, logoX, addressY);
+      
+      let currentY = addressY + 3.5;
+      const addressLines = doc.splitTextToSize(companyAddress, logoSectionWidth - (headerPadding * 2) - 4);
+      addressLines.forEach((line: string) => {
+        doc.text(line, logoX, currentY);
+        currentY += 3;
+      });
+      
+      currentY += 2;
+      doc.text(website, logoX, currentY);
+      currentY += 3;
+      doc.text(email, logoX, currentY);
+      currentY += 3;
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`GST No: ${data.gstNo}`, logoX, currentY);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      
+      addressBottomY = currentY + 4;
+      logoH = 3.5 + (addressLines.length * 3) + 2 + 3 + 3 + 4;
     }
   }
 
-  // ---- AWB box on right (number only) ----
-  doc.setLineWidth(0.4);
-  doc.rect(awbBoxX, awbBoxY, awbBoxW, awbBoxH);
-
+  // ==== SECTION 3: AWB NO + BARCODE (Right) ====
+  const awbBoxY = y + headerPadding;
+  const awbBoxHeight = 12;
+  const awbBoxX = awbSectionStartX + headerPadding;
+  
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('AWB NO :', awbBoxX + 3, awbBoxY + 6);
-  doc.setFontSize(12);
-  doc.text(data.awbNo, awbBoxX + 3, awbBoxY + 13);
+  doc.setFontSize(8);
+  doc.text('AWB NO :', awbBoxX, awbBoxY + 5);
+  doc.setFontSize(11);
+  doc.text(data.awbNo, awbBoxX, awbBoxY + 10);
 
-  // Barcode under box
+  // Barcode below AWB number
   const barcodeImg = generateBarcode(data.awbNo);
-  const barcodeW = 70;
-  const barcodeH = 14;
-  const barcodeX = pageWidth - margin - barcodeW;
-  const barcodeY = awbBoxY + awbBoxH + 3;
+  const barcodeW = 60;
+  const barcodeH = 12;
+  const barcodeX = awbSectionStartX + headerPadding;
+  const barcodeY = awbBoxY + awbBoxHeight + 2;
 
   if (barcodeImg) {
     doc.addImage(barcodeImg, 'PNG', barcodeX, barcodeY, barcodeW, barcodeH);
   }
 
-  // New y below barcode / logo
-  y = Math.max(barcodeY + barcodeH, y + logoH + 22) + 6;
+  // Compute bottom of header content (max of all sections)
+  const headerContentBottomY = Math.max(
+    accountBoxY + accountBoxHeight,
+    addressBottomY,
+    barcodeY + barcodeH
+  ) + headerPadding;
+
+  // Draw the single outer box around everything
+  doc.setLineWidth(0.5);
+  doc.rect(
+    margin,
+    headerTopY,
+    contentWidth,
+    headerContentBottomY - headerTopY
+  );
+
+  // Draw vertical dividers between sections
+  doc.setLineWidth(0.3);
+  // Divider between Account and Logo+Address
+  doc.line(
+    logoSectionStartX - headerPadding,
+    headerTopY,
+    logoSectionStartX - headerPadding,
+    headerContentBottomY
+  );
+  // Divider between Logo+Address and AWB+Barcode
+  doc.line(
+    awbSectionStartX - headerPadding,
+    headerTopY,
+    awbSectionStartX - headerPadding,
+    headerContentBottomY
+  );
+
+  // New y directly at bottom of header box so grid touches it (no gap)
+  y = headerContentBottomY;
 
   // ========== MAIN GRID ==========
 
@@ -907,10 +977,9 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     return yRow + h;
   };
 
-  // ---- Row 1: ACCOUNT | CUSTOMER | ORIGIN | DESTINATION | SERVICE
-  let widths = [25, 45, 30, 55, 35]; // sum = 190
+  // ---- Row 1: CUSTOMER | ORIGIN | DESTINATION | SERVICE (Account moved to header)
+  let widths = [45, 40, 60, 45]; // sum = 190 (removed ACCOUNT column)
   y = drawHeaderRow(margin, y, widths, [
-    'ACCOUNT',
     'CUSTOMER',
     'ORIGIN',
     'DESTINATION',
@@ -918,7 +987,6 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   ]);
 
   y = drawValueRow(margin, y, widths, [
-    data.accountNo || '',
     data.customer || '',
     data.origin || '',
     data.destination || '',

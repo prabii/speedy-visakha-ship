@@ -911,6 +911,7 @@ const AdminDashboard = () => {
       if (selectedPriceSheet?._id === sheetId) {
         const updated = await api.priceSheets.getById(sheetId);
         setSelectedPriceSheet(updated);
+        setEditedItems([...updated.items]);
       }
     } catch (error: any) {
       toast({
@@ -926,6 +927,8 @@ const AdminDashboard = () => {
       // Update country in editable table
       handleCellEdit(countryDialogFor.row, 'country', country.name);
       handleCellEdit(countryDialogFor.row, 'countryCode', country.code);
+      // Immediately persist change so country updates properly
+      handleSaveRow(countryDialogFor.row);
       setCountryDialogFor(null);
     } else {
       // Update country in form

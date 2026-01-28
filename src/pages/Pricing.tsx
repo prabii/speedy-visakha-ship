@@ -7,10 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
-import pricingUK from "@/assets/ChatGPT Image Jan 26, 2026, 01_16_05 PM.png";
-import pricingAustralia from "@/assets/ChatGPT Image Jan 26, 2026, 01_22_18 PM.png";
-import pricingPromo from "@/assets/ChatGPT Image Jan 26, 2026, 12_52_04 PM.png";
-import pricingCanada from "@/assets/ChatGPT Image Jan 26, 2026, 01_13_40 PM.png";
+
+// Gallery item type reused for public pricing images
+interface PricingGalleryItem {
+  _id: string;
+  type: "image" | "video" | "youtube" | "imageUrl";
+  url: string;
+  title?: string;
+  description?: string;
+  isActive?: boolean;
+  createdAt?: string;
+}
 
 const Pricing = () => {
   const { isVendor, user } = useAuth();
@@ -20,6 +27,8 @@ const Pricing = () => {
   const [error, setError] = useState<string | null>(null);
   const [filterCountry, setFilterCountry] = useState<string>('');
   const [filterService, setFilterService] = useState<string>('');
+  const [publicImages, setPublicImages] = useState<PricingGalleryItem[]>([]);
+  const [publicLoading, setPublicLoading] = useState<boolean>(false);
 
   const vendorMode = isVendor();
   
@@ -76,6 +85,36 @@ const Pricing = () => {
     };
 
     loadPriceSheet();
+  }, [vendorMode]);
+
+  // Load public pricing images from Gallery for client-side pricing section
+  useEffect(() => {
+    if (vendorMode) {
+      return;
+    }
+
+    const loadPublicImages = async () => {
+      try {
+        setPublicLoading(true);
+        // Reuse gallery API: take active image/imageUrl items as pricing images
+        const data = await api.gallery.getAll();
+        const items = (data || []) as PricingGalleryItem[];
+        const images = items
+          .filter((item) => (item.type === "image" || item.type === "imageUrl") && item.isActive !== false)
+          .sort((a, b) => {
+            if (!a.createdAt || !b.createdAt) return 0;
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          });
+        setPublicImages(images);
+      } catch (error) {
+        console.error("Failed to load public pricing images from gallery:", error);
+        setPublicImages([]);
+      } finally {
+        setPublicLoading(false);
+      }
+    };
+
+    loadPublicImages();
   }, [vendorMode]);
 
   // Auto-play carousel for public users
@@ -257,98 +296,58 @@ const Pricing = () => {
         ) : (
           /* Pricing Chart Images Carousel for Public */
           <div className="mb-16">
-          <Carousel 
-            className="w-full max-w-4xl mx-auto" 
-            setApi={setCarouselApi}
-            opts={{ 
-              align: "start", 
-              loop: true
-            }}
-          >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {/* Canada Rates */}
-                <CarouselItem className="pl-2 md:pl-4">
-                  <Card className="overflow-hidden shadow-lg">
-                    <CardContent className="p-0">
-                      <img 
-                        src={pricingCanada} 
-                        alt="Shipping Rates to Canada" 
-                        className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-                      />
-                      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                        <h3 className="text-xl font-bold mb-2 text-foreground">Shipping Rates to Canada</h3>
-                        <p className="text-muted-foreground">
-                          Efficient shipping to Canada with transparent pricing. Rates start from ₹2100 + GST for 0.5kg, 
-                          with special bulk rates for 21+ kg shipments. All rates in INR with GST applicable.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-                
-                {/* UK Rates */}
-                <CarouselItem className="pl-2 md:pl-4">
-                  <Card className="overflow-hidden shadow-lg">
-                    <CardContent className="p-0">
-                      <img 
-                        src={pricingUK} 
-                        alt="Shipping Rates to United Kingdom" 
-                        className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-                      />
-                      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                        <h3 className="text-xl font-bold mb-2 text-foreground">Shipping Rates to United Kingdom</h3>
-                        <p className="text-muted-foreground">
-                          Affordable shipping rates to the UK with transparent pricing. Starting from ₹2000 for 0.5kg, 
-                          with volume discounts available. All rates displayed in INR for easy reference.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-                
-                {/* Australia Rates */}
-                <CarouselItem className="pl-2 md:pl-4">
-                  <Card className="overflow-hidden shadow-lg">
-                    <CardContent className="p-0">
-                      <img 
-                        src={pricingAustralia} 
-                        alt="Shipping Rates to Australia" 
-                        className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-                      />
-                      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                        <h3 className="text-xl font-bold mb-2 text-foreground">Shipping Rates to Australia</h3>
-                        <p className="text-muted-foreground">
-                          Reliable shipping solutions to Australia with competitive rates. Starting from ₹2200 for 0.5kg, 
-                          with rates up to 9kg clearly displayed. Fast and secure delivery to major Australian cities.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-                
-                {/* Promotional Image */}
-                <CarouselItem className="pl-2 md:pl-4">
-                  <Card className="overflow-hidden shadow-lg">
-                    <CardContent className="p-0">
-                      <img 
-                        src={pricingPromo} 
-                        alt="Fast. Reliable. Nationwide Delivery" 
-                        className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-                      />
-                      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                        <h3 className="text-xl font-bold mb-2 text-foreground">Fast. Reliable. Nationwide Delivery</h3>
-                        <p className="text-muted-foreground">
-                          Your trusted partner in logistics solutions. We offer comprehensive shipping services including air freight, 
-                          sea freight, and road transportation. Fast, reliable, and secure handling for all your shipping needs.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              </CarouselContent>
-              <CarouselPrevious className="left-2 md:-left-12 bg-white/90 hover:bg-white shadow-lg" />
-              <CarouselNext className="right-2 md:-right-12 bg-white/90 hover:bg-white shadow-lg" />
-            </Carousel>
+            {publicLoading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading pricing images...</p>
+              </div>
+            ) : publicImages.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  No pricing images configured yet. Please add images in the Gallery (type: image) to show them here.
+                </p>
+              </div>
+            ) : (
+              <Carousel 
+                className="w-full max-w-4xl mx-auto" 
+                setApi={setCarouselApi}
+                opts={{ 
+                  align: "start", 
+                  loop: true
+                }}
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {publicImages.map((item) => (
+                    <CarouselItem key={item._id} className="pl-2 md:pl-4">
+                      <Card className="overflow-hidden shadow-lg">
+                        <CardContent className="p-0">
+                          <img 
+                            src={item.url}
+                            alt={item.title || "Pricing chart"}
+                            className="w-full h-auto max-h-[70vh] object-contain mx-auto"
+                          />
+                          {(item.title || item.description) && (
+                            <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+                              {item.title && (
+                                <h3 className="text-xl font-bold mb-2 text-foreground">
+                                  {item.title}
+                                </h3>
+                              )}
+                              {item.description && (
+                                <p className="text-muted-foreground">
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2 md:-left-12 bg-white/90 hover:bg-white shadow-lg" />
+                <CarouselNext className="right-2 md:-right-12 bg-white/90 hover:bg-white shadow-lg" />
+              </Carousel>
+            )}
           </div>
         )}
 
