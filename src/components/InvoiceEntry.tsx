@@ -1847,6 +1847,12 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
                   <SelectItem value="VSP">Visakhapatnam</SelectItem>
                   <SelectItem value="HYD">Hyderabad</SelectItem>
                   <SelectItem value="BLR">Bangalore</SelectItem>
+                  <SelectItem value="MAA">Chennai</SelectItem>
+                  <SelectItem value="VJA">Vijayawada</SelectItem>
+                  <SelectItem value="VZM">Vizianagaram</SelectItem>
+                  <SelectItem value="SKM">Srikakulam</SelectItem>
+                  <SelectItem value="RJY">Rajahmundry</SelectItem>
+                  <SelectItem value="KKD">Kakinada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
