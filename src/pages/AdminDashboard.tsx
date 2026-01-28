@@ -81,6 +81,8 @@ const AdminDashboard = () => {
     isDefault: false,
     assignedVendors: [] as string[],
   });
+  const [editingVendorAssignment, setEditingVendorAssignment] = useState<any>(null);
+  const [vendorAssignmentForm, setVendorAssignmentForm] = useState<string[]>([]);
   const [itemForm, setItemForm] = useState({
     itemName: '',
     hsnCode: '',
@@ -753,6 +755,31 @@ const AdminDashboard = () => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update default price sheet',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSaveVendorAssignment = async () => {
+    if (!editingVendorAssignment) return;
+
+    try {
+      await api.priceSheets.update(editingVendorAssignment._id, {
+        assignedVendors: vendorAssignmentForm
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Vendor assignment updated successfully',
+      });
+      
+      setEditingVendorAssignment(null);
+      setVendorAssignmentForm([]);
+      loadPriceSheets();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update vendor assignment',
         variant: 'destructive',
       });
     }
@@ -1834,7 +1861,7 @@ const AdminDashboard = () => {
                                       Items: {sheet.items?.length || 0}
                                     </p>
                                   </div>
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-2 flex-wrap">
                                     {sheet.isDefault && (
                                       <Badge className="bg-green-500">Default</Badge>
                                     )}
@@ -1844,8 +1871,25 @@ const AdminDashboard = () => {
                                       <Badge className="bg-gray-500">Inactive</Badge>
                                     )}
                                   </div>
+                                  {/* Assigned Vendors Display */}
+                                  <div className="mt-2">
+                                    <p className="text-xs text-gray-500 mb-1">Assigned Vendors:</p>
+                                    {sheet.assignedVendors && sheet.assignedVendors.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1">
+                                        {sheet.assignedVendors.map((vendor: any) => (
+                                          <Badge key={vendor._id || vendor} variant="outline" className="text-xs">
+                                            {vendor.vendorName || vendor.username || vendor}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <Badge variant="outline" className="text-xs text-gray-400">
+                                        Available to all vendors
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-col">
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1860,6 +1904,18 @@ const AdminDashboard = () => {
                                   >
                                     <Edit className="h-4 w-4 mr-1" />
                                     Manage Items
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const assignedIds = sheet.assignedVendors?.map((v: any) => v._id || v) || [];
+                                      setEditingVendorAssignment(sheet);
+                                      setVendorAssignmentForm(assignedIds);
+                                    }}
+                                  >
+                                    <UserCog className="h-4 w-4 mr-1" />
+                                    Assign Vendors
                                   </Button>
                                   {!sheet.isDefault && (
                                     <Button
@@ -1886,6 +1942,70 @@ const AdminDashboard = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Vendor Assignment Dialog */}
+                  <Dialog open={!!editingVendorAssignment} onOpenChange={(open) => {
+                    if (!open) {
+                      setEditingVendorAssignment(null);
+                      setVendorAssignmentForm([]);
+                    }
+                  }}>
+                    <DialogContent className="max-w-2xl max-h-[80vh]">
+                      <DialogHeader>
+                        <DialogTitle>Assign Vendors to Price Sheet</DialogTitle>
+                        <DialogDescription>
+                          Select vendors who should have access to "{editingVendorAssignment?.sheetName}". 
+                          Leave empty to make it available to all vendors.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        <ScrollArea className="h-64 border rounded-md p-4">
+                          {vendorUsers.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">No vendors available</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {vendorUsers.map((vendor) => (
+                                <div key={vendor._id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
+                                  <input
+                                    type="checkbox"
+                                    checked={vendorAssignmentForm.includes(vendor._id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setVendorAssignmentForm([...vendorAssignmentForm, vendor._id]);
+                                      } else {
+                                        setVendorAssignmentForm(vendorAssignmentForm.filter(id => id !== vendor._id));
+                                      }
+                                    }}
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-sm flex-1">{vendor.vendorName || vendor.username}</span>
+                                  {vendorAssignmentForm.includes(vendor._id) && (
+                                    <Badge variant="outline" className="text-xs">Assigned</Badge>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </ScrollArea>
+                        <div className="flex justify-end gap-2 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setEditingVendorAssignment(null);
+                              setVendorAssignmentForm([]);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleSaveVendorAssignment}
+                          >
+                            Save Assignment
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   {/* Pricing Images Management for Public Website */}
                   <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 mt-8">
