@@ -922,13 +922,50 @@ const AdminDashboard = () => {
     }
   };
 
-  const selectCountry = (country: CountryCode) => {
+  const selectCountry = async (country: CountryCode) => {
     if (countryDialogFor) {
-      // Update country in editable table
-      handleCellEdit(countryDialogFor.row, 'country', country.name);
-      handleCellEdit(countryDialogFor.row, 'countryCode', country.code);
-      // Immediately persist change so country updates properly
-      handleSaveRow(countryDialogFor.row);
+      // Update country in editable table immediately
+      const updated = [...editedItems];
+      updated[countryDialogFor.row] = { 
+        ...updated[countryDialogFor.row], 
+        country: country.name,
+        countryCode: country.code
+      };
+      setEditedItems(updated);
+      
+      // Now save with the updated country value
+      const item = updated[countryDialogFor.row];
+      if (item && item.itemName && item.rate) {
+        try {
+          await api.priceSheets.updateItem(selectedPriceSheet._id, item._id, {
+            itemName: item.itemName,
+            hsnCode: item.hsnCode || '',
+            weight: item.weight || '',
+            rate: parseFloat(item.rate?.toString() || '0'),
+            destination: item.destination || '',
+            country: country.name, // Use the selected country directly
+            countryCode: country.code, // Use the selected country code directly
+            serviceType: item.serviceType || '',
+            currency: item.currency || 'INR'
+          });
+          
+          toast({
+            title: 'Success',
+            description: 'Country updated successfully',
+          });
+          
+          // Reload to get fresh data
+          const updatedSheet = await api.priceSheets.getById(selectedPriceSheet._id);
+          setSelectedPriceSheet(updatedSheet);
+          setEditedItems([...updatedSheet.items]);
+        } catch (error: any) {
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to update country',
+            variant: 'destructive',
+          });
+        }
+      }
       setCountryDialogFor(null);
     } else {
       // Update country in form
@@ -1803,6 +1840,162 @@ const AdminDashboard = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Pricing Images Management for Public Website */}
+                  <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 mt-8">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+                      <CardTitle className="flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5 text-purple-600" />
+                        Pricing Images for Website
+                      </CardTitle>
+                      <CardDescription>
+                        Upload images that will be displayed in the carousel on the public pricing page. 
+                        Only active images with type "image" or "imageUrl" will be shown.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6 space-y-4">
+                      {/* Upload Form */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Upload Type *</Label>
+                          <Select
+                            value={galleryForm.type}
+                            onValueChange={(value: 'image' | 'imageUrl' | 'youtube' | 'video') => {
+                              setGalleryForm({ ...galleryForm, type: value, url: '' });
+                              setGalleryUploadFile(null);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select upload type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="image">Upload Image File</SelectItem>
+                              <SelectItem value="imageUrl">Image URL</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {galleryForm.type === 'image' && (
+                          <div className="space-y-2">
+                            <Label>Image File *</Label>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setGalleryUploadFile(file);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                        {galleryForm.type === 'imageUrl' && (
+                          <div className="space-y-2">
+                            <Label>Image URL *</Label>
+                            <Input
+                              placeholder="https://example.com/image.png"
+                              value={galleryForm.url}
+                              onChange={(e) => setGalleryForm({ ...galleryForm, url: e.target.value })}
+                            />
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <Label>Title</Label>
+                          <Input
+                            placeholder="e.g., Shipping Rates to USA"
+                            value={galleryForm.title}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label>Description</Label>
+                          <Input
+                            placeholder="Brief description of the pricing chart"
+                            value={galleryForm.description}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, description: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          if (galleryForm.type === 'image' && !galleryUploadFile) {
+                            toast({
+                              title: 'Error',
+                              description: 'Please select an image file',
+                              variant: 'destructive',
+                            });
+                            return;
+                          }
+                          if ((galleryForm.type === 'imageUrl') && !galleryForm.url.trim()) {
+                            toast({
+                              title: 'Error',
+                              description: 'Please enter an image URL',
+                              variant: 'destructive',
+                            });
+                            return;
+                          }
+
+                          try {
+                            if (galleryForm.type === 'image' && galleryUploadFile) {
+                              const formData = new FormData();
+                              formData.append('file', galleryUploadFile);
+                              formData.append('type', 'image');
+                              if (galleryForm.title) formData.append('title', galleryForm.title);
+                              if (galleryForm.description) formData.append('description', galleryForm.description);
+                              
+                              await api.gallery.upload(formData);
+                            } else if (galleryForm.type === 'imageUrl') {
+                              await api.gallery.create({
+                                type: 'imageUrl',
+                                url: galleryForm.url.trim(),
+                                title: galleryForm.title.trim() || undefined,
+                                description: galleryForm.description.trim() || undefined,
+                                isActive: true
+                              });
+                            }
+
+                            toast({
+                              title: 'Success',
+                              description: 'Pricing image uploaded successfully',
+                            });
+
+                            // Reset form
+                            setGalleryForm({
+                              type: 'image',
+                              url: '',
+                              title: '',
+                              description: '',
+                            });
+                            setGalleryUploadFile(null);
+
+                            // Reload gallery items to show in list
+                            const galleryData = await api.gallery.getAll();
+                            const pricingImages = (galleryData || []).filter(
+                              (item: any) => (item.type === 'image' || item.type === 'imageUrl') && item.isActive !== false
+                            );
+                            // You can set this to state if you want to show them here
+                          } catch (error: any) {
+                            toast({
+                              title: 'Error',
+                              description: error.message || 'Failed to upload pricing image',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                        className="w-full"
+                        disabled={
+                          (galleryForm.type === 'image' && !galleryUploadFile) ||
+                          (galleryForm.type === 'imageUrl' && !galleryForm.url.trim())
+                        }
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Upload Pricing Image
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Images uploaded here will appear in the carousel on the public pricing page (/pricing)
+                      </p>
+                    </CardContent>
+                  </Card>
 
                   {/* Selected Price Sheet - Item Management */}
                   {selectedPriceSheet && (
