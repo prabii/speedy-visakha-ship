@@ -4,39 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 
-// Gallery item type reused for public pricing images
-interface PricingGalleryItem {
-  _id: string;
-  type: "image" | "video" | "youtube" | "imageUrl";
-  url: string;
-  title?: string;
-  description?: string;
-  isActive?: boolean;
-  createdAt?: string;
-}
+const FLAG: Record<string, string> = {
+  USA: "🇺🇸",
+  CANADA: "🇨🇦",
+  UK: "🇬🇧",
+  AUSTRALIA: "🇦🇺",
+};
 
 const Pricing = () => {
   const { isVendor, user } = useAuth();
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [priceSheet, setPriceSheet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterCountry, setFilterCountry] = useState<string>('');
   const [filterService, setFilterService] = useState<string>('');
-  const [publicImages, setPublicImages] = useState<PricingGalleryItem[]>([]);
-  const [publicLoading, setPublicLoading] = useState<boolean>(false);
+  const [publicSheet, setPublicSheet] = useState<any>(null);
+  const [publicLoading, setPublicLoading] = useState(false);
 
   const vendorMode = isVendor();
-  
-  // Debug logging
-  useEffect(() => {
-    console.log('Pricing page - User:', user);
-    console.log('Pricing page - Is Vendor:', vendorMode);
-  }, [user, vendorMode]);
 
   // Load price sheet for vendors
   useEffect(() => {
@@ -49,17 +38,11 @@ const Pricing = () => {
       try {
         setLoading(true);
         setError(null);
-        // Get vendor ID for filtering - only pass if user is a vendor
         const vendorId = vendorMode && user?._id ? user._id : undefined;
-        
-        console.log('Loading price sheet for vendor:', vendorId, 'User:', user);
-        
-        // Try to get active price sheet (filtered by vendor if vendorId exists)
         const data = await api.priceSheets.getActive(vendorId);
         if (data && data.items && data.items.length > 0) {
           setPriceSheet(data);
         } else {
-          // If no active, try to get any price sheet (filtered by vendor)
           const allSheets = await api.priceSheets.getAll({ isActive: true, vendorId });
           if (allSheets && allSheets.length > 0) {
             setPriceSheet(allSheets[0]);
@@ -69,8 +52,6 @@ const Pricing = () => {
           }
         }
       } catch (err: any) {
-        console.log('No active price sheet found:', err);
-        // Try to get any price sheet as fallback
         try {
           const vendorId = vendorMode && user?._id ? user._id : undefined;
           const allSheets = await api.priceSheets.getAll({ isActive: true, vendorId });
@@ -81,7 +62,7 @@ const Pricing = () => {
             setPriceSheet(null);
             setError('No pricing data available. Please contact administrator.');
           }
-        } catch (fallbackErr: any) {
+        } catch {
           setPriceSheet(null);
           setError('No pricing data available. Please contact administrator.');
         }
@@ -93,56 +74,18 @@ const Pricing = () => {
     loadPriceSheet();
   }, [vendorMode]);
 
-  // Load public pricing images from Gallery for client-side pricing section
+  // Load public customer rates
   useEffect(() => {
-    if (vendorMode) {
-      return;
-    }
-
-    const loadPublicImages = async () => {
-      try {
-        setPublicLoading(true);
-        // Get only pricing category images from gallery API
-        const data = await api.gallery.getAll();
-        const items = (data || []) as PricingGalleryItem[];
-        const images = items
-          .filter((item) => 
-            (item.type === "image" || item.type === "imageUrl") && 
-            item.isActive !== false &&
-            (item as any).category === 'pricing' // Only pricing category images
-          )
-          .sort((a, b) => {
-            if (!a.createdAt || !b.createdAt) return 0;
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          });
-        setPublicImages(images);
-      } catch (error) {
-        console.error("Failed to load public pricing images from gallery:", error);
-        setPublicImages([]);
-      } finally {
-        setPublicLoading(false);
-      }
-    };
-
-    loadPublicImages();
+    if (vendorMode) return;
+    setPublicLoading(true);
+    api.priceSheets.getPublic()
+      .then((data: any) => { if (data?.items?.length) setPublicSheet(data); })
+      .catch(() => {})
+      .finally(() => setPublicLoading(false));
   }, [vendorMode]);
 
-  // Auto-play carousel for public users
-  useEffect(() => {
-    if (!carouselApi || vendorMode) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      if (carouselApi.canScrollNext()) {
-        carouselApi.scrollNext();
-      } else {
-        carouselApi.scrollTo(0); // Reset to first slide
-      }
-    }, 10000); // Change slide every 10 seconds (slower)
-
-    return () => clearInterval(interval);
-  }, [carouselApi, vendorMode]);
+  const publicItems: any[] = publicSheet?.items || [];
+  const countries = [...new Set(publicItems.map((i: any) => i.country).filter(Boolean))];
 
   return (
     <main className="min-h-screen py-20">
@@ -152,14 +95,13 @@ const Pricing = () => {
             Competitive Pricing for Global Shipping
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Transparent and affordable rates for all your international courier needs. 
+            Transparent and affordable rates for all your international courier needs.
             No hidden charges, just reliable service at great prices.
           </p>
         </div>
 
-        {/* Show pricing table for vendors, carousel for public */}
+        {/* Vendors: detailed price table */}
         {vendorMode ? (
-          /* Price Sheet Table for Vendors */
           loading ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Loading pricing information...</p>
@@ -175,27 +117,20 @@ const Pricing = () => {
                 )}
               </CardHeader>
               <CardContent className="p-6">
-                {/* Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <Input
-                      placeholder="Search country..."
-                      value={filterCountry}
-                      onChange={(e) => setFilterCountry(e.target.value)}
-                      className="h-10 text-base"
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      placeholder="Search service type..."
-                      value={filterService}
-                      onChange={(e) => setFilterService(e.target.value)}
-                      className="h-10 text-base"
-                    />
-                  </div>
+                  <Input
+                    placeholder="Search country..."
+                    value={filterCountry}
+                    onChange={(e) => setFilterCountry(e.target.value)}
+                    className="h-10 text-base"
+                  />
+                  <Input
+                    placeholder="Search service type..."
+                    value={filterService}
+                    onChange={(e) => setFilterService(e.target.value)}
+                    className="h-10 text-base"
+                  />
                 </div>
-
-                {/* Price Table */}
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -222,14 +157,13 @@ const Pricing = () => {
                     <TableBody>
                       {priceSheet.items
                         .filter((item: any) => {
-                          const countryMatch = !filterCountry || 
+                          const countryMatch = !filterCountry ||
                             (item.country && item.country.toLowerCase().includes(filterCountry.toLowerCase()));
-                          const serviceMatch = !filterService || 
+                          const serviceMatch = !filterService ||
                             (item.serviceType && item.serviceType.toLowerCase().includes(filterService.toLowerCase()));
                           return countryMatch && serviceMatch;
                         })
                         .map((item: any, index: number) => {
-                          // Clean item name - remove FEDEX and service type mentions
                           let cleanItemName = item.itemName || '';
                           if (cleanItemName) {
                             cleanItemName = cleanItemName.replace(/^FEDEX\s*-\s*/i, '');
@@ -238,7 +172,6 @@ const Pricing = () => {
                               cleanItemName = cleanItemName.replace(new RegExp(`\\s*-\\s*${item.serviceType}\\s*`, 'i'), '');
                             }
                           }
-                          
                           return (
                             <TableRow key={item._id || index} className="hover:bg-gray-50">
                               <TableCell className="font-medium text-base">{cleanItemName || '-'}</TableCell>
@@ -277,9 +210,9 @@ const Pricing = () => {
                   </Table>
                 </div>
                 {priceSheet.items.filter((item: any) => {
-                  const countryMatch = !filterCountry || 
+                  const countryMatch = !filterCountry ||
                     (item.country && item.country.toLowerCase().includes(filterCountry.toLowerCase()));
-                  const serviceMatch = !filterService || 
+                  const serviceMatch = !filterService ||
                     (item.serviceType && item.serviceType.toLowerCase().includes(filterService.toLowerCase()));
                   return countryMatch && serviceMatch;
                 }).length === 0 && (
@@ -304,63 +237,72 @@ const Pricing = () => {
             </div>
           )
         ) : (
-          /* Pricing Chart Images Carousel for Public */
+          /* Public: country rate cards */
           <div className="mb-16">
             {publicLoading ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">Loading pricing images...</p>
+                <p className="text-muted-foreground">Loading pricing...</p>
               </div>
-            ) : publicImages.length === 0 ? (
+            ) : countries.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  No pricing images configured yet. Please add images in the Gallery (type: image) to show them here.
-                </p>
+                <p className="text-muted-foreground">Pricing information coming soon.</p>
               </div>
             ) : (
-              <Carousel 
-                className="w-full max-w-4xl mx-auto" 
-                setApi={setCarouselApi}
-                opts={{ 
-                  align: "start", 
-                  loop: true
-                }}
-              >
-                <CarouselContent className="-ml-2 md:-ml-4">
-                  {publicImages.map((item) => (
-                    <CarouselItem key={item._id} className="pl-2 md:pl-4">
-                      <Card className="overflow-hidden shadow-lg">
-                        <CardContent className="p-0">
-                          <img 
-                            src={item.url}
-                            alt={item.title || "Pricing chart"}
-                            className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-                          />
-                          {(item.title || item.description) && (
-                            <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                              {item.title && (
-                                <h3 className="text-xl font-bold mb-2 text-foreground">
-                                  {item.title}
-                                </h3>
-                              )}
-                              {item.description && (
-                                <p className="text-muted-foreground">
-                                  {item.description}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2 md:-left-12 bg-white/90 hover:bg-white shadow-lg" />
-                <CarouselNext className="right-2 md:-right-12 bg-white/90 hover:bg-white shadow-lg" />
-              </Carousel>
+              <div className="max-w-2xl mx-auto">
+                <Card className="shadow-xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-4 text-center">
+                    <CardTitle className="text-lg tracking-wide">Courier Rates (Per Kg)</CardTitle>
+                    <p className="text-sm opacity-80 mt-1">Rates in INR. GST applicable on select weights.</p>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Tabs defaultValue={countries[0]} className="w-full">
+                      <TabsList
+                        className="w-full rounded-none border-b grid"
+                        style={{ gridTemplateColumns: `repeat(${countries.length}, 1fr)` }}
+                      >
+                        {countries.map((c) => (
+                          <TabsTrigger key={c} value={c} className="text-sm py-3">
+                            {FLAG[c] || "🌍"} {c}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      {countries.map((country) => {
+                        const rows = publicItems.filter((i: any) => i.country === country);
+                        return (
+                          <TabsContent key={country} value={country} className="m-0">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="bg-gray-50 border-b">
+                                  <th className="text-left px-6 py-3 font-semibold text-gray-700">Weight (Kg)</th>
+                                  <th className="text-right px-6 py-3 font-semibold text-gray-700">Price (INR)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {rows.map((item: any, idx: number) => (
+                                  <tr key={item._id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                    <td className="px-6 py-3 font-medium text-gray-800">{item.weight}</td>
+                                    <td className="px-6 py-3 text-right">
+                                      <span className="font-bold text-blue-700">
+                                        {item.rate?.toLocaleString("en-IN")}
+                                      </span>
+                                      {item.destination && (
+                                        <span className="text-xs text-gray-500 ml-1">{item.destination}</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </TabsContent>
+                        );
+                      })}
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
         )}
-
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -375,7 +317,6 @@ const Pricing = () => {
               </p>
             </CardContent>
           </Card>
-
           <Card className="text-center hover:shadow-elegant transition-all duration-300">
             <CardContent className="p-6">
               <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
@@ -387,7 +328,6 @@ const Pricing = () => {
               </p>
             </CardContent>
           </Card>
-
           <Card className="text-center hover:shadow-elegant transition-all duration-300">
             <CardContent className="p-6">
               <div className="w-12 h-12 bg-gradient-secondary rounded-full flex items-center justify-center mx-auto mb-4">
