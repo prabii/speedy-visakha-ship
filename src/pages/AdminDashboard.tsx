@@ -1837,6 +1837,66 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
 
+                  {/* Upload Excel Price Sheet */}
+                  <Card className="bg-gray-50 border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Upload className="h-5 w-5 text-blue-600" />
+                        Upload Excel / CSV Price Sheet
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Sheet Name *</Label>
+                          <Input
+                            placeholder="Enter price sheet name"
+                            value={priceSheetForm.sheetName}
+                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, sheetName: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Excel / CSV File *</Label>
+                          <Input
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Input
+                            placeholder="Optional description"
+                            value={priceSheetForm.description}
+                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, description: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2 flex items-end">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={priceSheetForm.isDefault}
+                              onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isDefault: e.target.checked })}
+                              className="w-4 h-4"
+                            />
+                            <span className="text-sm text-muted-foreground">Set as default (shows on home page)</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handleUploadPriceSheet}
+                        disabled={!priceSheetForm.sheetName || !uploadFile}
+                        className="w-full"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload &amp; Import Price Sheet
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Supported columns: Item Name, Weight, Rate/Price, Country, Destination, Service Type, HSN Code
+                      </p>
+                    </CardContent>
+                  </Card>
+
                   {/* Price Sheets List */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Price Sheets</h3>
