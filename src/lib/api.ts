@@ -167,6 +167,7 @@ export const api = {
       const query = vendorId ? `?vendorId=${vendorId}` : '';
       return api.fetch(`/price-sheets/active${query}`);
     },
+    getPublic: () => api.fetch('/price-sheets/public'),
     getById: (id: string) => api.fetch(`/price-sheets/${id}`),
     create: (data: any) => api.fetch('/price-sheets', { method: 'POST', body: JSON.stringify(data) }),
     upload: (formData: FormData) => {

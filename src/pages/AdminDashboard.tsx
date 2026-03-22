@@ -702,6 +702,7 @@ const AdminDashboard = () => {
         sheetName: priceSheetForm.sheetName,
         description: priceSheetForm.description,
         isDefault: priceSheetForm.isDefault,
+        isPublic: (priceSheetForm as any).isPublic || false,
         uploadedBy: isValidObjectId ? user._id : undefined,
         assignedVendors: priceSheetForm.assignedVendors
       });
@@ -1782,7 +1783,19 @@ const AdminDashboard = () => {
                               onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isDefault: e.target.checked })}
                               className="w-4 h-4"
                             />
-                            <span className="text-sm text-muted-foreground">Make this the default price sheet</span>
+                            <span className="text-sm text-muted-foreground">Make this the default price sheet (for vendors)</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label>Show on Public Website</Label>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={(priceSheetForm as any).isPublic || false}
+                              onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isPublic: e.target.checked } as any)}
+                              className="w-4 h-4"
+                            />
+                            <span className="text-sm text-muted-foreground">Display this price sheet on the home page for customers</span>
                           </div>
                         </div>
                         <div className="space-y-2 md:col-span-2">
@@ -1865,6 +1878,9 @@ const AdminDashboard = () => {
                                     {sheet.isDefault && (
                                       <Badge className="bg-green-500">Default</Badge>
                                     )}
+                                    {sheet.isPublic && (
+                                      <Badge className="bg-purple-500">Public</Badge>
+                                    )}
                                     {sheet.isActive ? (
                                       <Badge className="bg-blue-500">Active</Badge>
                                     ) : (
@@ -1924,6 +1940,19 @@ const AdminDashboard = () => {
                                       onClick={() => handleSetDefault(sheet._id)}
                                     >
                                       Set Default
+                                    </Button>
+                                  )}
+                                  {!sheet.isPublic && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={async () => {
+                                        await api.priceSheets.update(sheet._id, { isPublic: true });
+                                        toast({ title: 'Success', description: 'Price sheet set as public' });
+                                        loadPriceSheets();
+                                      }}
+                                    >
+                                      Set Public
                                     </Button>
                                   )}
                                   <Button
