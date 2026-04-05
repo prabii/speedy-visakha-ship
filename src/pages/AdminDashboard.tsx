@@ -1740,236 +1740,268 @@ const AdminDashboard = () => {
 
           {/* Price Sheets Tab (Admin only) */}
           {isAdmin() && (
-            <TabsContent value="price-sheets" className="space-y-4">
-              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-5 w-5 text-blue-600" />
-                    Price Sheet Management
-                  </CardTitle>
-                  <CardDescription>Upload and manage rate charts from Excel files</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-6">
-                  {/* Create New Price Sheet Form */}
-                  <Card className="bg-gray-50 border-gray-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Create New Price Sheet</CardTitle>
+            <TabsContent value="price-sheets" className="space-y-6">
+              {/* Page Header */}
+              <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white shadow-lg">
+                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <FileSpreadsheet className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Price Sheet Management</h2>
+                  <p className="text-blue-100 text-sm mt-0.5">Create sheets, add country rates, and publish to website</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                {/* LEFT: Create Form */}
+                <div className="xl:col-span-2">
+                  <Card className="border-0 shadow-md overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Plus className="h-4 w-4 text-blue-600" />
+                        Create New Price Sheet
+                      </CardTitle>
+                      <CardDescription className="text-xs">Add a sheet then manage its items</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Sheet Name *</Label>
-                          <Input
-                            placeholder="Enter price sheet name"
-                            value={priceSheetForm.sheetName}
-                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, sheetName: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Description</Label>
-                          <Input
-                            placeholder="Enter description (optional)"
-                            value={priceSheetForm.description}
-                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, description: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Set as Default</Label>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={priceSheetForm.isDefault}
-                              onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isDefault: e.target.checked })}
-                              className="w-4 h-4"
-                            />
-                            <span className="text-sm text-muted-foreground">Make this the default price sheet (for vendors)</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Show on Public Website</Label>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={(priceSheetForm as any).isPublic || false}
-                              onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isPublic: e.target.checked } as any)}
-                              className="w-4 h-4"
-                            />
-                            <span className="text-sm text-muted-foreground">Display this price sheet on the home page for customers</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Assign to Vendors</Label>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Select vendors who should see this price sheet. Leave empty to make it available to all vendors.
-                          </p>
-                          <ScrollArea className="h-32 border rounded-md p-2">
-                            {vendorUsers.length === 0 ? (
-                              <p className="text-sm text-muted-foreground text-center py-4">No vendors available</p>
-                            ) : (
-                              <div className="space-y-2">
-                                {vendorUsers.map((vendor) => (
-                                  <div key={vendor._id} className="flex items-center space-x-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={priceSheetForm.assignedVendors.includes(vendor._id)}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setPriceSheetForm({
-                                            ...priceSheetForm,
-                                            assignedVendors: [...priceSheetForm.assignedVendors, vendor._id]
-                                          });
-                                        } else {
-                                          setPriceSheetForm({
-                                            ...priceSheetForm,
-                                            assignedVendors: priceSheetForm.assignedVendors.filter(id => id !== vendor._id)
-                                          });
-                                        }
-                                      }}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-sm">{vendor.vendorName || vendor.username}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </ScrollArea>
-                        </div>
+                    <CardContent className="pt-5 space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Sheet Name *</Label>
+                        <Input
+                          placeholder="e.g. USA Rates 2025"
+                          value={priceSheetForm.sheetName}
+                          onChange={(e) => setPriceSheetForm({ ...priceSheetForm, sheetName: e.target.value })}
+                        />
                       </div>
-                      <Button 
-                        onClick={handleCreatePriceSheet} 
-                        disabled={!priceSheetForm.sheetName} 
-                        className="w-full"
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Description</Label>
+                        <Input
+                          placeholder="Optional note about this sheet"
+                          value={priceSheetForm.description}
+                          onChange={(e) => setPriceSheetForm({ ...priceSheetForm, description: e.target.value })}
+                        />
+                      </div>
+
+                      {/* Toggles */}
+                      <div className="space-y-3 pt-1">
+                        <label className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                          <div>
+                            <p className="text-sm font-medium text-green-800">Default Sheet</p>
+                            <p className="text-xs text-green-600">For vendors without specific assignment</p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={priceSheetForm.isDefault}
+                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isDefault: e.target.checked })}
+                            className="w-4 h-4 accent-green-600"
+                          />
+                        </label>
+                        <label className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors">
+                          <div>
+                            <p className="text-sm font-medium text-purple-800">Show on Website</p>
+                            <p className="text-xs text-purple-600">Visible to customers on pricing page</p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={(priceSheetForm as any).isPublic || false}
+                            onChange={(e) => setPriceSheetForm({ ...priceSheetForm, isPublic: e.target.checked } as any)}
+                            className="w-4 h-4 accent-purple-600"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Assign Vendors */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Assign to Vendors</Label>
+                        <ScrollArea className="h-28 border rounded-lg bg-gray-50 p-2">
+                          {vendorUsers.length === 0 ? (
+                            <p className="text-xs text-muted-foreground text-center py-4">No vendors available</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {vendorUsers.map((vendor) => (
+                                <label key={vendor._id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={priceSheetForm.assignedVendors.includes(vendor._id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setPriceSheetForm({ ...priceSheetForm, assignedVendors: [...priceSheetForm.assignedVendors, vendor._id] });
+                                      } else {
+                                        setPriceSheetForm({ ...priceSheetForm, assignedVendors: priceSheetForm.assignedVendors.filter(id => id !== vendor._id) });
+                                      }
+                                    }}
+                                    className="w-4 h-4 accent-blue-600"
+                                  />
+                                  <span className="text-sm">{vendor.vendorName || vendor.username}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </ScrollArea>
+                        <p className="text-xs text-muted-foreground">Leave empty = available to all vendors</p>
+                      </div>
+
+                      <Button
+                        onClick={handleCreatePriceSheet}
+                        disabled={!priceSheetForm.sheetName}
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         Create Price Sheet
                       </Button>
-                      <p className="text-xs text-muted-foreground text-center">
-                        Create a new price sheet and add items manually using the editable table
-                      </p>
                     </CardContent>
                   </Card>
+                </div>
 
-                  {/* Price Sheets List */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Price Sheets</h3>
-                    {isLoadingPriceSheets ? (
-                      <div className="text-center py-8">Loading...</div>
-                    ) : priceSheets.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">No price sheets found. Upload your first price sheet above.</div>
-                    ) : (
-                      <div className="space-y-4">
-                        {priceSheets.map((sheet) => (
-                          <Card key={sheet._id} className="bg-white border-gray-200">
-                            <CardContent className="pt-6">
-                              <div className="flex justify-between items-start">
-                                <div className="space-y-2 flex-1">
-                                  <div className="mb-2">
-                                    <h4 className="font-bold text-lg text-blue-600">{sheet.sheetName}</h4>
-                                    {sheet.description && (
-                                      <p className="text-sm text-gray-500 mt-1">{sheet.description}</p>
-                                    )}
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      Uploaded: {new Date(sheet.createdAt).toLocaleDateString()} | 
-                                      Items: {sheet.items?.length || 0}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {sheet.isDefault && (
-                                      <Badge className="bg-green-500">Default</Badge>
-                                    )}
-                                    {sheet.isPublic && (
-                                      <Badge className="bg-purple-500">Public</Badge>
-                                    )}
-                                    {sheet.isActive ? (
-                                      <Badge className="bg-blue-500">Active</Badge>
-                                    ) : (
-                                      <Badge className="bg-gray-500">Inactive</Badge>
-                                    )}
-                                  </div>
-                                  {/* Assigned Vendors Display */}
-                                  <div className="mt-2">
-                                    <p className="text-xs text-gray-500 mb-1">Assigned Vendors:</p>
-                                    {sheet.assignedVendors && sheet.assignedVendors.length > 0 ? (
-                                      <div className="flex flex-wrap gap-1">
-                                        {sheet.assignedVendors.map((vendor: any) => (
-                                          <Badge key={vendor._id || vendor} variant="outline" className="text-xs">
-                                            {vendor.vendorName || vendor.username || vendor}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <Badge variant="outline" className="text-xs text-gray-400">
-                                        Available to all vendors
+                {/* RIGHT: Price Sheets List */}
+                <div className="xl:col-span-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-gray-800">
+                      Your Price Sheets
+                      {priceSheets.length > 0 && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                          {priceSheets.length}
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+
+                  {isLoadingPriceSheets ? (
+                    <div className="flex items-center justify-center py-12 text-muted-foreground">
+                      <div className="text-center space-y-2">
+                        <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
+                        <p className="text-sm">Loading sheets...</p>
+                      </div>
+                    </div>
+                  ) : priceSheets.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                      <FileSpreadsheet className="h-10 w-10 text-gray-300 mb-3" />
+                      <p className="text-sm font-medium text-gray-500">No price sheets yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Create your first sheet using the form</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {priceSheets.map((sheet) => {
+                        const countries = [...new Set((sheet.items || []).map((i: any) => i.country).filter(Boolean))];
+                        return (
+                          <Card key={sheet._id} className={`border-l-4 shadow-sm hover:shadow-md transition-shadow ${sheet.isPublic ? 'border-l-purple-500' : sheet.isDefault ? 'border-l-green-500' : 'border-l-blue-400'}`}>
+                            <CardContent className="p-4">
+                              {/* Top row: name + badges */}
+                              <div className="flex items-start justify-between gap-2 mb-3">
+                                <div className="min-w-0">
+                                  <h4 className="font-bold text-gray-900 truncate">{sheet.sheetName}</h4>
+                                  {sheet.description && (
+                                    <p className="text-xs text-gray-500 mt-0.5 truncate">{sheet.description}</p>
+                                  )}
+                                </div>
+                                <div className="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
+                                  {sheet.isPublic && <Badge className="bg-purple-500 text-white text-xs px-2">🌐 Public</Badge>}
+                                  {sheet.isDefault && <Badge className="bg-green-500 text-white text-xs px-2">⭐ Default</Badge>}
+                                  <Badge className={`text-xs px-2 ${sheet.isActive ? 'bg-blue-500 text-white' : 'bg-gray-400 text-white'}`}>
+                                    {sheet.isActive ? '● Active' : '○ Inactive'}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Stats row */}
+                              <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                                <span className="flex items-center gap-1">
+                                  <FileText className="h-3 w-3" />
+                                  {sheet.items?.length || 0} items
+                                </span>
+                                {countries.length > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <span>🌍</span>
+                                    {countries.slice(0, 3).join(', ')}{countries.length > 3 ? ` +${countries.length - 3}` : ''}
+                                  </span>
+                                )}
+                                <span>{new Date(sheet.createdAt).toLocaleDateString('en-IN')}</span>
+                              </div>
+
+                              {/* Vendors */}
+                              <div className="mb-3">
+                                {sheet.assignedVendors && sheet.assignedVendors.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {sheet.assignedVendors.map((vendor: any) => (
+                                      <Badge key={vendor._id || vendor} variant="outline" className="text-xs border-blue-200 text-blue-700">
+                                        {vendor.vendorName || vendor.username || vendor}
                                       </Badge>
-                                    )}
+                                    ))}
                                   </div>
-                                </div>
-                                <div className="flex gap-2 flex-col">
+                                ) : (
+                                  <span className="text-xs text-gray-400 italic">All vendors</span>
+                                )}
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                                <Button
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white h-7 text-xs px-3"
+                                  onClick={async () => {
+                                    const sheetData = await api.priceSheets.getById(sheet._id);
+                                    setSelectedPriceSheet(sheetData);
+                                    setEditedItems([...sheetData.items]);
+                                    setEditingItem(null);
+                                    setEditingItemIndex(null);
+                                    setEditingCell(null);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Manage Items
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-3 border-slate-300"
+                                  onClick={() => {
+                                    const assignedIds = sheet.assignedVendors?.map((v: any) => v._id || v) || [];
+                                    setEditingVendorAssignment(sheet);
+                                    setVendorAssignmentForm(assignedIds);
+                                  }}
+                                >
+                                  <UserCog className="h-3 w-3 mr-1" />
+                                  Vendors
+                                </Button>
+                                {!sheet.isDefault && (
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={async () => {
-                                      const sheetData = await api.priceSheets.getById(sheet._id);
-                                      setSelectedPriceSheet(sheetData);
-                                      setEditedItems([...sheetData.items]);
-                                      setEditingItem(null);
-                                      setEditingItemIndex(null);
-                                      setEditingCell(null);
-                                    }}
+                                    className="h-7 text-xs px-3 border-green-300 text-green-700 hover:bg-green-50"
+                                    onClick={() => handleSetDefault(sheet._id)}
                                   >
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Manage Items
+                                    ⭐ Set Default
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      const assignedIds = sheet.assignedVendors?.map((v: any) => v._id || v) || [];
-                                      setEditingVendorAssignment(sheet);
-                                      setVendorAssignmentForm(assignedIds);
-                                    }}
-                                  >
-                                    <UserCog className="h-4 w-4 mr-1" />
-                                    Assign Vendors
-                                  </Button>
-                                  {!sheet.isDefault && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleSetDefault(sheet._id)}
-                                    >
-                                      Set Default
-                                    </Button>
-                                  )}
-                                  {!sheet.isPublic && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={async () => {
-                                        await api.priceSheets.update(sheet._id, { isPublic: true });
-                                        toast({ title: 'Success', description: 'Price sheet set as public' });
-                                        loadPriceSheets();
-                                      }}
-                                    >
-                                      Set Public
-                                    </Button>
-                                  )}
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => handleDeletePriceSheet(sheet._id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Delete
-                                  </Button>
-                                </div>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={`h-7 text-xs px-3 ${sheet.isPublic ? 'border-purple-300 text-purple-700 bg-purple-50' : 'border-purple-300 text-purple-700 hover:bg-purple-50'}`}
+                                  onClick={async () => {
+                                    await api.priceSheets.update(sheet._id, { isPublic: !sheet.isPublic });
+                                    toast({ title: 'Success', description: sheet.isPublic ? 'Removed from public website' : 'Now visible on public website' });
+                                    loadPriceSheets();
+                                  }}
+                                >
+                                  🌐 {sheet.isPublic ? 'Unpublish' : 'Publish'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-3 border-red-200 text-red-600 hover:bg-red-50 ml-auto"
+                                  onClick={() => handleDeletePriceSheet(sheet._id)}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Delete
+                                </Button>
                               </div>
                             </CardContent>
                           </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
 
                   {/* Vendor Assignment Dialog */}
                   <Dialog open={!!editingVendorAssignment} onOpenChange={(open) => {
@@ -2547,8 +2579,7 @@ const AdminDashboard = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
-                </CardContent>
-              </Card>
+
             </TabsContent>
           )}
 
