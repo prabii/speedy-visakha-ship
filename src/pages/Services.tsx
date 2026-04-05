@@ -61,24 +61,24 @@ const Services = () => {
   ];
 
   return (
-    <main className="min-h-screen py-20">
+    <main className="min-h-screen py-12 md:py-20">
       <div className="container mx-auto px-4">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-foreground mb-6">
+        <div className="text-center mb-8 md:mb-16">
+          <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-4 md:mb-6">
             A Full Range Of Courier Solutions For Every Business Need
           </h1>
-          <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-            Visakha International Couriers is a tireless team working smart to subdue your anxiety. 
-            We help reach your personal, professional & private courier packages across the globe—real quick & without you breaking into a sweat.
+          <p className="text-base md:text-xl text-muted-foreground max-w-4xl mx-auto">
+            Visakha International Couriers is a tireless team working smart to subdue your anxiety.
+            We help reach your personal, professional &amp; private courier packages across the globe—real quick &amp; without you breaking into a sweat.
           </p>
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-20">
           {services.map((service, index) => (
             <Card key={index} className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
-              <CardContent className="p-8">
+              <CardContent className="p-5 md:p-8">
                 <div className="w-16 h-16 bg-gradient-secondary rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <service.icon className="text-white" size={32} />
                 </div>
@@ -105,8 +105,8 @@ const Services = () => {
         </div>
 
         {/* Features Section */}
-        <div className="bg-muted/30 rounded-lg p-8 mb-20">
-          <h2 className="text-3xl font-semibold text-foreground text-center mb-12">Why Choose Our Services?</h2>
+        <div className="bg-muted/30 rounded-lg p-4 md:p-8 mb-12 md:mb-20">
+          <h2 className="text-2xl md:text-3xl font-semibold text-foreground text-center mb-8 md:mb-12">Why Choose Our Services?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
@@ -142,10 +142,10 @@ const Services = () => {
 
         {/* Partners Section */}
         <div className="text-center">
-          <h2 className="text-3xl font-semibold text-foreground mb-12">
+          <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-6 md:mb-12">
             We Provide Multiple Network Services
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">International & Domestic</p>
+          <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8">International &amp; Domestic</p>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {partners.map((partner, index) => (

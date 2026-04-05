@@ -110,7 +110,7 @@ export const Hero = () => {
 
   return (
     <>
-      <section className="relative min-h-[600px] flex items-center overflow-hidden">
+      <section className="relative min-h-[350px] md:min-h-[600px] flex items-center overflow-hidden">
         {/* Background image with lighter overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -128,11 +128,11 @@ export const Hero = () => {
 
       {/* Tracking Results Section - Outside hero section */}
       {(trackingData || error) && (
-        <section className="bg-gray-50 py-8">
+        <section className="bg-gray-50 py-6 md:py-8">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-foreground">Tracking Details</h2>
+                <h2 className="text-lg md:text-2xl font-bold text-foreground">Tracking Details</h2>
                 <Button
                   variant="outline"
                   size="sm"

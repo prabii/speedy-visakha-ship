@@ -3,10 +3,10 @@ import { CheckCircle, Users, Globe, Award } from "lucide-react";
 
 const About = () => {
   return (
-    <main className="min-h-screen py-20">
+    <main className="min-h-screen py-12 md:py-20">
       <div className="container mx-auto px-4">
         {/* Hero Section */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 md:mb-16">
           {/* Logo */}
           <div className="mb-8 flex justify-center">
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 shadow-lg border border-blue-100">
@@ -22,19 +22,19 @@ const About = () => {
             </div>
           </div>
           
-          <h1 className="text-4xl font-bold text-foreground mb-6">
+          <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-4 md:mb-6">
             About Visakha International Couriers
           </h1>
-          <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
+          <p className="text-base md:text-xl text-muted-foreground max-w-4xl mx-auto">
             We, VISAKHA INTERNATIONAL COURIERS are a leading logistics company that provides 
             comprehensive and efficient services to businesses and individuals alike.
           </p>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto mb-8 md:mb-16">
           <div>
-            <h2 className="text-3xl font-semibold text-foreground mb-6">Our Story</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-4 md:mb-6">Our Story</h2>
             <p className="text-muted-foreground mb-6">
               With a team of experienced professionals and advanced technology, we are able to handle 
               all types of logistic needs, from small packages to large shipments and everything in between.
@@ -102,8 +102,8 @@ const About = () => {
         </div>
 
         {/* Values Section */}
-        <div className="bg-muted/30 rounded-lg p-8">
-          <h2 className="text-3xl font-semibold text-foreground text-center mb-12">Our Values</h2>
+        <div className="bg-muted/30 rounded-lg p-4 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-semibold text-foreground text-center mb-8 md:mb-12">Our Values</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">

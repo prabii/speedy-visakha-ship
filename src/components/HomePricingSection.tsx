@@ -30,8 +30,8 @@ const HomePricingSection = () => {
   return (
     <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-foreground mb-3">
+        <div className="text-center mb-8 md:mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Courier Rates <span className="text-blue-600">(Per Kg)</span>
           </h2>
           <p className="text-muted-foreground">
@@ -41,13 +41,13 @@ const HomePricingSection = () => {
 
         <Card className="shadow-xl max-w-2xl mx-auto overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-4 text-center">
-            <CardTitle className="text-lg tracking-wide">International Shipping Rates</CardTitle>
+            <CardTitle className="text-base md:text-lg tracking-wide">International Shipping Rates</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Tabs defaultValue={countries[0]} className="w-full">
-              <TabsList className="w-full rounded-none border-b grid" style={{ gridTemplateColumns: `repeat(${countries.length}, 1fr)` }}>
+              <TabsList className="w-full rounded-none border-b flex flex-wrap h-auto gap-0">
                 {countries.map((c) => (
-                  <TabsTrigger key={c} value={c} className="text-sm py-3">
+                  <TabsTrigger key={c} value={c} className="text-xs md:text-sm py-2 md:py-3 px-2 md:px-4 flex-1 min-w-fit">
                     {FLAG[c] || "🌍"} {c}
                   </TabsTrigger>
                 ))}

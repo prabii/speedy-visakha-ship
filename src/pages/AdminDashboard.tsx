@@ -1247,48 +1247,45 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                <FileText className="h-5 w-5 text-white" />
+        <div className="container mx-auto px-4 py-3 md:py-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                <FileText className="h-4 w-4 md:h-5 md:w-5 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <div className="min-w-0">
+                <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate">
                   {isVendor() ? 'Vendor Dashboard' : 'Admin Dashboard'}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Visakha International Couriers</p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-0.5 hidden sm:block">Visakha International Couriers</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
               {/* Account Details for Vendors */}
               {isVendor() && user && (
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="py-2 px-4">
-                    <div className="flex items-center gap-4 text-sm">
+                <Card className="bg-blue-50 border-blue-200 hidden md:block">
+                  <CardContent className="py-2 px-3">
+                    <div className="flex items-center gap-3 text-xs md:text-sm">
                       <div>
-                        <span className="text-muted-foreground">Account Number:</span>
-                        <span className="font-semibold ml-2">{user.username}</span>
+                        <span className="text-muted-foreground">Account:</span>
+                        <span className="font-semibold ml-1">{user.username}</span>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Client Code:</span>
-                        <span className="font-semibold ml-2">{user.username}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Client Name:</span>
-                        <span className="font-semibold ml-2">{user.vendorName}</span>
+                      <div className="hidden lg:block">
+                        <span className="text-muted-foreground">Name:</span>
+                        <span className="font-semibold ml-1">{user.vendorName}</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleLogout}
+                size="sm"
                 className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                <LogOut className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Logout</span>
               </Button>
             </div>
           </div>
@@ -1296,92 +1293,94 @@ const AdminDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="invoice" className="space-y-6" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white/80 backdrop-blur-sm shadow-sm border border-gray-200 p-1.5 rounded-lg">
-            <TabsTrigger 
+      <main className="container mx-auto px-2 md:px-4 py-4 md:py-8">
+        <Tabs defaultValue="invoice" className="space-y-4 md:space-y-6" value={activeTab} onValueChange={setActiveTab}>
+          <div className="overflow-x-auto pb-1">
+          <TabsList className="bg-white/80 backdrop-blur-sm shadow-sm border border-gray-200 p-1 md:p-1.5 rounded-lg flex-nowrap inline-flex min-w-full md:min-w-0 w-max md:w-auto">
+            <TabsTrigger
               value="invoice"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
             >
-              <FileText className="mr-2 h-4 w-4" />
+              <FileText className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
               Invoice Entry
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="shipments"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
             >
-              <Package className="mr-2 h-4 w-4" />
+              <Package className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
               Shipments
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="history"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
             >
-              <History className="mr-2 h-4 w-4" />
-              Invoice History
+              <History className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+              History
             </TabsTrigger>
             {isAdmin() && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="customers"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
               >
-                <Users className="mr-2 h-4 w-4" />
+                <Users className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                 Customers
               </TabsTrigger>
             )}
             {isAdmin() && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="branches"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
               >
-                <Building2 className="mr-2 h-4 w-4" />
-                Branch Locations
+                <Building2 className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                Branches
               </TabsTrigger>
             )}
             {isAdmin() && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="price-sheets"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
               >
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                <FileSpreadsheet className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                 Price Sheets
               </TabsTrigger>
             )}
             {isVendor() && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="pricing"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
               >
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                <FileSpreadsheet className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                 Pricing
               </TabsTrigger>
             )}
             {isAdmin() && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="users"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
               >
-                <UserCog className="mr-2 h-4 w-4" />
-                Vendor Users
+                <UserCog className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                Users
               </TabsTrigger>
             )}
             {isAdmin() && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="gallery"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
               >
-                <ImageIcon className="mr-2 h-4 w-4" />
+                <ImageIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                 Gallery
               </TabsTrigger>
             )}
-            <TabsTrigger 
+            <TabsTrigger
               value="settings"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all text-xs md:text-sm px-2 md:px-3 whitespace-nowrap"
             >
-              <Settings className="mr-2 h-4 w-4" />
+              <Settings className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
               Settings
             </TabsTrigger>
           </TabsList>
+          </div>
 
           <TabsContent value="invoice" className="space-y-4">
             <InvoiceEntry />

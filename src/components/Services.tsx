@@ -71,14 +71,14 @@ const services = [
 
 export const Services = () => {
   return (
-    <section id="services" className="py-20 bg-muted/30">
+    <section id="services" className="py-12 md:py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-foreground mb-6">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4 md:mb-6">
             Your Reliable Courier Services Provider
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            We understand the frustrations in the industry and prioritize customer satisfaction 
+          <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            We understand the frustrations in the industry and prioritize customer satisfaction
             with fast, secure, and personalized services.
           </p>
         </div>

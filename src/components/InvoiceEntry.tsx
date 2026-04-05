@@ -1830,7 +1830,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
       </Card>
 
       {/* Three Column Layout: Shipper, Consignee, Services */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Shipper Details */}
         <Card>
           <CardHeader className="bg-blue-600 text-white rounded-t-lg">
@@ -2441,7 +2441,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           <CardTitle>Click here to enter Pieces details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <Label>Measurement Unit</Label>
               <Select 
@@ -2643,7 +2643,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <Label>CSB_Type</Label>
               <Select value={manifestGST.csbType} onValueChange={(v) => updateManifestGST('csbType', v)}>
@@ -2771,7 +2771,7 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
           <CardTitle>Click here to enter performa details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-10 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 gap-3">
             <div>
               <Label>Box No</Label>
               <Select 

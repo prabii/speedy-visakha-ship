@@ -149,7 +149,7 @@ export const ChatAgent = () => {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-36 z-50">
+      <div className="fixed bottom-6 right-6 md:right-36 z-50">
         <Button
           onClick={() => setIsOpen(true)}
           className="w-16 h-16 rounded-full shadow-2xl hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -165,7 +165,7 @@ export const ChatAgent = () => {
   }
 
   return (
-    <Card className="fixed bottom-6 right-36 w-96 h-[600px] shadow-2xl z-50 border-0 overflow-hidden">
+    <Card className="fixed bottom-6 right-2 md:right-36 w-[calc(100vw-1rem)] sm:w-96 h-[500px] md:h-[600px] shadow-2xl z-50 border-0 overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

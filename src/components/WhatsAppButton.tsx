@@ -22,7 +22,7 @@ export const WhatsAppButton = () => {
       href={whatsappLink}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-20 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-elegant hover:shadow-glow transition-all duration-300 hover:scale-110 z-40 group"
+      className="fixed bottom-24 right-4 md:bottom-6 md:right-20 w-12 h-12 md:w-14 md:h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-elegant hover:shadow-glow transition-all duration-300 hover:scale-110 z-40 group"
       aria-label="Contact us on WhatsApp"
     >
       <WhatsAppIcon size={28} />

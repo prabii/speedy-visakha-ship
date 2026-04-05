@@ -13,19 +13,19 @@ import {
 
 export const Contact = () => {
   return (
-    <section id="contact" className="py-20 bg-muted/30">
+    <section id="contact" className="py-12 md:py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-foreground mb-6">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4 md:mb-6">
             Get in Touch
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Ready to ship? Contact us today for the best international courier services 
+          <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            Ready to ship? Contact us today for the best international courier services
             from Visakhapatnam to anywhere in the world.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
           {/* Contact Information */}
           <div>
             <h3 className="text-2xl font-semibold mb-8 text-foreground">
@@ -102,7 +102,7 @@ export const Contact = () => {
 
           {/* Contact Form */}
           <Card className="shadow-elegant">
-            <CardContent className="p-8">
+            <CardContent className="p-4 md:p-8">
               <h3 className="text-2xl font-semibold mb-6 text-foreground">
                 Send us a Message
               </h3>

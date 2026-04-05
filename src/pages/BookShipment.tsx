@@ -194,22 +194,22 @@ const BookShipment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 md:py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              <Package className="inline-block mr-2 mb-1" size={36} />
+          <div className="text-center mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
+              <Package className="inline-block mr-2 mb-1" size={28} />
               Book Your Shipment
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-base md:text-lg text-gray-600">
               Quick and easy international shipping booking
             </p>
           </div>
 
           {/* Progress Steps with Labels */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-4">
+          <div className="mb-6 md:mb-8">
+            <div className="flex items-center justify-center mb-4">
               {[
                 { num: 1, label: 'Sender' },
                 { num: 2, label: 'Receiver' },
@@ -219,19 +219,19 @@ const BookShipment = () => {
                 <div key={step.num} className="flex items-center">
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                      className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-semibold transition-all ${
                         currentStep >= step.num
                           ? 'bg-blue-600 text-white shadow-lg scale-110'
                           : 'bg-gray-200 text-gray-600'
                       }`}
                     >
                       {currentStep > step.num ? (
-                        <CheckCircle className="w-6 h-6" />
+                        <CheckCircle className="w-4 h-4 md:w-6 md:h-6" />
                       ) : (
                         step.num
                       )}
                     </div>
-                    <span className={`text-xs mt-2 font-medium ${
+                    <span className={`text-xs mt-1 md:mt-2 font-medium ${
                       currentStep >= step.num ? 'text-blue-600' : 'text-gray-500'
                     }`}>
                       {step.label}
@@ -239,7 +239,7 @@ const BookShipment = () => {
                   </div>
                   {idx < 3 && (
                     <div
-                      className={`w-20 h-1 mx-3 transition-all ${
+                      className={`w-8 sm:w-14 md:w-20 h-1 mx-1 md:mx-3 transition-all ${
                         currentStep > step.num ? 'bg-blue-600' : 'bg-gray-200'
                       }`}
                     />
@@ -255,7 +255,7 @@ const BookShipment = () => {
           </div>
 
           <Card className="shadow-xl">
-            <CardContent className="p-8">
+            <CardContent className="p-4 md:p-8">
               <Tabs value={currentStep.toString()} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-8">
                   <TabsTrigger value="1">Sender</TabsTrigger>
@@ -684,18 +684,9 @@ const BookShipment = () => {
               </Tabs>
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between items-center mt-8 pt-6 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                  disabled={currentStep === 1}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                
-                <div className="text-sm text-gray-500 text-center">
+              <div className="flex flex-col gap-3 mt-6 md:mt-8 pt-4 md:pt-6 border-t">
+                {/* Validation message */}
+                <div className="text-sm text-center">
                   {currentStep === 1 && (!formData.senderName || !formData.senderEmail) && (
                     <span className="text-red-600">Please fill all required fields (*) to continue</span>
                   )}
@@ -709,6 +700,16 @@ const BookShipment = () => {
                     <span className="text-red-600">Please select a payment method to complete booking</span>
                   )}
                 </div>
+                <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+                  disabled={currentStep === 1}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Previous
+                </Button>
                 
                 {currentStep < 4 ? (
                   <Button
@@ -727,7 +728,7 @@ const BookShipment = () => {
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting || !formData.paymentMethod}
-                    className="min-w-[160px] bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                    className="min-w-[140px] md:min-w-[160px] bg-green-600 hover:bg-green-700 flex items-center gap-2"
                   >
                     {isSubmitting ? (
                       <>
@@ -742,6 +743,7 @@ const BookShipment = () => {
                     )}
                   </Button>
                 )}
+                </div>
               </div>
             </CardContent>
           </Card>

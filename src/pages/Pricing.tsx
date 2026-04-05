@@ -88,13 +88,13 @@ const Pricing = () => {
   const countries = [...new Set(publicItems.map((i: any) => i.country).filter(Boolean))];
 
   return (
-    <main className="min-h-screen py-20">
+    <main className="min-h-screen py-12 md:py-20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-foreground mb-6">
+        <div className="text-center mb-8 md:mb-16">
+          <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-4 md:mb-6">
             Competitive Pricing for Global Shipping
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Transparent and affordable rates for all your international courier needs.
             No hidden charges, just reliable service at great prices.
           </p>
@@ -256,12 +256,9 @@ const Pricing = () => {
                   </CardHeader>
                   <CardContent className="p-0">
                     <Tabs defaultValue={countries[0]} className="w-full">
-                      <TabsList
-                        className="w-full rounded-none border-b grid"
-                        style={{ gridTemplateColumns: `repeat(${countries.length}, 1fr)` }}
-                      >
+                      <TabsList className="w-full rounded-none border-b flex flex-wrap h-auto gap-0">
                         {countries.map((c) => (
-                          <TabsTrigger key={c} value={c} className="text-sm py-3">
+                          <TabsTrigger key={c} value={c} className="text-xs md:text-sm py-2 md:py-3 px-2 md:px-4 flex-1 min-w-fit">
                             {FLAG[c] || "🌍"} {c}
                           </TabsTrigger>
                         ))}
