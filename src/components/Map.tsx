@@ -8,7 +8,7 @@ const Map = () => {
         style={{ border: 0 }}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
-        src="https://maps.google.com/maps?q=Old+Gajuwaka+Visakhapatnam+530026+Andhra+Pradesh+India&z=16&output=embed"
+        src="https://maps.google.com/maps?q=17.684784,83.2025349&z=17&output=embed"
       />
     </div>
   );
