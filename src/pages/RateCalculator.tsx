@@ -1,248 +1,417 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calculator, Package, Truck, Plane, Ship, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calculator, Package, MapPin, ArrowRight, CheckCircle2, Info } from "lucide-react";
+import api from "@/lib/api";
+
+const FLAG: Record<string, string> = {
+  USA: "🇺🇸", "UNITED STATES": "🇺🇸",
+  CANADA: "🇨🇦",
+  UK: "🇬🇧", "UNITED KINGDOM": "🇬🇧",
+  AUSTRALIA: "🇦🇺",
+  UAE: "🇦🇪", DUBAI: "🇦🇪",
+  SINGAPORE: "🇸🇬",
+  GERMANY: "🇩🇪",
+  FRANCE: "🇫🇷",
+  ITALY: "🇮🇹",
+  SPAIN: "🇪🇸",
+  NETHERLANDS: "🇳🇱",
+  JAPAN: "🇯🇵",
+  CHINA: "🇨🇳",
+  MALAYSIA: "🇲🇾",
+  "NEW ZEALAND": "🇳🇿",
+  SWEDEN: "🇸🇪",
+  NORWAY: "🇳🇴",
+  DENMARK: "🇩🇰",
+  SWITZERLAND: "🇨🇭",
+  QATAR: "🇶🇦",
+  KUWAIT: "🇰🇼",
+  BAHRAIN: "🇧🇭",
+  OMAN: "🇴🇲",
+  SAUDI: "🇸🇦", "SAUDI ARABIA": "🇸🇦",
+  "HONG KONG": "🇭🇰",
+  THAILAND: "🇹🇭",
+  "SOUTH KOREA": "🇰🇷",
+};
+
+const getFlag = (c: string) => FLAG[c?.toUpperCase()] || "🌍";
+
+// Parse weight strings like "0.5 Kg", "1kg", "500g" → number in kg
+const parseWeightKg = (w: string): number => {
+  if (!w) return 0;
+  const lower = w.toLowerCase().replace(/\s/g, "");
+  if (lower.includes("g") && !lower.includes("kg")) {
+    return (parseFloat(lower.replace(/[^\d.]/g, "")) || 0) / 1000;
+  }
+  return parseFloat(lower.replace(/[^\d.]/g, "")) || 0;
+};
 
 const RateCalculator = () => {
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
+  const navigate = useNavigate();
+  const [sheets, setSheets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [countries, setCountries] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [weight, setWeight] = useState("");
-  const [dimensions, setDimensions] = useState({ length: "", width: "", height: "" });
-  const [serviceType, setServiceType] = useState("");
-  const [calculatedRate, setCalculatedRate] = useState<number | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [result, setResult] = useState<any>(null);
 
-  const serviceTypes = [
-    { value: "express", label: "Express Delivery", icon: Plane, rate: 2000 }, // INR per kg
-    { value: "standard", label: "Standard Shipping", icon: Truck, rate: 1200 }, // INR per kg
-    { value: "economy", label: "Economy Shipping", icon: Ship, rate: 800 }, // INR per kg
-  ];
+  useEffect(() => {
+    api.priceSheets
+      .getPublic()
+      .then((data: any) => {
+        const arr = Array.isArray(data) ? data : data ? [data] : [];
+        const active = arr.filter((s: any) => s.items?.length > 0);
+        setSheets(active);
+        const seen = new Set<string>();
+        const list: string[] = [];
+        active.forEach((sheet: any) => {
+          sheet.items.forEach((item: any) => {
+            if (item.country && !seen.has(item.country.toUpperCase())) {
+              seen.add(item.country.toUpperCase());
+              list.push(item.country);
+            }
+          });
+        });
+        setCountries(list.sort());
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  const calculateRate = () => {
-    if (!origin || !destination || !weight || !serviceType) {
-      alert("Please fill in all required fields");
+  // All items for selected country
+  const countryItems = (): any[] => {
+    const items: any[] = [];
+    sheets.forEach((sheet) => {
+      sheet.items
+        .filter((i: any) => i.country?.toUpperCase() === selectedCountry.toUpperCase())
+        .forEach((i: any) => items.push({ ...i, sheetName: sheet.sheetName }));
+    });
+    return items;
+  };
+
+  const handleCalculate = () => {
+    const inputKg = parseFloat(weight);
+    if (!selectedCountry || !inputKg || inputKg <= 0) return;
+
+    const items = countryItems();
+    if (items.length === 0) {
+      setResult({ notFound: true });
       return;
     }
 
-    setIsCalculating(true);
+    // Sort by parsed weight ascending
+    const sorted = items
+      .map((i) => ({ ...i, _kg: parseWeightKg(i.weight) }))
+      .filter((i) => i._kg > 0)
+      .sort((a, b) => a._kg - b._kg);
 
-    // Simulate API call
-    setTimeout(() => {
-      const selectedService = serviceTypes.find(service => service.value === serviceType);
-      const baseRate = selectedService?.rate || 1200; // Default INR per kg
-      const weightNumber = parseFloat(weight);
-      const volumetricWeight = dimensions.length && dimensions.width && dimensions.height 
-        ? (parseFloat(dimensions.length) * parseFloat(dimensions.width) * parseFloat(dimensions.height)) / 5000
-        : 0;
-      
-      const chargeableWeight = Math.max(weightNumber, volumetricWeight);
-      const distance = Math.random() * 5000 + 500; // Random distance for demo
-      const rate = baseRate * chargeableWeight + (distance * 8); // INR calculation
-      
-      setCalculatedRate(Math.round(rate * 100) / 100);
-      setIsCalculating(false);
-    }, 2000);
+    if (sorted.length === 0) {
+      setResult({ notFound: true });
+      return;
+    }
+
+    // Standard courier billing: charge on next higher slab
+    let matched = sorted.find((i) => i._kg >= inputKg);
+    if (!matched) matched = sorted[sorted.length - 1]; // heaviest slab if over max
+
+    const gstInclusive = matched.gstInclusive || matched.additionalInfo?.gstInclusive;
+    const base = matched.rate as number;
+    const gstAmt = gstInclusive ? 0 : Math.round(base * 0.18);
+    const total = base + gstAmt;
+
+    setResult({
+      matched,
+      inputKg,
+      base,
+      gstInclusive,
+      gstAmt,
+      total,
+    });
   };
+
+  const items = selectedCountry ? countryItems() : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 md:py-12">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
-              <Calculator className="inline-block mr-2 mb-1" size={28} />
+        <div className="max-w-5xl mx-auto">
+
+          {/* Page Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4 shadow-lg">
+              <Calculator className="h-7 w-7 text-white" />
+            </div>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
               Shipping Rate Calculator
             </h1>
-            <p className="text-base md:text-lg text-gray-600">
-              Get instant shipping rates for your packages worldwide
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              All rates are in Indian Rupees (₹)
-            </p>
+            <p className="text-gray-600">Get instant shipping rates for your packages worldwide</p>
+            <p className="text-sm text-gray-400 mt-1">All rates are in Indian Rupees (₹)</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Calculator Form */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+            {/* ── Left: Input Form ── */}
             <div className="lg:col-span-2">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package size={24} />
+              <Card className="border-0 shadow-lg overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Package className="h-5 w-5" />
                     Package Details
                   </CardTitle>
-                  <CardDescription>
-                    Enter your shipment information to calculate shipping rates
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Origin and Destination */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="origin">Origin Country/City</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="origin"
-                          placeholder="e.g., New York, USA"
-                          value={origin}
-                          onChange={(e) => setOrigin(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
+                <CardContent className="pt-5 space-y-4">
+
+                  {/* Origin — fixed */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">From (Origin)</Label>
+                    <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border rounded-lg text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      Visakhapatnam, India 🇮🇳
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="destination">Destination Country/City</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="destination"
-                          placeholder="e.g., London, UK"
-                          value={destination}
-                          onChange={(e) => setDestination(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
+                  </div>
+
+                  {/* Destination country */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">To (Destination) *</Label>
+                    {loading ? (
+                      <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                    ) : countries.length === 0 ? (
+                      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        No published rates available yet.
+                      </p>
+                    ) : (
+                      <Select
+                        value={selectedCountry}
+                        onValueChange={(v) => {
+                          setSelectedCountry(v);
+                          setResult(null);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select destination country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map((c) => (
+                            <SelectItem key={c} value={c}>
+                              {getFlag(c)} {c}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
 
                   {/* Weight */}
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight (kg)</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Package Weight (kg) *</Label>
                     <Input
-                      id="weight"
                       type="number"
-                      placeholder="Enter package weight"
+                      placeholder="e.g. 0.5, 1, 2.5"
                       value={weight}
-                      onChange={(e) => setWeight(e.target.value)}
+                      min="0.1"
+                      step="0.1"
+                      onChange={(e) => {
+                        setWeight(e.target.value);
+                        setResult(null);
+                      }}
                     />
+                    <p className="text-xs text-gray-400">
+                      Rate is applied on the next published weight slab
+                    </p>
                   </div>
 
-                  {/* Dimensions */}
-                  <div className="space-y-2">
-                    <Label>Dimensions (cm) - Optional</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <Input
-                        placeholder="Length"
-                        value={dimensions.length}
-                        onChange={(e) => setDimensions({...dimensions, length: e.target.value})}
-                      />
-                      <Input
-                        placeholder="Width"
-                        value={dimensions.width}
-                        onChange={(e) => setDimensions({...dimensions, width: e.target.value})}
-                      />
-                      <Input
-                        placeholder="Height"
-                        value={dimensions.height}
-                        onChange={(e) => setDimensions({...dimensions, height: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Service Type */}
-                  <div className="space-y-2">
-                    <Label htmlFor="service">Service Type</Label>
-                    <Select value={serviceType} onValueChange={setServiceType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select shipping service" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {serviceTypes.map((service) => (
-                          <SelectItem key={service.value} value={service.value}>
-                            <div className="flex items-center gap-2">
-                              <service.icon size={16} />
-                              {service.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Calculate Button */}
-                  <Button 
-                    onClick={calculateRate} 
-                    disabled={isCalculating}
-                    className="w-full h-12 text-lg"
+                  <Button
+                    onClick={handleCalculate}
+                    disabled={!selectedCountry || !weight || loading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-11"
                   >
-                    {isCalculating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Calculating...
-                      </>
-                    ) : (
-                      <>
-                        <Calculator className="mr-2" size={20} />
-                        Calculate Rate
-                      </>
-                    )}
+                    <Calculator className="mr-2 h-4 w-4" />
+                    Calculate Rate
                   </Button>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Results and Service Types */}
-            <div className="space-y-6">
-              {/* Rate Result */}
-              {calculatedRate !== null && (
-                <Card className="shadow-lg border-green-200 bg-green-50">
-                  <CardHeader>
-                    <CardTitle className="text-green-800">Calculated Rate</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-600 mb-2">
-                        ₹{calculatedRate?.toLocaleString('en-IN')}
-                      </div>
-                      <p className="text-sm text-green-700">
-                        Estimated shipping cost (INR)
-                      </p>
-                      <Button className="w-full mt-4" variant="default">
-                        Book This Shipment
-                      </Button>
+            {/* ── Right: Results + Rate Table ── */}
+            <div className="lg:col-span-3 space-y-5">
+
+              {/* Result card */}
+              {result && !result.notFound && (
+                <Card className="border-0 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-4 text-white">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span className="font-bold text-lg">
+                        Rate for {getFlag(selectedCountry)} {selectedCountry}
+                      </span>
                     </div>
+                    <p className="text-green-100 text-xs mt-0.5">
+                      Weight slab: {result.matched.weight}
+                      {result.matched.sheetName ? ` · ${result.matched.sheetName}` : ""}
+                      {result.matched.serviceType ? ` · ${result.matched.serviceType}` : ""}
+                    </p>
+                  </div>
+                  <CardContent className="p-5">
+                    <div className="space-y-0">
+                      <div className="flex justify-between items-center py-3 border-b">
+                        <span className="text-sm text-gray-600">Base Rate</span>
+                        <span className="font-semibold text-gray-800">
+                          ₹{result.base.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b">
+                        <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                          GST (18%)
+                          {result.gstInclusive && (
+                            <Badge className="bg-green-100 text-green-700 border-0 text-xs px-1.5 py-0 h-4">
+                              Included
+                            </Badge>
+                          )}
+                        </span>
+                        {result.gstInclusive ? (
+                          <span className="text-sm text-green-600 font-medium">
+                            Included in rate
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-gray-800">
+                            ₹{result.gstAmt.toLocaleString("en-IN")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center py-3 mt-1 bg-blue-50 px-4 rounded-xl">
+                        <span className="font-bold text-blue-800 text-base">Total Payable</span>
+                        <span className="font-extrabold text-blue-700 text-2xl">
+                          ₹{result.total.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+
+                    {result.gstInclusive ? (
+                      <p className="text-xs text-green-600 text-center mt-3 flex items-center justify-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        GST inclusive — no additional tax charges on this weight
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-600 text-center mt-3 flex items-center justify-center gap-1">
+                        <Info className="h-3.5 w-3.5" />
+                        GST @18% applied on this weight slab
+                      </p>
+                    )}
+
+                    <Button
+                      onClick={() => navigate("/book-shipment")}
+                      className="w-full mt-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 h-11 text-base font-semibold"
+                    >
+                      Book a Shipment
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Service Types Info */}
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Available Services</CardTitle>
-                  <CardDescription>
-                    Choose the service that best fits your needs
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {serviceTypes.map((service) => (
-                    <div key={service.value} className="flex items-center gap-3 p-3 rounded-lg border">
-                      <service.icon size={20} className="text-blue-600" />
-                      <div className="flex-1">
-                        <div className="font-medium">{service.label}</div>
-                        <div className="text-sm text-gray-600">
-                          From ₹{service.rate.toLocaleString('en-IN')}/kg
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+              {result?.notFound && (
+                <Card className="border-amber-200 bg-amber-50 shadow-sm">
+                  <CardContent className="p-5 text-center">
+                    <p className="text-amber-700 font-medium">No rates found for {selectedCountry}</p>
+                    <p className="text-amber-600 text-sm mt-1">
+                      Please contact us for a custom quote.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Additional Info */}
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Important Notes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-gray-600">
-                  <p>• Rates are estimates and may vary based on actual shipment details</p>
-                  <p>• Volumetric weight may apply for light, bulky items</p>
-                  <p>• Additional charges may apply for special handling</p>
-                  <p>• Contact us for accurate quotes on large shipments</p>
-                </CardContent>
-              </Card>
+              {/* Rate table for selected country */}
+              {selectedCountry && items.length > 0 && (
+                <Card className="border-0 shadow-md overflow-hidden">
+                  <CardHeader className="py-3 px-4 bg-gray-50 border-b">
+                    <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      {getFlag(selectedCountry)} Published Rates — {selectedCountry}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b">
+                          <th className="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">
+                            Weight
+                          </th>
+                          <th className="text-right px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">
+                            Rate (₹)
+                          </th>
+                          <th className="text-center px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">
+                            GST
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item: any, idx: number) => {
+                          const gst = item.gstInclusive || item.additionalInfo?.gstInclusive;
+                          const isSelected =
+                            result &&
+                            !result.notFound &&
+                            item.weight === result.matched.weight;
+                          return (
+                            <tr
+                              key={idx}
+                              className={`transition-colors ${
+                                isSelected
+                                  ? "bg-blue-50 ring-2 ring-inset ring-blue-400"
+                                  : idx % 2 === 0
+                                  ? "bg-white"
+                                  : "bg-gray-50/60"
+                              }`}
+                            >
+                              <td className="px-4 py-2.5 font-medium text-gray-800">
+                                {item.weight}
+                                {isSelected && (
+                                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                                    ← selected
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-2.5 text-right font-bold text-blue-700">
+                                ₹{item.rate?.toLocaleString("en-IN")}
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                {gst ? (
+                                  <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                                    Incl.
+                                  </span>
+                                ) : (
+                                  <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                                    +GST
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <p className="text-xs text-center text-gray-400 py-2.5 border-t bg-gray-50">
+                      Rates in INR (₹) · GST @18% on +GST rows · Inclusive rows have no extra charge
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Empty state */}
+              {!selectedCountry && !loading && countries.length > 0 && (
+                <Card className="border-0 shadow-sm bg-white/60">
+                  <CardContent className="p-8 text-center text-gray-400">
+                    <Package className="h-12 w-12 mx-auto mb-3 text-gray-200" />
+                    <p className="font-medium text-gray-500">Select a destination country</p>
+                    <p className="text-sm mt-1">
+                      Choose a country to see available weight slabs and rates
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
