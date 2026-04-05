@@ -13,6 +13,38 @@ const FLAG: Record<string, string> = {
   CANADA: "🇨🇦",
   UK: "🇬🇧",
   AUSTRALIA: "🇦🇺",
+  UAE: "🇦🇪",
+  DUBAI: "🇦🇪",
+  SINGAPORE: "🇸🇬",
+  GERMANY: "🇩🇪",
+  FRANCE: "🇫🇷",
+  ITALY: "🇮🇹",
+  SPAIN: "🇪🇸",
+  NETHERLANDS: "🇳🇱",
+  JAPAN: "🇯🇵",
+  CHINA: "🇨🇳",
+  MALAYSIA: "🇲🇾",
+  NEWZEALAND: "🇳🇿",
+  "NEW ZEALAND": "🇳🇿",
+  SWEDEN: "🇸🇪",
+  NORWAY: "🇳🇴",
+  DENMARK: "🇩🇰",
+  SWITZERLAND: "🇨🇭",
+  AUSTRIA: "🇦🇹",
+  BELGIUM: "🇧🇪",
+  PORTUGAL: "🇵🇹",
+  IRELAND: "🇮🇪",
+  QATAR: "🇶🇦",
+  KUWAIT: "🇰🇼",
+  BAHRAIN: "🇧🇭",
+  OMAN: "🇴🇲",
+  SAUDI: "🇸🇦",
+  "SAUDI ARABIA": "🇸🇦",
+  HONGKONG: "🇭🇰",
+  "HONG KONG": "🇭🇰",
+  THAILAND: "🇹🇭",
+  SOUTHKOREA: "🇰🇷",
+  "SOUTH KOREA": "🇰🇷",
 };
 
 const Pricing = () => {
@@ -269,27 +301,42 @@ const Pricing = () => {
                           <TabsContent key={country} value={country} className="m-0">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="bg-gray-50 border-b">
-                                  <th className="text-left px-6 py-3 font-semibold text-gray-700">Weight (Kg)</th>
-                                  <th className="text-right px-6 py-3 font-semibold text-gray-700">Price (INR)</th>
+                                <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                                  <th className="text-left px-4 md:px-6 py-3 font-semibold text-gray-700">Weight (Kg)</th>
+                                  <th className="text-right px-4 md:px-6 py-3 font-semibold text-gray-700">Rate (INR ₹)</th>
+                                  <th className="text-center px-2 md:px-4 py-3 font-semibold text-gray-700">GST</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {rows.map((item: any, idx: number) => (
-                                  <tr key={item._id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                                    <td className="px-6 py-3 font-medium text-gray-800">{item.weight}</td>
-                                    <td className="px-6 py-3 text-right">
-                                      <span className="font-bold text-blue-700">
-                                        {item.rate?.toLocaleString("en-IN")}
-                                      </span>
-                                      {item.destination && (
-                                        <span className="text-xs text-gray-500 ml-1">{item.destination}</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
+                                {rows.map((item: any, idx: number) => {
+                                  const gstInclusive = item.additionalInfo?.get?.('gstInclusive') || item.gstInclusive;
+                                  return (
+                                    <tr key={item._id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                      <td className="px-4 md:px-6 py-3 font-medium text-gray-800">
+                                        {item.weight}
+                                        {item.destination && (
+                                          <span className="text-xs text-gray-400 ml-1">({item.destination})</span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 md:px-6 py-3 text-right">
+                                        <span className="font-bold text-blue-700 text-base">
+                                          ₹{item.rate?.toLocaleString("en-IN")}
+                                        </span>
+                                      </td>
+                                      <td className="px-2 md:px-4 py-3 text-center">
+                                        {gstInclusive
+                                          ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Incl.</span>
+                                          : <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">+GST</span>
+                                        }
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
+                            <p className="text-xs text-center text-gray-500 py-3 border-t bg-gray-50">
+                              * All rates in INR (₹). GST applicable on select weights as per govt. norms.
+                            </p>
                           </TabsContent>
                         );
                       })}
