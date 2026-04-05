@@ -2068,22 +2068,24 @@ const AdminDashboard = () => {
                   </Dialog>
 
                   {/* Pricing Images Management for Public Website */}
-                  <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 mt-8">
-                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
-                      <CardTitle className="flex items-center gap-2">
-                        <ImageIcon className="h-5 w-5 text-purple-600" />
-                        Pricing Images for Website
-                      </CardTitle>
-                      <CardDescription>
-                        Upload images that will be displayed in the carousel on the public pricing page. 
-                        Only active images with type "image" or "imageUrl" will be shown.
-                      </CardDescription>
+                  <Card className="border-0 shadow-md overflow-hidden mt-6">
+                    <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <ImageIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-bold text-white">Pricing Images for Website</CardTitle>
+                          <CardDescription className="text-purple-100 text-xs mt-0.5">
+                            Upload images shown in the carousel on the public pricing page
+                          </CardDescription>
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent className="pt-6 space-y-4">
-                      {/* Upload Form */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CardContent className="pt-5 space-y-4">
+                      <div className="space-y-3">
                         <div className="space-y-2">
-                          <Label>Upload Type *</Label>
+                          <Label className="text-sm font-medium">Upload Type *</Label>
                           <Select
                             value={galleryForm.type}
                             onValueChange={(value: 'image' | 'imageUrl' | 'youtube' | 'video') => {
@@ -2102,22 +2104,35 @@ const AdminDashboard = () => {
                         </div>
                         {galleryForm.type === 'image' && (
                           <div className="space-y-2">
-                            <Label>Image File *</Label>
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  setGalleryUploadFile(file);
-                                }
-                              }}
-                            />
+                            <Label className="text-sm font-medium">Image File *</Label>
+                            <div className="border-2 border-dashed border-purple-200 rounded-lg p-4 text-center hover:border-purple-400 transition-colors cursor-pointer" onClick={() => document.getElementById('pricing-img-input')?.click()}>
+                              {galleryUploadFile ? (
+                                <div className="flex items-center justify-center gap-2 text-sm text-purple-700">
+                                  <ImageIcon className="h-4 w-4" />
+                                  <span className="font-medium truncate max-w-xs">{galleryUploadFile.name}</span>
+                                </div>
+                              ) : (
+                                <div className="text-gray-400 text-sm">
+                                  <Upload className="h-6 w-6 mx-auto mb-1 text-purple-300" />
+                                  Click to choose an image file
+                                </div>
+                              )}
+                              <input
+                                id="pricing-img-input"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) setGalleryUploadFile(file);
+                                }}
+                              />
+                            </div>
                           </div>
                         )}
                         {galleryForm.type === 'imageUrl' && (
                           <div className="space-y-2">
-                            <Label>Image URL *</Label>
+                            <Label className="text-sm font-medium">Image URL *</Label>
                             <Input
                               placeholder="https://example.com/image.png"
                               value={galleryForm.url}
@@ -2125,51 +2140,43 @@ const AdminDashboard = () => {
                             />
                           </div>
                         )}
-                        <div className="space-y-2">
-                          <Label>Title</Label>
-                          <Input
-                            placeholder="e.g., Shipping Rates to USA"
-                            value={galleryForm.title}
-                            onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Description</Label>
-                          <Input
-                            placeholder="Brief description of the pricing chart"
-                            value={galleryForm.description}
-                            onChange={(e) => setGalleryForm({ ...galleryForm, description: e.target.value })}
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Title</Label>
+                            <Input
+                              placeholder="e.g., Shipping Rates to USA"
+                              value={galleryForm.title}
+                              onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Description</Label>
+                            <Input
+                              placeholder="Brief description"
+                              value={galleryForm.description}
+                              onChange={(e) => setGalleryForm({ ...galleryForm, description: e.target.value })}
+                            />
+                          </div>
                         </div>
                       </div>
                       <Button
                         onClick={async () => {
                           if (galleryForm.type === 'image' && !galleryUploadFile) {
-                            toast({
-                              title: 'Error',
-                              description: 'Please select an image file',
-                              variant: 'destructive',
-                            });
+                            toast({ title: 'Error', description: 'Please select an image file', variant: 'destructive' });
                             return;
                           }
-                          if ((galleryForm.type === 'imageUrl') && !galleryForm.url.trim()) {
-                            toast({
-                              title: 'Error',
-                              description: 'Please enter an image URL',
-                              variant: 'destructive',
-                            });
+                          if (galleryForm.type === 'imageUrl' && !galleryForm.url.trim()) {
+                            toast({ title: 'Error', description: 'Please enter an image URL', variant: 'destructive' });
                             return;
                           }
-
                           try {
                             if (galleryForm.type === 'image' && galleryUploadFile) {
                               const formData = new FormData();
                               formData.append('file', galleryUploadFile);
                               formData.append('type', 'image');
-                              formData.append('category', 'pricing'); // Mark as pricing image
+                              formData.append('category', 'pricing');
                               if (galleryForm.title) formData.append('title', galleryForm.title);
                               if (galleryForm.description) formData.append('description', galleryForm.description);
-                              
                               await api.gallery.upload(formData);
                             } else if (galleryForm.type === 'imageUrl') {
                               await api.gallery.create({
@@ -2177,335 +2184,304 @@ const AdminDashboard = () => {
                                 url: galleryForm.url.trim(),
                                 title: galleryForm.title.trim() || undefined,
                                 description: galleryForm.description.trim() || undefined,
-                                category: 'pricing', // Mark as pricing image
-                                isActive: true
+                                category: 'pricing',
+                                isActive: true,
                               });
                             }
-
-                            toast({
-                              title: 'Success',
-                              description: 'Pricing image uploaded successfully',
-                            });
-
-                            // Reset form
-                            setGalleryForm({
-                              type: 'image',
-                              url: '',
-                              title: '',
-                              description: '',
-                            });
+                            toast({ title: 'Success', description: 'Pricing image uploaded successfully' });
+                            setGalleryForm({ type: 'image', url: '', title: '', description: '' });
                             setGalleryUploadFile(null);
-
-                            // Reload gallery items to show in list
-                            const galleryData = await api.gallery.getAll();
-                            const pricingImages = (galleryData || []).filter(
-                              (item: any) => (item.type === 'image' || item.type === 'imageUrl') && item.isActive !== false
-                            );
-                            // You can set this to state if you want to show them here
                           } catch (error: any) {
-                            toast({
-                              title: 'Error',
-                              description: error.message || 'Failed to upload pricing image',
-                              variant: 'destructive',
-                            });
+                            toast({ title: 'Error', description: error.message || 'Failed to upload pricing image', variant: 'destructive' });
                           }
                         }}
-                        className="w-full"
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         disabled={
                           (galleryForm.type === 'image' && !galleryUploadFile) ||
                           (galleryForm.type === 'imageUrl' && !galleryForm.url.trim())
                         }
                       >
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Upload className="mr-2 h-4 w-4" />
                         Upload Pricing Image
                       </Button>
-                      <p className="text-xs text-muted-foreground text-center">
-                        Images uploaded here will appear in the carousel on the public pricing page (/pricing)
-                      </p>
                     </CardContent>
                   </Card>
 
-                  {/* Selected Price Sheet - Item Management */}
-                  {selectedPriceSheet && (
-                    <Card className="bg-blue-50/50 border-blue-200 mt-6">
-                      <CardHeader>
-                        <div className="flex justify-between items-center">
-                          <CardTitle className="text-lg">
-                            Manage Items: {selectedPriceSheet.sheetName}
-                          </CardTitle>
+                  {/* Manage Items Dialog */}
+                  <Dialog open={!!selectedPriceSheet} onOpenChange={(open) => {
+                    if (!open) {
+                      setSelectedPriceSheet(null);
+                      setEditingItem(null);
+                      setEditingItemIndex(null);
+                      setEditedItems([]);
+                      setItemForm({ itemName: '', hsnCode: '', weight: '', rate: '', destination: '', country: '', countryCode: '', serviceType: '', currency: 'INR' });
+                    }
+                  }}>
+                    <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0">
+                      {/* Dialog Header */}
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 rounded-t-lg flex-shrink-0">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <DialogTitle className="text-white text-lg font-bold">
+                              {selectedPriceSheet?.sheetName}
+                            </DialogTitle>
+                            <p className="text-blue-100 text-xs mt-0.5">
+                              {editedItems.length || selectedPriceSheet?.items?.length || 0} items · Edit inline, then click Save
+                            </p>
+                          </div>
                           <Button
-                            variant="outline"
                             size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 h-8 px-3 text-xs"
                             onClick={() => {
                               setSelectedPriceSheet(null);
-                              setEditingItem(null);
-                              setEditingItemIndex(null);
                               setEditedItems([]);
-                              setItemForm({
-                                itemName: '',
-                                hsnCode: '',
-                                weight: '',
-                                rate: '',
-                                destination: '',
-                                country: '',
-                                countryCode: '',
-                                serviceType: '',
-                                currency: 'INR',
-                              });
+                              setItemForm({ itemName: '', hsnCode: '', weight: '', rate: '', destination: '', country: '', countryCode: '', serviceType: '', currency: 'INR' });
                             }}
                           >
-                            Close
+                            ✕ Close
                           </Button>
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
+                      </div>
+
+                      {/* Scrollable Body */}
+                      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
                         {/* Add New Item Form */}
-                        <Card className="bg-white border-gray-200">
-                          <CardHeader>
-                            <CardTitle className="text-lg">Add New Item</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label>Item Name *</Label>
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                          <h4 className="font-semibold text-sm text-blue-800 mb-3 flex items-center gap-2">
+                            <Plus className="h-4 w-4" /> Add New Item
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Item Name *</Label>
+                              <Input
+                                placeholder="e.g. FedEx Express"
+                                value={itemForm.itemName}
+                                onChange={(e) => setItemForm({ ...itemForm, itemName: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Weight</Label>
+                              <Input
+                                placeholder="e.g. 1kg"
+                                value={itemForm.weight}
+                                onChange={(e) => setItemForm({ ...itemForm, weight: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Rate (₹) *</Label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={itemForm.rate}
+                                onChange={(e) => setItemForm({ ...itemForm, rate: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Country</Label>
+                              <div className="flex gap-1">
                                 <Input
-                                  placeholder="Enter item name"
-                                  value={itemForm.itemName}
-                                  onChange={(e) => setItemForm({ ...itemForm, itemName: e.target.value })}
+                                  placeholder="Select"
+                                  value={itemForm.country}
+                                  readOnly
+                                  onClick={() => setShowCountryDialog(true)}
+                                  className="h-8 text-sm cursor-pointer"
                                 />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>HSN Code</Label>
-                                <Input
-                                  placeholder="Enter HSN code"
-                                  value={itemForm.hsnCode}
-                                  onChange={(e) => setItemForm({ ...itemForm, hsnCode: e.target.value })}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Weight</Label>
-                                <Input
-                                  placeholder="e.g., 1kg, 500g"
-                                  value={itemForm.weight}
-                                  onChange={(e) => setItemForm({ ...itemForm, weight: e.target.value })}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Rate (₹) *</Label>
-                                <Input
-                                  type="number"
-                                  placeholder="Enter rate"
-                                  value={itemForm.rate}
-                                  onChange={(e) => setItemForm({ ...itemForm, rate: e.target.value })}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Country</Label>
-                                <div className="flex gap-2">
-                                  <Input
-                                    placeholder="Select country"
-                                    value={itemForm.country}
-                                    readOnly
-                                    onClick={() => setShowCountryDialog(true)}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setShowCountryDialog(true)}
-                                  >
-                                    Select
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Destination</Label>
-                                <Input
-                                  placeholder="Enter destination city"
-                                  value={itemForm.destination}
-                                  onChange={(e) => setItemForm({ ...itemForm, destination: e.target.value })}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Service Type</Label>
-                                <Input
-                                  placeholder="e.g., Express, Standard"
-                                  value={itemForm.serviceType}
-                                  onChange={(e) => setItemForm({ ...itemForm, serviceType: e.target.value })}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Currency</Label>
-                                <Select
-                                  value={itemForm.currency}
-                                  onValueChange={(value) => setItemForm({ ...itemForm, currency: value })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="INR">INR (₹)</SelectItem>
-                                    <SelectItem value="USD">USD ($)</SelectItem>
-                                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <Button type="button" variant="outline" size="sm" className="h-8 px-2 flex-shrink-0" onClick={() => setShowCountryDialog(true)}>
+                                  <Search className="h-3 w-3" />
+                                </Button>
                               </div>
                             </div>
-                            <Button
-                              onClick={() => handleAddItem(selectedPriceSheet._id)}
-                              disabled={!itemForm.itemName || !itemForm.rate}
-                              className="w-full"
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              Add Item
-                            </Button>
-                          </CardContent>
-                        </Card>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Destination</Label>
+                              <Input
+                                placeholder="City"
+                                value={itemForm.destination}
+                                onChange={(e) => setItemForm({ ...itemForm, destination: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Service Type</Label>
+                              <Input
+                                placeholder="Express, Standard…"
+                                value={itemForm.serviceType}
+                                onChange={(e) => setItemForm({ ...itemForm, serviceType: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">HSN Code</Label>
+                              <Input
+                                placeholder="HSN"
+                                value={itemForm.hsnCode}
+                                onChange={(e) => setItemForm({ ...itemForm, hsnCode: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Currency</Label>
+                              <Select value={itemForm.currency} onValueChange={(v) => setItemForm({ ...itemForm, currency: v })}>
+                                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="INR">INR (₹)</SelectItem>
+                                  <SelectItem value="USD">USD ($)</SelectItem>
+                                  <SelectItem value="EUR">EUR (€)</SelectItem>
+                                  <SelectItem value="GBP">GBP (£)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => handleAddItem(selectedPriceSheet._id)}
+                            disabled={!itemForm.itemName || !itemForm.rate}
+                            className="mt-3 bg-blue-600 hover:bg-blue-700 h-8 text-sm px-4"
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            Add Item
+                          </Button>
+                        </div>
 
                         {/* Editable Items Table */}
                         <div>
-                          <h4 className="font-semibold text-lg mb-4">Price Items ({editedItems.length || selectedPriceSheet.items?.length || 0})</h4>
+                          <h4 className="font-semibold text-sm text-gray-700 mb-3">
+                            Price Items <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{editedItems.length || selectedPriceSheet?.items?.length || 0}</span>
+                          </h4>
                           {editedItems.length > 0 ? (
-                            <div className="border rounded-lg overflow-hidden bg-white">
+                            <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
                               <div className="overflow-x-auto">
                                 <Table>
                                   <TableHeader>
-                                    <TableRow className="bg-gray-50">
-                                      <TableHead className="font-semibold text-base">Item Name</TableHead>
+                                    <TableRow className="bg-gray-50 border-b">
+                                      <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Item Name</TableHead>
                                       {editedItems.some((i: any) => i.hsnCode) && (
-                                        <TableHead className="font-semibold text-base">HSN Code</TableHead>
+                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">HSN</TableHead>
                                       )}
                                       {editedItems.some((i: any) => i.weight) && (
-                                        <TableHead className="font-semibold text-base">Weight</TableHead>
+                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Weight</TableHead>
                                       )}
                                       {editedItems.some((i: any) => i.country) && (
-                                        <TableHead className="font-semibold text-base">Country</TableHead>
+                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Country</TableHead>
                                       )}
                                       {editedItems.some((i: any) => i.destination) && (
-                                        <TableHead className="font-semibold text-base">Destination</TableHead>
+                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Destination</TableHead>
                                       )}
                                       {editedItems.some((i: any) => i.serviceType) && (
-                                        <TableHead className="font-semibold text-base">Service Type</TableHead>
+                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Service</TableHead>
                                       )}
-                                      <TableHead className="font-semibold text-base text-right">Rate</TableHead>
-                                      <TableHead className="font-semibold text-base text-center">Actions</TableHead>
+                                      <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide text-right">Rate (₹)</TableHead>
+                                      <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide text-center w-28">Actions</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
                                     {editedItems.map((item: any, index: number) => (
-                                      <TableRow key={item._id || index} className="hover:bg-gray-50">
-                                        <TableCell className="py-3">
+                                      <TableRow key={item._id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+                                        <TableCell className="py-2">
                                           <Input
                                             value={item.itemName || ''}
                                             onChange={(e) => handleCellEdit(index, 'itemName', e.target.value)}
-                                            className="h-9 text-base"
+                                            className="h-8 text-sm"
                                             onBlur={() => handleSaveRow(index)}
                                             placeholder="Item name"
                                           />
                                         </TableCell>
                                         {editedItems.some((i: any) => i.hsnCode) && (
-                                          <TableCell className="py-3">
+                                          <TableCell className="py-2">
                                             <Input
                                               value={item.hsnCode || ''}
                                               onChange={(e) => handleCellEdit(index, 'hsnCode', e.target.value)}
-                                              className="h-9 text-base"
+                                              className="h-8 text-sm w-24"
                                               onBlur={() => handleSaveRow(index)}
-                                              placeholder="HSN code"
+                                              placeholder="HSN"
                                             />
                                           </TableCell>
                                         )}
                                         {editedItems.some((i: any) => i.weight) && (
-                                          <TableCell className="py-3">
+                                          <TableCell className="py-2">
                                             <Input
                                               value={item.weight || ''}
                                               onChange={(e) => handleCellEdit(index, 'weight', e.target.value)}
-                                              className="h-9 text-base"
+                                              className="h-8 text-sm w-24"
                                               onBlur={() => handleSaveRow(index)}
                                               placeholder="Weight"
                                             />
                                           </TableCell>
                                         )}
                                         {editedItems.some((i: any) => i.country) && (
-                                          <TableCell className="py-3">
-                                            <div className="flex items-center gap-2">
+                                          <TableCell className="py-2">
+                                            <div className="flex items-center gap-1">
                                               {item.country ? (
-                                                <Badge variant="outline" className="text-sm px-3 py-1.5 flex-1 justify-center">
-                                                  {item.country}
-                                                </Badge>
+                                                <Badge variant="outline" className="text-xs px-2 py-0.5">{item.country}</Badge>
                                               ) : (
-                                                <span className="text-gray-400 text-sm">-</span>
+                                                <span className="text-gray-400 text-xs">—</span>
                                               )}
                                               <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className="h-8 w-8 p-0"
+                                                className="h-6 w-6 p-0 flex-shrink-0"
                                                 onClick={() => {
                                                   setCountryDialogFor({ row: index, field: 'country' });
                                                   setShowCountryDialog(true);
                                                 }}
-                                                title="Change country"
                                               >
-                                                <Edit className="h-4 w-4" />
+                                                <Edit className="h-3 w-3" />
                                               </Button>
                                             </div>
                                           </TableCell>
                                         )}
                                         {editedItems.some((i: any) => i.destination) && (
-                                          <TableCell className="py-3">
+                                          <TableCell className="py-2">
                                             <Input
                                               value={item.destination || ''}
                                               onChange={(e) => handleCellEdit(index, 'destination', e.target.value)}
-                                              className="h-9 text-base"
+                                              className="h-8 text-sm w-28"
                                               onBlur={() => handleSaveRow(index)}
-                                              placeholder="Destination"
+                                              placeholder="City"
                                             />
                                           </TableCell>
                                         )}
                                         {editedItems.some((i: any) => i.serviceType) && (
-                                          <TableCell className="py-3">
+                                          <TableCell className="py-2">
                                             <Input
                                               value={item.serviceType || ''}
                                               onChange={(e) => handleCellEdit(index, 'serviceType', e.target.value)}
-                                              className="h-9 text-base"
+                                              className="h-8 text-sm w-28"
                                               onBlur={() => handleSaveRow(index)}
-                                              placeholder="Service type"
+                                              placeholder="Type"
                                             />
                                           </TableCell>
                                         )}
-                                        <TableCell className="py-3">
-                                          <div className="flex items-center gap-2 justify-end">
-                                            <span className="text-sm text-gray-500">{item.currency || 'INR'}</span>
-                                            <Input
-                                              type="number"
-                                              value={item.rate || 0}
-                                              onChange={(e) => handleCellEdit(index, 'rate', parseFloat(e.target.value) || 0)}
-                                              className="h-9 text-base w-28 text-right font-bold"
-                                              onBlur={() => handleSaveRow(index)}
-                                              placeholder="0"
-                                            />
-                                          </div>
+                                        <TableCell className="py-2 text-right">
+                                          <Input
+                                            type="number"
+                                            value={item.rate || 0}
+                                            onChange={(e) => handleCellEdit(index, 'rate', parseFloat(e.target.value) || 0)}
+                                            className="h-8 text-sm w-24 text-right font-bold ml-auto"
+                                            onBlur={() => handleSaveRow(index)}
+                                            placeholder="0"
+                                          />
                                         </TableCell>
-                                        <TableCell className="py-3">
-                                          <div className="flex gap-2 justify-center">
+                                        <TableCell className="py-2">
+                                          <div className="flex gap-1 justify-center">
                                             <Button
                                               size="sm"
                                               variant="outline"
                                               onClick={() => handleSaveRow(index)}
-                                              className="h-8 px-3"
-                                              title="Save changes"
+                                              className="h-7 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
                                             >
-                                              <Edit className="h-4 w-4 mr-1" />
                                               Save
                                             </Button>
                                             <Button
                                               size="sm"
                                               variant="outline"
                                               onClick={() => handleDeleteItem(selectedPriceSheet._id, item._id)}
-                                              className="h-8 px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                              title="Delete item"
+                                              className="h-7 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
                                             >
-                                              <Trash2 className="h-4 w-4 mr-1" />
-                                              Delete
+                                              <Trash2 className="h-3 w-3" />
                                             </Button>
                                           </div>
                                         </TableCell>
@@ -2515,19 +2491,18 @@ const AdminDashboard = () => {
                                 </Table>
                               </div>
                             </div>
-                          ) : selectedPriceSheet.items && selectedPriceSheet.items.length > 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                              Loading items...
-                            </div>
+                          ) : selectedPriceSheet?.items && selectedPriceSheet.items.length > 0 ? (
+                            <div className="text-center py-8 text-gray-500 text-sm">Loading items...</div>
                           ) : (
-                            <div className="text-center py-8 text-gray-500">
-                              No items found. Add your first item above.
+                            <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
+                              <FileSpreadsheet className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                              <p className="text-sm text-gray-500">No items yet. Add your first item above.</p>
                             </div>
                           )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   {/* Country Selection Dialog */}
                   <Dialog open={showCountryDialog} onOpenChange={setShowCountryDialog}>
