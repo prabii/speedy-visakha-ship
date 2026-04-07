@@ -384,7 +384,7 @@ const RateCalculator = () => {
                                   </span>
                                 ) : (
                                   <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
-                                    +GST
+                                    Incl. GST
                                   </span>
                                 )}
                               </td>
@@ -394,7 +394,7 @@ const RateCalculator = () => {
                       </tbody>
                     </table>
                     <p className="text-xs text-center text-gray-400 py-2.5 border-t bg-gray-50">
-                      Rates in INR (₹) · GST @18% on +GST rows · Inclusive rows have no extra charge
+                      Rates in INR (₹) · "Incl. GST" = GST already included · "Incl." = GST included
                     </p>
                   </CardContent>
                 </Card>
