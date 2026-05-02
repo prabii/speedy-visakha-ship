@@ -47,7 +47,7 @@ export const Header = () => {
             <img
               src="/VZlogo.png"
               alt="Visakha International Couriers Logo"
-              className="h-10 md:h-14 w-auto object-contain max-w-[120px] md:max-w-[150px]"
+              className="h-10 md:h-16 w-auto object-contain max-w-[160px] md:max-w-[220px]"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -60,10 +60,6 @@ export const Header = () => {
               style={{ display: 'none' }}
             >
               <Plane className="text-white" size={24} />
-            </div>
-            <div className="hidden lg:block">
-              <h1 className="text-base md:text-lg font-bold text-foreground leading-tight">Visakha International Couriers</h1>
-              <p className="text-xs text-muted-foreground">Shipping Worldwide with Trust & Speed</p>
             </div>
           </Link>
 
