@@ -42,33 +42,35 @@ export const Header = () => {
     <header className="bg-white shadow-elegant border-b border-border/10 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-2 md:gap-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-            <img
-              src="/VZlogo.png"
-              alt="Visakha International Couriers Logo"
-              className="h-10 md:h-12 w-auto object-contain max-w-[140px] md:max-w-[180px]"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'flex';
-              }}
-            />
-            <div
-              className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center"
-              style={{ display: 'none' }}
-            >
-              <Plane className="text-white" size={24} />
-            </div>
-          </Link>
+          {/* Logo + Nav grouped on the left */}
+          <div className="flex items-center gap-4 md:gap-6">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
+              <img
+                src="/VZlogo.png"
+                alt="Visakha International Couriers Logo"
+                className="h-10 md:h-12 w-auto object-contain max-w-[140px] md:max-w-[180px]"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div
+                className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center"
+                style={{ display: 'none' }}
+              >
+                <Plane className="text-white" size={24} />
+              </div>
+            </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-3 lg:gap-4 flex-shrink">
-            {navLinks.map(link => (
-              <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">{link.label}</Link>
-            ))}
-          </nav>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-3 lg:gap-5">
+              {navLinks.map(link => (
+                <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">{link.label}</Link>
+              ))}
+            </nav>
+          </div>
 
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             <Link to="/admin/login?type=admin" className="hidden md:block">
