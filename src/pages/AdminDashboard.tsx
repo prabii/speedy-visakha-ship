@@ -1972,18 +1972,24 @@ const AdminDashboard = () => {
                                     ⭐ Set Default
                                   </Button>
                                 )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className={`h-7 text-xs px-3 ${sheet.isPublic ? 'border-purple-300 text-purple-700 bg-purple-50' : 'border-purple-300 text-purple-700 hover:bg-purple-50'}`}
-                                  onClick={async () => {
-                                    await api.priceSheets.update(sheet._id, { isPublic: !sheet.isPublic });
-                                    toast({ title: 'Success', description: sheet.isPublic ? 'Removed from public website' : 'Now visible on public website' });
-                                    loadPriceSheets();
-                                  }}
-                                >
-                                  🌐 {sheet.isPublic ? 'Unpublish' : 'Publish'}
-                                </Button>
+                                {sheet.assignedVendors && sheet.assignedVendors.length > 0 ? (
+                                  <span className="h-7 text-xs px-3 flex items-center text-gray-400 italic">
+                                    🔒 Vendor-only
+                                  </span>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className={`h-7 text-xs px-3 ${sheet.isPublic ? 'border-purple-300 text-purple-700 bg-purple-50' : 'border-purple-300 text-purple-700 hover:bg-purple-50'}`}
+                                    onClick={async () => {
+                                      await api.priceSheets.update(sheet._id, { isPublic: !sheet.isPublic });
+                                      toast({ title: 'Success', description: sheet.isPublic ? 'Removed from public website' : 'Now visible on public website' });
+                                      loadPriceSheets();
+                                    }}
+                                  >
+                                    🌐 {sheet.isPublic ? 'Unpublish' : 'Publish'}
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
