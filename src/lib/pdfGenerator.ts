@@ -1103,7 +1103,84 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     data.consignee.country || data.destination || '',
   ]);
 
-  // ========== SECOND GRID: GOODS / PIECES / WEIGHT / VALUE / DATE ==========
+  // ========== SHIPPER AGREEMENT + TERMS & CONDITIONS (joined, above Description of Goods) ==========
+  y = checkPageBreak(doc, y, 65);
+
+  const boxPadding = 3;
+  const combinedBoxWidth = contentWidth;
+
+  // Pre-calculate agreement text lines
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  const agreementText = 'SHIPPER AGREES TO STANDARD TERM AND CONDITIONS OF CARRIAGE.';
+  const agreementLines = doc.splitTextToSize(agreementText, combinedBoxWidth - (boxPadding * 2));
+
+  // Pre-calculate terms text lines
+  const termsText = [
+    '1. No Claims would be entertained for any damage during transit & delay in delivery due to any reason.',
+    '2. Maximum claims for loss of parcel would be USD 50 upto 10 Kgs & USD 100 above 10 kgs or the declared value whichever is lower.',
+    '3. This AWB is for the account holder and it is not transferable. This receipt does not imply we have physically received the parcel in our hub'
+  ];
+  const maxTermsWidth = combinedBoxWidth - (boxPadding * 2);
+
+  // Calculate agreement section height
+  const agreementSectionHeight = boxPadding + 5 + 6 + 5 + 6 + (agreementLines.length * 4) + boxPadding;
+
+  // Calculate terms section height
+  let termsContentHeight = 5 + 5; // title + gap
+  termsText.forEach((term, idx) => {
+    const lines = doc.splitTextToSize(term, maxTermsWidth);
+    termsContentHeight += lines.length * 4;
+    if (idx < termsText.length - 1) termsContentHeight += 1;
+  });
+  const termsSectionHeight = boxPadding + termsContentHeight + boxPadding;
+
+  const totalCombinedHeight = agreementSectionHeight + termsSectionHeight;
+
+  // Draw one outer box enclosing both sections
+  doc.setLineWidth(0.5);
+  doc.rect(margin, y, combinedBoxWidth, totalCombinedHeight);
+
+  // Draw divider line between agreement and terms
+  doc.setLineWidth(0.3);
+  doc.line(margin, y + agreementSectionHeight, margin + combinedBoxWidth, y + agreementSectionHeight);
+
+  // --- Shipper Agreement content ---
+  let boxY = y + boxPadding;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SHIPPER AGREEMENT DATE', margin + boxPadding, boxY + 5);
+  boxY += 6;
+  doc.text("SHIPPER'S SIGNATURE", margin + boxPadding, boxY + 5);
+  boxY += 6;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  agreementLines.forEach((line, idx) => {
+    doc.text(line, margin + boxPadding, boxY + 5 + (idx * 4));
+  });
+
+  // --- Terms & Conditions content ---
+  let termsY = y + agreementSectionHeight + boxPadding;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Terms & Conditions :', margin + boxPadding, termsY + 5);
+  termsY += 10;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  termsText.forEach((term, index) => {
+    const termLines = doc.splitTextToSize(term, maxTermsWidth);
+    termLines.forEach((line) => {
+      doc.text(line, margin + boxPadding, termsY);
+      termsY += 4;
+    });
+    if (index < termsText.length - 1) termsY += 1;
+  });
+
+  y += totalCombinedHeight;
+
+  // ========== DESCRIPTION OF GOODS / PIECES / WEIGHT / VALUE / DATE ==========
+  y = checkPageBreak(doc, y, 20);
+
   widths = [80, 20, 30, 30, 30]; // sum = 190
   y = drawHeaderRow(margin, y, widths, [
     'DESCRIPTION OF GOODS',
@@ -1117,10 +1194,8 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
   let formattedBookingDate = '';
   if (data.bookingDate) {
     try {
-      // Try to parse the date (could be ISO string, formatted string, etc.)
       const date = new Date(data.bookingDate);
       if (!isNaN(date.getTime())) {
-        // Format as DD/MM/YYYY HH:mm
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
@@ -1128,11 +1203,9 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
         const minutes = String(date.getMinutes()).padStart(2, '0');
         formattedBookingDate = `${day}/${month}/${year} ${hours}:${minutes}`;
       } else {
-        // If parsing fails, use the string as-is (might already be formatted)
         formattedBookingDate = data.bookingDate;
       }
     } catch (e) {
-      // If any error, use current date/time
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1142,7 +1215,6 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
       formattedBookingDate = `${day}/${month}/${year} ${hours}:${minutes}`;
     }
   } else {
-    // If no booking date provided, use current date/time
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1159,99 +1231,6 @@ export const generateAWBPDF = async (data: AWBData, customLogo?: string | null) 
     data.shipmentValue || '',
     formattedBookingDate,
   ]);
-
-  // Add small gap after Description of Goods table (before SHIPPER AGREEMENT)
-  y += 3;
-
-  // ========== SHIPPER AGREEMENT BOX ==========
-  y = checkPageBreak(doc, y, 35);
-  
-  const agreementBoxWidth = contentWidth;
-  const boxPadding = 3;
-  
-  // Calculate content height first
-  let contentHeight = boxPadding;
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  contentHeight += 5; // SHIPPER AGREEMENT DATE
-  
-  contentHeight += 6; // Gap
-  contentHeight += 5; // SHIPPER'S SIGNATURE
-  
-  contentHeight += 6; // Gap
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  const agreementText = 'SHIPPER AGREES TO STANDARD TERM AND CONDITIONS OF CARRIAGE.';
-  const agreementLines = doc.splitTextToSize(agreementText, agreementBoxWidth - (boxPadding * 2));
-  contentHeight += (agreementLines.length * 4); // Agreement text (multiple lines if needed)
-  
-  contentHeight += boxPadding; // Bottom padding
-  
-  const agreementBoxHeight = contentHeight;
-  
-  // Draw the agreement box
-  doc.setLineWidth(0.5);
-  doc.rect(margin, y, agreementBoxWidth, agreementBoxHeight);
-  
-  // Content inside the box
-  let boxY = y + boxPadding;
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('SHIPPER AGREEMENT DATE', margin + boxPadding, boxY + 5);
-  
-  boxY += 6;
-  doc.text('SHIPPER\'S SIGNATURE', margin + boxPadding, boxY + 5);
-  
-  boxY += 6;
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  agreementLines.forEach((line, idx) => {
-    doc.text(line, margin + boxPadding, boxY + 5 + (idx * 4));
-  });
-  
-  // Add small gap after SHIPPER AGREEMENT (before Terms & Conditions)
-  y += agreementBoxHeight + 3;
-
-  // ========== TERMS & CONDITIONS BOX ==========
-  y = checkPageBreak(doc, y, 40);
-  
-  const termsBoxHeight = 35;
-  const termsBoxWidth = contentWidth;
-  
-  // Draw the terms box
-  doc.setLineWidth(0.5);
-  doc.rect(margin, y, termsBoxWidth, termsBoxHeight);
-  
-  // Terms & Conditions title
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Terms & Conditions :', margin + boxPadding, y + 5);
-  
-  // Terms content
-  let termsY = y + 10;
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  
-  const termsText = [
-    '1. No Claims would be entertained for any damage during transit & delay in delivery due to any reason.',
-    '2. Maximum claims for loss of parcel would be USD 50 upto 10 Kgs & USD 100 above 10 kgs or the declared value whichever is lower.',
-    '3. This AWB is for the account holder and it is not transferable. This receipt does not imply we have physically received the parcel in our hub'
-  ];
-  
-  const maxTermsWidth = termsBoxWidth - (boxPadding * 2);
-  termsText.forEach((term, index) => {
-    const termLines = doc.splitTextToSize(term, maxTermsWidth);
-    termLines.forEach((line) => {
-      doc.text(line, margin + boxPadding, termsY);
-      termsY += 4;
-    });
-    if (index < termsText.length - 1) {
-      termsY += 1; // Small gap between terms
-    }
-  });
-  
-  y += termsBoxHeight + 4;
 
   // ---------- FOOTER ----------
   // GST number has been moved to header section, so footer is now empty or can be used for other info
