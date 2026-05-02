@@ -47,7 +47,7 @@ export const Header = () => {
             <img
               src="/VZlogo.png"
               alt="Visakha International Couriers Logo"
-              className="h-10 md:h-16 w-auto object-contain max-w-[160px] md:max-w-[220px]"
+              className="h-10 md:h-12 w-auto object-contain max-w-[140px] md:max-w-[180px]"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';

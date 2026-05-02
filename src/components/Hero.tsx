@@ -110,20 +110,12 @@ export const Hero = () => {
 
   return (
     <>
-      <section className="relative min-h-[350px] md:min-h-[600px] flex items-center overflow-hidden">
-        {/* Background image with lighter overlay */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/20"></div>
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 py-12">
-          <div className="max-w-2xl mx-auto text-center space-y-6" data-tracking-section>
-            {/* Content hidden */}
-          </div>
-        </div>
+      <section className="relative w-full overflow-hidden" data-tracking-section>
+        <img
+          src={heroImage}
+          alt="Fast. Reliable. Nationwide Delivery."
+          className="w-full h-auto block"
+        />
       </section>
 
       {/* Tracking Results Section - Outside hero section */}
