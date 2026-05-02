@@ -60,7 +60,7 @@ const AdminLogin = () => {
   };
 
   const [logoError, setLogoError] = useState(false);
-  const [logoSrc, setLogoSrc] = useState('/vzlogo.jpg');
+  const [logoSrc, setLogoSrc] = useState('/VZlogo.png');
 
   const handleLogoError = () => {
     if (logoSrc === '/vzlogo.jpg') {
