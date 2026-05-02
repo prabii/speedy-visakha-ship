@@ -1765,9 +1765,9 @@ const InvoiceEntry: React.FC<InvoiceEntryProps> = () => {
               <Input 
                 id="accountNo"
                 value={accountDetails.accountNo} 
-                onChange={(e) => setAccountDetails(prev => ({ ...prev, accountNo: e.target.value }))} 
+                onChange={(e) => setAccountDetails(prev => ({ ...prev, accountNo: e.target.value.toUpperCase() }))}
                 placeholder="Enter account number"
-                className="h-10"
+                className="h-10 uppercase"
               />
             </div>
             <div className="space-y-2">
