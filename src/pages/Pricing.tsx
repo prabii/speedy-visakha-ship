@@ -62,6 +62,7 @@ const Pricing = () => {
   const [filterService, setFilterService] = useState<string>('');
   const [publicLoading, setPublicLoading] = useState(false);
   const [publicSheets, setPublicSheets] = useState<any[]>([]);
+  const [pricingImages, setPricingImages] = useState<any[]>([]);
 
   const vendorMode = isVendor();
 
@@ -123,6 +124,17 @@ const Pricing = () => {
       })
       .catch(() => {})
       .finally(() => setPublicLoading(false));
+  }, [vendorMode]);
+
+  // Load pricing images uploaded from admin
+  useEffect(() => {
+    if (vendorMode) return;
+    api.gallery.getAll({ category: 'pricing', isActive: true })
+      .then((data: any) => {
+        const arr = Array.isArray(data) ? data : data?.items ?? [];
+        setPricingImages(arr);
+      })
+      .catch(() => {});
   }, [vendorMode]);
 
   return (
@@ -275,8 +287,42 @@ const Pricing = () => {
             </div>
           )
         ) : (
-          /* Public: carousel of price sheet cards */
+          /* Public: pricing images carousel + price sheet cards */
           <div className="mb-16">
+            {pricingImages.length > 0 && (
+              <div className="mb-10">
+                <Carousel
+                  opts={{ align: "start", loop: pricingImages.length > 1 }}
+                  className="w-full max-w-5xl mx-auto"
+                >
+                  <CarouselContent className="-ml-4">
+                    {pricingImages.map((img: any) => (
+                      <CarouselItem key={img._id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                        <div className="rounded-xl overflow-hidden shadow-lg border bg-white">
+                          <img
+                            src={img.url}
+                            alt={img.title || 'Pricing'}
+                            className="w-full h-56 object-contain"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                          {img.title && (
+                            <div className="px-4 py-2 text-sm font-medium text-gray-700 text-center">
+                              {img.title}
+                            </div>
+                          )}
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {pricingImages.length > 1 && (
+                    <>
+                      <CarouselPrevious className="-left-4 md:-left-6 shadow-md" />
+                      <CarouselNext className="-right-4 md:-right-6 shadow-md" />
+                    </>
+                  )}
+                </Carousel>
+              </div>
+            )}
             {publicLoading ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">Loading pricing...</p>
