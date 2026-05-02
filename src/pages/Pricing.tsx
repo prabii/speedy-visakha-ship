@@ -289,24 +289,25 @@ const Pricing = () => {
         ) : (
           /* Public: pricing images carousel + price sheet cards */
           <div className="mb-16">
-            {pricingImages.length > 0 && (
+            {pricingImages.filter((img: any) => img.url).length > 0 && (
               <div className="mb-10">
+                <h2 className="text-xl font-bold text-center text-foreground mb-5">Pricing Charts</h2>
                 <Carousel
-                  opts={{ align: "start", loop: pricingImages.length > 1 }}
-                  className="w-full max-w-5xl mx-auto"
+                  opts={{ align: "center", loop: pricingImages.length > 1 }}
+                  className="w-full max-w-4xl mx-auto px-8"
                 >
                   <CarouselContent className="-ml-4">
-                    {pricingImages.map((img: any) => (
-                      <CarouselItem key={img._id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                        <div className="rounded-xl overflow-hidden shadow-lg border bg-white">
+                    {pricingImages.filter((img: any) => img.url).map((img: any) => (
+                      <CarouselItem key={img._id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                        <div className="rounded-xl overflow-hidden shadow-lg border bg-white flex flex-col">
                           <img
                             src={img.url}
-                            alt={img.title || 'Pricing'}
-                            className="w-full h-56 object-contain"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            alt={img.title || 'Pricing Chart'}
+                            className="w-full object-contain bg-gray-50"
+                            style={{ maxHeight: '420px' }}
                           />
                           {img.title && (
-                            <div className="px-4 py-2 text-sm font-medium text-gray-700 text-center">
+                            <div className="px-4 py-2 text-sm font-semibold text-gray-700 text-center border-t bg-white">
                               {img.title}
                             </div>
                           )}
@@ -314,13 +315,16 @@ const Pricing = () => {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  {pricingImages.length > 1 && (
-                    <>
-                      <CarouselPrevious className="-left-4 md:-left-6 shadow-md" />
-                      <CarouselNext className="-right-4 md:-right-6 shadow-md" />
-                    </>
-                  )}
+                  <CarouselPrevious className="shadow-md" />
+                  <CarouselNext className="shadow-md" />
                 </Carousel>
+                {pricingImages.filter((img: any) => img.url).length > 1 && (
+                  <div className="flex justify-center gap-1.5 mt-4">
+                    {pricingImages.filter((img: any) => img.url).map((_: any, i: number) => (
+                      <div key={i} className="w-2 h-2 rounded-full bg-blue-400" />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {publicLoading ? (

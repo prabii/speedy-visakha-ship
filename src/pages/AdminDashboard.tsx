@@ -115,6 +115,10 @@ const AdminDashboard = () => {
   const [showGalleryDialog, setShowGalleryDialog] = useState(false);
   const [editingGalleryItem, setEditingGalleryItem] = useState<any>(null);
 
+  // Pricing images state
+  const [pricingImages, setPricingImages] = useState<any[]>([]);
+  const [isLoadingPricingImages, setIsLoadingPricingImages] = useState(false);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/admin/login');
@@ -131,6 +135,30 @@ const AdminDashboard = () => {
       window.removeEventListener('navigateToInvoiceTab', handleNavigateToInvoice);
     };
   }, []);
+
+  // Pricing images functions
+  const loadPricingImages = async () => {
+    setIsLoadingPricingImages(true);
+    try {
+      const data = await api.gallery.getAll({ category: 'pricing' });
+      const arr = Array.isArray(data) ? data : data?.items ?? [];
+      setPricingImages(arr);
+    } catch {
+      setPricingImages([]);
+    } finally {
+      setIsLoadingPricingImages(false);
+    }
+  };
+
+  const deletePricingImage = async (id: string) => {
+    try {
+      await api.gallery.delete(id);
+      setPricingImages(prev => prev.filter(img => img._id !== id));
+      toast({ title: 'Deleted', description: 'Pricing image removed successfully' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to delete image', variant: 'destructive' });
+    }
+  };
 
   // Branch Locations functions
   const loadBranchLocations = async () => {
@@ -1017,6 +1045,7 @@ const AdminDashboard = () => {
     if (isAdmin() && activeTab === 'price-sheets') {
       loadPriceSheets();
       loadVendorUsers(); // Load vendors for assignment dropdown
+      loadPricingImages();
     }
     if (isAdmin() && activeTab === 'gallery') {
       loadGalleryItems();
@@ -2197,6 +2226,7 @@ const AdminDashboard = () => {
                             toast({ title: 'Success', description: 'Pricing image uploaded successfully' });
                             setGalleryForm({ type: 'image', url: '', title: '', description: '' });
                             setGalleryUploadFile(null);
+                            loadPricingImages();
                           } catch (error: any) {
                             toast({ title: 'Error', description: error.message || 'Failed to upload pricing image', variant: 'destructive' });
                           }
@@ -2210,6 +2240,52 @@ const AdminDashboard = () => {
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Pricing Image
                       </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Uploaded Pricing Images */}
+                  <Card className="border-0 shadow-md overflow-hidden mt-4">
+                    <CardHeader className="bg-gray-50 border-b py-3 px-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-purple-600" />
+                          Uploaded Pricing Images ({pricingImages.length})
+                        </CardTitle>
+                        <Button variant="outline" size="sm" className="text-xs h-7" onClick={loadPricingImages}>
+                          Refresh
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      {isLoadingPricingImages ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
+                      ) : pricingImages.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">No pricing images uploaded yet.</p>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {pricingImages.map((img: any) => (
+                            <div key={img._id} className="relative group rounded-lg overflow-hidden border bg-gray-50">
+                              <img
+                                src={img.url}
+                                alt={img.title || 'Pricing image'}
+                                className="w-full h-32 object-contain bg-white"
+                                onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                              />
+                              <div className="px-2 py-1.5 flex items-center justify-between gap-1">
+                                <span className="text-xs text-gray-600 truncate">{img.title || 'Untitled'}</span>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 flex-shrink-0"
+                                  onClick={() => deletePricingImage(img._id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
