@@ -4,7 +4,6 @@ import { Package, Globe, X } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { TrackingResult } from "./TrackingResult";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@/assets/ChatGPT Image Jan 26, 2026, 12_24_50 PM.png";
 
 const DELHIVERY_API_KEY = "3fa572f5b2e80d1267e936d28dccacd86d24a700";
 const DELHIVERY_API_URL = "https://track.delhivery.com/api/v1/packages/json/";
@@ -112,7 +111,7 @@ export const Hero = () => {
     <>
       <section className="relative w-full overflow-hidden" data-tracking-section>
         <img
-          src={heroImage}
+          src="/newhero.png"
           alt="Fast. Reliable. Nationwide Delivery."
           className="w-full object-cover block"
           style={{ maxHeight: '480px' }}
