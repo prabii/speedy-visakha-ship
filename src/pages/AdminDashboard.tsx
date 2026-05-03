@@ -83,15 +83,12 @@ const AdminDashboard = () => {
   });
   const [editingVendorAssignment, setEditingVendorAssignment] = useState<any>(null);
   const [vendorAssignmentForm, setVendorAssignmentForm] = useState<string[]>([]);
+  const [editingSheetName, setEditingSheetName] = useState<{id: string, name: string} | null>(null);
   const [itemForm, setItemForm] = useState({
     itemName: '',
-    hsnCode: '',
     weight: '',
     rate: '',
     destination: '',
-    country: '',
-    countryCode: '',
-    serviceType: '',
     currency: 'INR',
   });
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -789,6 +786,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleRenameSheet = async () => {
+    if (!editingSheetName || !editingSheetName.name.trim()) return;
+    try {
+      await api.priceSheets.update(editingSheetName.id, { sheetName: editingSheetName.name.trim() });
+      toast({ title: 'Success', description: 'Price sheet renamed successfully' });
+      setEditingSheetName(null);
+      loadPriceSheets();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to rename price sheet', variant: 'destructive' });
+    }
+  };
+
   const handleSaveVendorAssignment = async () => {
     if (!editingVendorAssignment) return;
 
@@ -835,17 +844,7 @@ const AdminDashboard = () => {
         description: 'Item added successfully',
       });
       
-      setItemForm({
-        itemName: '',
-        hsnCode: '',
-        weight: '',
-        rate: '',
-        destination: '',
-        country: '',
-        countryCode: '',
-        serviceType: '',
-        currency: 'INR',
-      });
+      setItemForm({ itemName: '', weight: '', rate: '', destination: '', currency: 'INR' });
       loadPriceSheets();
       if (selectedPriceSheet?._id === sheetId) {
         const updated = await api.priceSheets.getById(sheetId);
@@ -882,17 +881,7 @@ const AdminDashboard = () => {
       });
       
       setEditingItem(null);
-      setItemForm({
-        itemName: '',
-        hsnCode: '',
-        weight: '',
-        rate: '',
-        destination: '',
-        country: '',
-        countryCode: '',
-        serviceType: '',
-        currency: 'INR',
-      });
+      setItemForm({ itemName: '', weight: '', rate: '', destination: '', currency: 'INR' });
       loadPriceSheets();
       if (selectedPriceSheet?._id === sheetId) {
         const updated = await api.priceSheets.getById(sheetId);
@@ -1965,6 +1954,14 @@ const AdminDashboard = () => {
                               <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                                 <Button
                                   size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-3 border-amber-300 text-amber-700 hover:bg-amber-50"
+                                  onClick={() => setEditingSheetName({ id: sheet._id, name: sheet.sheetName })}
+                                >
+                                  ✏️ Rename
+                                </Button>
+                                <Button
+                                  size="sm"
                                   className="bg-blue-600 hover:bg-blue-700 text-white h-7 text-xs px-3"
                                   onClick={async () => {
                                     const sheetData = await api.priceSheets.getById(sheet._id);
@@ -2097,6 +2094,29 @@ const AdminDashboard = () => {
                           >
                             Save Assignment
                           </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Rename Price Sheet Dialog */}
+                  <Dialog open={!!editingSheetName} onOpenChange={(open) => { if (!open) setEditingSheetName(null); }}>
+                    <DialogContent className="max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle>Rename Price Sheet</DialogTitle>
+                        <DialogDescription>Enter a new name for this price sheet.</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-2">
+                        <Input
+                          value={editingSheetName?.name || ''}
+                          onChange={(e) => setEditingSheetName(editingSheetName ? { ...editingSheetName, name: e.target.value } : null)}
+                          placeholder="Sheet name"
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSheet(); }}
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setEditingSheetName(null)}>Cancel</Button>
+                          <Button onClick={handleRenameSheet} disabled={!editingSheetName?.name?.trim()}>Save</Button>
                         </div>
                       </div>
                     </DialogContent>
@@ -2296,7 +2316,7 @@ const AdminDashboard = () => {
                       setEditingItem(null);
                       setEditingItemIndex(null);
                       setEditedItems([]);
-                      setItemForm({ itemName: '', hsnCode: '', weight: '', rate: '', destination: '', country: '', countryCode: '', serviceType: '', currency: 'INR' });
+                      setItemForm({ itemName: '', weight: '', rate: '', destination: '', currency: 'INR' });
                     }
                   }}>
                     <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0">
@@ -2318,7 +2338,7 @@ const AdminDashboard = () => {
                             onClick={() => {
                               setSelectedPriceSheet(null);
                               setEditedItems([]);
-                              setItemForm({ itemName: '', hsnCode: '', weight: '', rate: '', destination: '', country: '', countryCode: '', serviceType: '', currency: 'INR' });
+                              setItemForm({ itemName: '', weight: '', rate: '', destination: '', currency: 'INR' });
                             }}
                           >
                             ✕ Close
@@ -2364,44 +2384,11 @@ const AdminDashboard = () => {
                               />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Country</Label>
-                              <div className="flex gap-1">
-                                <Input
-                                  placeholder="Select"
-                                  value={itemForm.country}
-                                  readOnly
-                                  onClick={() => setShowCountryDialog(true)}
-                                  className="h-8 text-sm cursor-pointer"
-                                />
-                                <Button type="button" variant="outline" size="sm" className="h-8 px-2 flex-shrink-0" onClick={() => setShowCountryDialog(true)}>
-                                  <Search className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
                               <Label className="text-xs font-medium">Destination</Label>
                               <Input
-                                placeholder="City"
+                                placeholder="City / Country"
                                 value={itemForm.destination}
                                 onChange={(e) => setItemForm({ ...itemForm, destination: e.target.value })}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">Service Type</Label>
-                              <Input
-                                placeholder="Express, Standard…"
-                                value={itemForm.serviceType}
-                                onChange={(e) => setItemForm({ ...itemForm, serviceType: e.target.value })}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">HSN Code</Label>
-                              <Input
-                                placeholder="HSN"
-                                value={itemForm.hsnCode}
-                                onChange={(e) => setItemForm({ ...itemForm, hsnCode: e.target.value })}
                                 className="h-8 text-sm"
                               />
                             </div>
@@ -2440,20 +2427,11 @@ const AdminDashboard = () => {
                                   <TableHeader>
                                     <TableRow className="bg-gray-50 border-b">
                                       <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Item Name</TableHead>
-                                      {editedItems.some((i: any) => i.hsnCode) && (
-                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">HSN</TableHead>
-                                      )}
                                       {editedItems.some((i: any) => i.weight) && (
                                         <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Weight</TableHead>
                                       )}
-                                      {editedItems.some((i: any) => i.country) && (
-                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Country</TableHead>
-                                      )}
                                       {editedItems.some((i: any) => i.destination) && (
                                         <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Destination</TableHead>
-                                      )}
-                                      {editedItems.some((i: any) => i.serviceType) && (
-                                        <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide">Service</TableHead>
                                       )}
                                       <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide text-right">Rate (₹)</TableHead>
                                       <TableHead className="font-semibold text-xs text-gray-600 uppercase tracking-wide text-center w-28">Actions</TableHead>
@@ -2471,17 +2449,6 @@ const AdminDashboard = () => {
                                             placeholder="Item name"
                                           />
                                         </TableCell>
-                                        {editedItems.some((i: any) => i.hsnCode) && (
-                                          <TableCell className="py-2">
-                                            <Input
-                                              value={item.hsnCode || ''}
-                                              onChange={(e) => handleCellEdit(index, 'hsnCode', e.target.value)}
-                                              className="h-8 text-sm w-24"
-                                              onBlur={() => handleSaveRow(index)}
-                                              placeholder="HSN"
-                                            />
-                                          </TableCell>
-                                        )}
                                         {editedItems.some((i: any) => i.weight) && (
                                           <TableCell className="py-2">
                                             <Input
@@ -2493,28 +2460,6 @@ const AdminDashboard = () => {
                                             />
                                           </TableCell>
                                         )}
-                                        {editedItems.some((i: any) => i.country) && (
-                                          <TableCell className="py-2">
-                                            <div className="flex items-center gap-1">
-                                              {item.country ? (
-                                                <Badge variant="outline" className="text-xs px-2 py-0.5">{item.country}</Badge>
-                                              ) : (
-                                                <span className="text-gray-400 text-xs">—</span>
-                                              )}
-                                              <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                className="h-6 w-6 p-0 flex-shrink-0"
-                                                onClick={() => {
-                                                  setCountryDialogFor({ row: index, field: 'country' });
-                                                  setShowCountryDialog(true);
-                                                }}
-                                              >
-                                                <Edit className="h-3 w-3" />
-                                              </Button>
-                                            </div>
-                                          </TableCell>
-                                        )}
                                         {editedItems.some((i: any) => i.destination) && (
                                           <TableCell className="py-2">
                                             <Input
@@ -2523,17 +2468,6 @@ const AdminDashboard = () => {
                                               className="h-8 text-sm w-28"
                                               onBlur={() => handleSaveRow(index)}
                                               placeholder="City"
-                                            />
-                                          </TableCell>
-                                        )}
-                                        {editedItems.some((i: any) => i.serviceType) && (
-                                          <TableCell className="py-2">
-                                            <Input
-                                              value={item.serviceType || ''}
-                                              onChange={(e) => handleCellEdit(index, 'serviceType', e.target.value)}
-                                              className="h-8 text-sm w-28"
-                                              onBlur={() => handleSaveRow(index)}
-                                              placeholder="Type"
                                             />
                                           </TableCell>
                                         )}
