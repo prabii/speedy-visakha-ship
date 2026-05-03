@@ -115,7 +115,7 @@ export const Hero = () => {
           alt="Fast. Reliable. World Wide Delivery."
           className="w-full block"
           style={{
-            height: 'clamp(260px, 42vw, 560px)',
+            height: 'clamp(220px, 56vw, 760px)',
             objectFit: 'cover',
             objectPosition: 'center top',
           }}
