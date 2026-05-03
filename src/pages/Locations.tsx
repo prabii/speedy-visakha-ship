@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Building2, Search, Mail, Phone, User } from 'lucide-react';
+import { MapPin, Building2, Search, Mail, Phone, User, ExternalLink } from 'lucide-react';
 import { loadServiceLocations, ServiceLocation } from '@/lib/pincodeParser';
 import { getStateName } from '@/lib/stateCodes';
 import api from '@/lib/api';
@@ -163,7 +163,18 @@ const Locations = () => {
                     <CardContent className="space-y-4">
                       <div className="flex items-start gap-2">
                         <MapPin className="w-4 h-4 text-gray-500 mt-1 flex-shrink-0" />
-                        <p className="text-sm text-gray-700">{branch.address}</p>
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-700">{branch.address}</p>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline mt-1.5"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            View on Map
+                          </a>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-gray-500" />
