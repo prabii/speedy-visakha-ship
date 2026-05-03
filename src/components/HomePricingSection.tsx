@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calculator } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Carousel,
   CarouselContent,
@@ -63,13 +66,21 @@ const HomePricingSection = () => {
   return (
     <section className="py-12 md:py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            International Shipping Rates
-          </h2>
-          <p className="text-sm md:text-base text-muted-foreground">
-            All rates in INR (₹) &nbsp;•&nbsp; GST applicable on select weights
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 md:mb-10">
+          <div className="text-center md:text-left">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              International Shipping Rates
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground">
+              All rates in INR (₹) &nbsp;•&nbsp; GST applicable on select weights
+            </p>
+          </div>
+          <Link to="/rate-calculator" className="flex-shrink-0 mx-auto md:mx-0">
+            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md gap-2 px-5 h-11">
+              <Calculator className="h-4 w-4" />
+              Rate Calculator
+            </Button>
+          </Link>
         </div>
 
         <Carousel

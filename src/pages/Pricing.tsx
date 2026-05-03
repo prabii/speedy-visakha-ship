@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Calculator } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Carousel,
   CarouselContent,
@@ -337,8 +339,14 @@ const Pricing = () => {
               </div>
             ) : (
               <>
-                <div className="text-center mb-6">
-                  <p className="text-sm text-muted-foreground">All rates in INR (₹) &nbsp;•&nbsp; GST applicable on select weights</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                  <p className="text-sm text-muted-foreground text-center sm:text-left">All rates in INR (₹) &nbsp;•&nbsp; GST applicable on select weights</p>
+                  <Link to="/rate-calculator" className="mx-auto sm:mx-0 flex-shrink-0">
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md gap-2 px-5 h-10">
+                      <Calculator className="h-4 w-4" />
+                      Rate Calculator
+                    </Button>
+                  </Link>
                 </div>
                 <Carousel
                   opts={{ align: "start", loop: publicSheets.length > 1 }}
