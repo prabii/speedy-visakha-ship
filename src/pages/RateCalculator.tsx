@@ -171,7 +171,7 @@ const RateCalculator = () => {
                     <Label className="text-sm font-medium">From (Origin)</Label>
                     <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border rounded-lg text-sm text-gray-600">
                       <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                      Visakhapatnam, India 🇮🇳
+                      India 🇮🇳
                     </div>
                   </div>
 
