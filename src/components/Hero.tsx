@@ -114,7 +114,8 @@ export const Hero = () => {
         <img
           src={heroImage}
           alt="Fast. Reliable. Nationwide Delivery."
-          className="w-full h-auto block"
+          className="w-full object-cover block"
+          style={{ maxHeight: '480px' }}
         />
       </section>
 

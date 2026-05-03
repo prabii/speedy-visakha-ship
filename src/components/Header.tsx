@@ -40,39 +40,38 @@ export const Header = () => {
 
   return (
     <header className="bg-white shadow-elegant border-b border-border/10 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
+      <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between gap-2 md:gap-4">
-          {/* Logo + Nav grouped on the left */}
-          <div className="flex items-center gap-4 md:gap-6">
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
-              <img
-                src="/VZlogo.png"
-                alt="Visakha International Couriers Logo"
-                className="h-10 md:h-12 w-auto object-contain max-w-[140px] md:max-w-[180px]"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = target.nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = 'flex';
-                }}
-              />
-              <div
-                className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center"
-                style={{ display: 'none' }}
-              >
-                <Plane className="text-white" size={24} />
-              </div>
-            </Link>
+          {/* Logo on the left */}
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
+            <img
+              src="/VZlogo.png"
+              alt="Visakha International Couriers Logo"
+              className="h-9 md:h-11 w-auto object-contain max-w-[130px] md:max-w-[160px]"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+            <div
+              className="w-9 h-9 bg-gradient-primary rounded-full flex items-center justify-center"
+              style={{ display: 'none' }}
+            >
+              <Plane className="text-white" size={22} />
+            </div>
+          </Link>
 
+          {/* Right side: Nav + buttons + tracking */}
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-3 lg:gap-5">
+            <nav className="hidden md:flex items-center gap-3 lg:gap-5 mr-2 lg:mr-4">
               {navLinks.map(link => (
                 <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors whitespace-nowrap">{link.label}</Link>
               ))}
             </nav>
-          </div>
 
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             <Link to="/admin/login?type=admin" className="hidden md:block">
               <Button variant="outline" size="sm" className="text-xs px-2 md:px-3">
                 <User size={12} className="mr-1" />
@@ -94,11 +93,11 @@ export const Header = () => {
                 placeholder="AWB No"
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
-                className="w-24 sm:w-32 md:w-40 lg:w-48 h-8 md:h-9 text-xs md:text-sm border-gray-300"
+                className="w-24 sm:w-32 md:w-36 lg:w-44 h-8 text-xs md:text-sm border-gray-300"
               />
               <Button
                 type="submit"
-                className="bg-red-600 hover:bg-red-700 text-white font-bold px-2 md:px-4 h-8 md:h-9 text-xs md:text-sm"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-2 md:px-4 h-8 text-xs md:text-sm"
               >
                 GO
               </Button>
