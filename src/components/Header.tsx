@@ -34,7 +34,7 @@ export const Header = () => {
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
-    <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-100">
+    <header className="bg-white sticky top-0 z-50 shadow-md border-b border-gray-200">
       {/* Top accent bar */}
       <div className="h-0.5 bg-gradient-to-r from-blue-600 via-indigo-500 to-red-500" />
 

@@ -113,7 +113,12 @@ export const Hero = () => {
         <img
           src="/newhero.png"
           alt="Fast. Reliable. World Wide Delivery."
-          className="w-full h-auto block"
+          className="w-full block"
+          style={{
+            height: 'clamp(260px, 42vw, 560px)',
+            objectFit: 'cover',
+            objectPosition: 'center top',
+          }}
         />
       </section>
 
