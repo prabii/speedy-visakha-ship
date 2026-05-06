@@ -55,6 +55,7 @@ const AdminDashboard = () => {
     mobileNumber: '',
     email: '',
     contactPerson: '',
+    mapLink: '',
   });
   
   // Vendor Users state
@@ -212,7 +213,7 @@ const AdminDashboard = () => {
           variant: 'success',
         });
       }
-      setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '' });
+      setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '', mapLink: '' });
       setEditingBranch(null);
       // Reload to ensure sync
       await loadBranchLocations();
@@ -233,6 +234,7 @@ const AdminDashboard = () => {
       mobileNumber: branch.mobileNumber || '',
       email: branch.email || '',
       contactPerson: branch.contactPerson || '',
+      mapLink: branch.mapLink || '',
     });
   };
 
@@ -251,7 +253,7 @@ const AdminDashboard = () => {
       });
       if (editingBranch?._id === id) {
         setEditingBranch(null);
-        setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '' });
+        setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '', mapLink: '' });
       }
       // Reload to ensure sync
       await loadBranchLocations();
@@ -1678,6 +1680,18 @@ const AdminDashboard = () => {
                         onChange={(e) => setBranchForm({ ...branchForm, contactPerson: e.target.value })}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1">
+                        <LinkIcon className="h-3.5 w-3.5" />
+                        Google Maps Link
+                      </Label>
+                      <Input
+                        placeholder="Paste Google Maps URL (e.g. https://maps.app.goo.gl/...)"
+                        value={branchForm.mapLink}
+                        onChange={(e) => setBranchForm({ ...branchForm, mapLink: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-400">Open Google Maps → share → copy link → paste here</p>
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={handleSaveBranch} className="flex-1">
                         {editingBranch ? 'Update' : 'Add'} Branch
@@ -1687,7 +1701,7 @@ const AdminDashboard = () => {
                           variant="outline" 
                           onClick={() => {
                             setEditingBranch(null);
-                            setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '' });
+                            setBranchForm({ city: '', address: '', mobileNumber: '', email: '', contactPerson: '', mapLink: '' });
                           }}
                         >
                           Cancel
@@ -1725,6 +1739,14 @@ const AdminDashboard = () => {
                                   <div className="col-span-2">
                                     <strong>Contact Person:</strong> {branch.contactPerson}
                                   </div>
+                                  {branch.mapLink && (
+                                    <div className="col-span-2">
+                                      <strong>Map Link:</strong>{' '}
+                                      <a href={branch.mapLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs break-all">
+                                        {branch.mapLink}
+                                      </a>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex gap-2 ml-4">
