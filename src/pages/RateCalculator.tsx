@@ -41,13 +41,19 @@ const FLAG: Record<string, string> = {
 
 const getFlag = (c: string) => FLAG[c?.toUpperCase()] || "🌍";
 
-// Parse weight strings like "0.5 Kg", "1kg", "500g" → number in kg
+// Parse weight slab strings → lower bound in kg for sorting & matching
+// e.g. "6 TO 10 Kg" → 6, "21 ABOVE" → 21, "0.500" → 0.5, "500g" → 0.5
 const parseWeightKg = (w: string): number => {
   if (!w) return 0;
   const lower = w.toLowerCase().replace(/\s/g, "");
+  // Range like "6to10kg" or "11to20kg" → use the start (lower bound)
+  const rangeMatch = lower.match(/^(\d+\.?\d*)to/);
+  if (rangeMatch) return parseFloat(rangeMatch[1]) || 0;
+  // Grams only (e.g. "500g" but not "kg")
   if (lower.includes("g") && !lower.includes("kg")) {
     return (parseFloat(lower.replace(/[^\d.]/g, "")) || 0) / 1000;
   }
+  // Default: extract first number ("0.500" → 0.5, "21above" → 21, "30kgabove" → 30)
   return parseFloat(lower.replace(/[^\d.]/g, "")) || 0;
 };
 
@@ -104,10 +110,10 @@ const RateCalculator = () => {
       return;
     }
 
-    // Sort by parsed weight ascending
+    // Sort by lower bound ascending
     const sorted = items
       .map((i) => ({ ...i, _kg: parseWeightKg(i.weight) }))
-      .filter((i) => i._kg > 0)
+      .filter((i) => i._kg >= 0)
       .sort((a, b) => a._kg - b._kg);
 
     if (sorted.length === 0) {
@@ -115,20 +121,19 @@ const RateCalculator = () => {
       return;
     }
 
-    // Standard courier billing: charge on next higher slab
-    let matched = sorted.find((i) => i._kg >= inputKg);
-    if (!matched) matched = sorted[sorted.length - 1]; // heaviest slab if over max
+    // Match: last slab whose lower bound ≤ inputKg (highest applicable slab)
+    const eligible = sorted.filter((i) => i._kg <= inputKg);
+    let matched = eligible.length > 0 ? eligible[eligible.length - 1] : sorted[0];
 
-    const gstInclusive = matched.gstInclusive || matched.additionalInfo?.gstInclusive;
+    // All published rates are GST-inclusive — total = base rate only
     const base = matched.rate as number;
-    const gstAmt = gstInclusive ? 0 : Math.round(base * 0.18);
-    const total = base + gstAmt;
+    const gstAmt = 0;
+    const total = base;
 
     setResult({
       matched,
       inputKg,
       base,
-      gstInclusive,
       gstAmt,
       total,
     });
@@ -259,7 +264,7 @@ const RateCalculator = () => {
                   <CardContent className="p-5">
                     <div className="space-y-0">
                       <div className="flex justify-between items-center py-3 border-b">
-                        <span className="text-sm text-gray-600">Base Rate</span>
+                        <span className="text-sm text-gray-600">Rate (GST Inclusive)</span>
                         <span className="font-semibold text-gray-800">
                           ₹{result.base.toLocaleString("en-IN")}
                         </span>
@@ -267,21 +272,13 @@ const RateCalculator = () => {
                       <div className="flex justify-between items-center py-3 border-b">
                         <span className="text-sm text-gray-600 flex items-center gap-1.5">
                           GST (18%)
-                          {result.gstInclusive && (
-                            <Badge className="bg-green-100 text-green-700 border-0 text-xs px-1.5 py-0 h-4">
-                              Included
-                            </Badge>
-                          )}
+                          <Badge className="bg-green-100 text-green-700 border-0 text-xs px-1.5 py-0 h-4">
+                            Included
+                          </Badge>
                         </span>
-                        {result.gstInclusive ? (
-                          <span className="text-sm text-green-600 font-medium">
-                            Included in rate
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-gray-800">
-                            ₹{result.gstAmt.toLocaleString("en-IN")}
-                          </span>
-                        )}
+                        <span className="text-sm text-green-600 font-medium">
+                          Included in rate
+                        </span>
                       </div>
                       <div className="flex justify-between items-center py-3 mt-1 bg-blue-50 px-4 rounded-xl">
                         <span className="font-bold text-blue-800 text-base">Total Payable</span>
@@ -291,17 +288,10 @@ const RateCalculator = () => {
                       </div>
                     </div>
 
-                    {result.gstInclusive ? (
-                      <p className="text-xs text-green-600 text-center mt-3 flex items-center justify-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        GST inclusive — no additional tax charges on this weight
-                      </p>
-                    ) : (
-                      <p className="text-xs text-amber-600 text-center mt-3 flex items-center justify-center gap-1">
-                        <Info className="h-3.5 w-3.5" />
-                        GST @18% applied on this weight slab
-                      </p>
-                    )}
+                    <p className="text-xs text-green-600 text-center mt-3 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      GST inclusive — no additional tax charges on this weight
+                    </p>
 
                     <Button
                       onClick={() => navigate("/book-shipment")}
@@ -350,7 +340,6 @@ const RateCalculator = () => {
                       </thead>
                       <tbody>
                         {items.map((item: any, idx: number) => {
-                          const gst = item.gstInclusive || item.additionalInfo?.gstInclusive;
                           const isSelected =
                             result &&
                             !result.notFound &&
@@ -378,15 +367,11 @@ const RateCalculator = () => {
                                 ₹{item.rate?.toLocaleString("en-IN")}
                               </td>
                               <td className="px-3 py-2.5 text-center">
-                                {gst ? (
+                                {item.rate ? (
                                   <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
-                                    Incl.
-                                  </span>
-                                ) : (
-                                  <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
                                     Incl. GST
                                   </span>
-                                )}
+                                ) : null}
                               </td>
                             </tr>
                           );
@@ -394,7 +379,7 @@ const RateCalculator = () => {
                       </tbody>
                     </table>
                     <p className="text-xs text-center text-gray-400 py-2.5 border-t bg-gray-50">
-                      Rates in INR (₹) · "Incl. GST" = GST already included · "Incl." = GST included
+                      All rates in INR (₹) · GST is included in all published rates
                     </p>
                   </CardContent>
                 </Card>
